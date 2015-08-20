@@ -1,0 +1,21 @@
+#+MACRO: msjs MultiselectJS
+#+AUTHOR: Jaakko Järvi
+#+EMAIL: jarvi@cse.tamu.edu
+#+OPTIONS: ':t *:t -:t ::t <:{} H:3 \n:nil ^:t arch:headline
+#+OPTIONS: author:t c:nil creator:nil d:(not "LOGBOOK") date:t
+#+OPTIONS: e:t email:nil f:t inline:nil num:t p:nil pri:nil stat:nil
+#+OPTIONS: tags:nil tasks:nil tex:t timestamp:t toc:t todo:nil |:t
+
+#+DESCRIPTION:
+#+KEYWORDS:
+#+LANGUAGE: en
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+
+#+OPTIONS: html-link-use-abs-url:nil html-postamble:nil
+#+OPTIONS: html-preamble:t html-scripts:t html-style:t
+#+OPTIONS: html5-fancy:nil tex:t
+#+HTML_DOCTYPE: xhtml-strict
+#+HTML_CONTAINER: div
+
+#+HTML_HEAD_EXTRA: <style>body { font-family: Arial, Verdana, Helvetica, sans-serif; }</style>

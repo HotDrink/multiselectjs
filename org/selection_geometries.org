@@ -1,0 +1,294 @@
+* Selection geometries
+
+** Imports
+
+#+NAME: imports
+#+BEGIN_SRC js
+var M = require("./multiselect");
+var Rect = require("./rectangle");
+
+var makeEmptyMap = M.detail.makeEmptyMap;
+#+END_SRC
+
+#+NAME: multiselect_with_extras
+#+BEGIN_SRC js :tangle ../js/multiselect_with_extras.js :noweb yes :padline no
+  <<generated-banner>>
+
+  module.exports = require("./multiselect");
+
+  module.exports.Geometries = require("./selection_geometries");
+
+  // module.exports.Rect = require("./rectangle");
+  // module.exports.Drawing = require("./drawing");
+#+END_SRC
+
+
+#+BEGIN_SRC js :tangle ../js/selection_geometries.js :noweb yes :exports none :padline no
+<<imports>>
+<<ordered-geometry>>
+<<vertical-geometry>>
+<<horizontal-geometry>>
+<<dom-cs>>
+<<iphoto-dom-cs>>
+#+END_SRC
+
+
+** Ordered geometries
+
+A common geometries for elements that are linearly ordered,
+and indexed by natural numbers up to some preset maximum.
+
+#+NAME: ordered-geometry
+#+BEGIN_SRC js
+var OrderedGeometry = function (size) {
+  M.DefaultGeometry.call(this);
+  this._size = size;
+};
+
+OrderedGeometry.prototype = Object.create(M.DefaultGeometry.prototype);
+OrderedGeometry.prototype.constructor = OrderedGeometry;
+
+OrderedGeometry.prototype.selectionDomain = function (spath) {
+  var J = makeEmptyMap();
+  if (spath.length === 0) return J;
+
+  var b = Math.max(0, Math.min(M.anchor(spath), M.activeEnd(spath)));
+  var e = Math.min(this._size-1, Math.max(M.anchor(spath), M.activeEnd(spath)));
+  for (var i = b; i<=e; ++i) J.set(i, true);
+  return J; 
+};
+OrderedGeometry.prototype.filter = function (predicate) {
+  var J = makeEmptyMap();
+  for (var i = 0; i < this._size; ++i) if (predicate(i)) J.set(i, true);
+  return J;
+};
+
+OrderedGeometry.prototype.size = function () { return this._size; };
+
+exports.OrderedGeometry = OrderedGeometry;
+#+END_SRC
+
+The vertical and horizontal geometries agument the ordered
+geometry, respectively, with the ability to step up/down and
+left/right with the arrow functions:
+
+#+NAME: vertical-geometry
+#+BEGIN_SRC js
+var VerticalGeometry = function (size) {
+  OrderedGeometry.call(this, size);
+};
+
+VerticalGeometry.prototype = Object.create(OrderedGeometry.prototype);
+VerticalGeometry.prototype.constructor = VerticalGeometry;
+
+VerticalGeometry.prototype.step = function (dir, vpoint) {
+  switch (dir) {
+    case M.UP: return Math.max(0, vpoint-1);
+    case M.DOWN: return Math.min(this._size-1, vpoint+1);
+    default: return vpoint;
+  }
+};
+
+exports.VerticalGeometry = VerticalGeometry;
+#+END_SRC
+
+#+NAME: horizontal-geometry
+#+BEGIN_SRC js
+var HorizontalGeometry = function (size) {
+  OrderedGeometry.call(this, size);
+};
+
+HorizontalGeometry.prototype = Object.create(OrderedGeometry.prototype);
+HorizontalGeometry.prototype.constructor = HorizontalGeometry;
+
+HorizontalGeometry.prototype.step = function (dir, vpoint) {
+  switch (dir) {
+    case M.LEFT: return Math.max(0, vpoint-1);
+    case M.RIGHT: return Math.min(this._size-1, vpoint+1);
+    default: return vpoint;
+  }
+};
+
+exports.HorizontalGeometry = HorizontalGeometry;
+#+END_SRC
+
+** Coordinate system for an array of DOM objects
+
+The constructor takes an array of DOM elements. 
+These are considered to be in order.
+Given a mouse coordinate, ~m2v~ converts that coordinate to the index
+of the DOM element in this array.
+
+#+NAME: dom-cs
+#+BEGIN_SRC js 
+var DomGeometry = function (parent, elements) {
+  OrderedGeometry.call(this, elements.length);
+  
+  this._parent = parent;
+  this._elements = elements;
+};
+DomGeometry.prototype = Object.create(OrderedGeometry.prototype);
+DomGeometry.constructor = DomGeometry;
+
+DomGeometry.prototype.m2v = function (mpoint) {
+  for (var i=0; i<this._elements.length; ++i) {
+    if (Rect.pointInRects(mpoint, 
+                          Rect.getOffsetRects(
+                            this._parent, this._elements[i])))
+      return i;
+  }
+  return null;
+};
+
+DomGeometry.prototype.step = function (dir, vpoint) {
+  switch (dir) {
+  case M.LEFT: return Math.max(0, vpoint - 1);
+  case M.RIGHT: return Math.min(this._size - 1, vpoint + 1);
+  default: return vpoint;
+  }
+};
+
+DomGeometry.prototype.defaultCursor = function (dir) {
+  switch (dir) {
+  case M.LEFT: return this._size-1;
+  case M.RIGHT: return 0; 
+  case M.NO_DIRECTION: return 0;
+  default: return null;
+  }
+};
+  
+exports.DomGeometry = DomGeometry;
+#+END_SRC
+
+
+** IPhoto Coordinate system for an array of DOM objects
+
+The constructor takes an array of DOM elements. 
+These are considered to be in order.
+Given a mouse coordinate, ~m2v~ converts that coordinate to the index
+of the DOM element in this array.
+
+#+NAME: iphoto-dom-cs
+#+BEGIN_SRC js 
+var IPhotoDomGeometry = function (parent, elements) {
+  return DomGeometry.call(this, parent, elements);
+};
+IPhotoDomGeometry.prototype = Object.create(DomGeometry.prototype);
+IPhotoDomGeometry.constructor = IPhotoDomGeometry;
+
+IPhotoDomGeometry.prototype.m2v = function (mpoint) {
+  for (var i=0; i<this._elements.length; ++i) {
+    if (Rect.pointInRects(mpoint, 
+                            Rect.getOffsetRects(
+                              this._parent, this._elements[i])))
+      return { index: i, location: mpoint }
+  }
+  return { index: undefined, location: mpoint };
+};
+IPhotoDomGeometry.prototype.v2m = function (mpoint) {
+  if (mpoint === undefined) return mpoint;
+  if (mpoint.location !== undefined) return mpoint.location;
+  return Rect.midPoint(Rect.getOffsetRects(this._parent, this._elements[mpoint.index])[0]);
+}
+IPhotoDomGeometry.prototype.vpath2mpath = function (vpath) {
+  return vpath.map(function (mp) { return mp.location; });
+}
+
+IPhotoDomGeometry.prototype.defaultCursor = function (dir) {
+  switch (dir) {
+    case M.RIGHT: return { index: -1 };
+    case M.LEFT: return { index: this._size };
+    default: return undefined;
+  }
+};
+IPhotoDomGeometry.prototype.step = function (dir, vpoint) {
+  if (vpoint.index === undefined) return vpoint;
+  switch (dir) {
+    case M.LEFT: return { index: Math.max(0, vpoint.index-1) };
+    case M.RIGHT: return { index: Math.min(this._size-1, vpoint.index+1) };
+    default: return vpoint;
+  }
+};
+
+IPhotoDomGeometry.prototype.boundToElement = function (vpoint) {
+  return vpoint.index !== undefined;
+};
+IPhotoDomGeometry.prototype.extendPath = function (spath, vpoint) {
+  if (spath.length === 0) return [];
+  if (this.boundToElement(anchor(spath))) {
+    if (!this.boundToElement(vpoint)) return spath;
+  } else {
+    vpoint.index = undefined; // set vpoint not be bound to element
+  }
+  spath.push(vpoint); 
+  return spath;
+//  return DomGeometry.prototype.extendPath.call(this, spath, vpoint);
+};
+
+IPhotoDomGeometry.prototype.selectionDomain = function (spath) {
+  var J = makeEmptyMap();
+  if (spath.length === 0) return J;
+  if (this.boundToElement(anchor(spath))) {
+    return DomGeometry.prototype.selectionDomain.call(
+      this, spath.map(function (v) { return v.index; }));
+  }
+  else
+  {
+    var bbox = Rect.rect(anchor(spath).location, M.activeEnd(spath).location);
+    for (var i=0; i<this._elements.length; ++i) {
+      if (Rect.intersectWithAny(bbox,
+                                Rect.getOffsetRects(
+                                  this._parent, this._elements[i])))
+        J.set(i, true);
+    }
+  }
+  return J;
+}; 
+  
+exports.IPhotoDomGeometry = IPhotoDomGeometry;
+#+END_SRC
+
+* Export configuration                                              :ARCHIVE:
+  
+  #+MACRO: msjs MultiselectJS
+  #+TITLE:     {{{msjs}}}
+  #+AUTHOR:    Jaakko Järvi
+  #+EMAIL:     jarvij@gmail.com
+  #+DATE:      2014-09-22 Mon
+  #+DESCRIPTION:
+  #+KEYWORDS:
+  #+LANGUAGE:  en
+  #+OPTIONS:   H:3 num:t toc:t \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+  #+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
+  #+OPTIONS:   arch:nil
+  
+  #+EXPORT_SELECT_TAGS: export
+  #+EXPORT_EXCLUDE_TAGS: noexport
+  #+LINK_UP:   
+  #+LINK_HOME: 
+  # +INFOJS_OPT: view:t toc:t ltoc:t mouse:underline buttons:0 path:http://thomasf.github.io/solarized-css/org-info.min.js
+  # +HTML_HEAD: <link rel="stylesheet" type="text/css" href="http://thomasf.github.io/solarized-css/solarized-dark.min.css" />
+  # +INFOJS_OPT: view:t toc:t ltoc:t mouse:underline buttons:0 path:file:./org-info.min.js
+  # +HTML_HEAD: <link rel="stylesheet" type="text/css" href="file:./solarized-dark.min.css" />
+
+  #+OPTIONS: html-postamble:nil html-preamble:nil html-scripts:nil 
+  #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="org.css" />
+  #+HTML_DOCTYPE: xhtml5
+
+  #+HTML_HEAD_EXTRA: <style>.org-src-name { font-weight: normal; text-decoration: overline underline;  font-family: monospace; margin-top: 1cm; }</style>
+  # +HTML_HEAD_EXTRA: <style>.org-src-name:before { font-family: initial; content: ""; }</style>
+
+  
+* File local variables                                              :ARCHIVE:
+  
+# Local Variables:
+# mode: org
+# org-html-postamble: nil
+# org-src-preserve-indentation: t 
+# org-babel-use-quick-and-dirty-noweb-expansion: t
+# End:
+
+
+
+
+

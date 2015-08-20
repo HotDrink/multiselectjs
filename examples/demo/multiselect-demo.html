@@ -1,0 +1,133 @@
+<html>
+  <!------------------------------------>
+  <!-- MultiselectJS demo application -->
+  <!-- Author: Jaakko Järvi           -->
+  <!------------------------------------>  
+  <head>
+    <meta name="author" content="Jaakko Järvi">
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script type="text/javascript" src="../../dist/multiselect.min.js"></script>
+    <script type="text/javascript" src="./utilities.js"></script>
+    <script type="text/javascript" src="./code.js"></script>
+    <style>
+      #selectable_area { float: right; border:1px solid black; cursor:default; width: 60%; }
+      .selectable { outline:1px solid; padding:1px 4px 1px 4px; margin:5px; display:inline-block; }
+      .selected { background-color: khaki; }
+
+      #div1 {float: left; horizontal-align: top;}
+      #div1 {width: 39%;}
+
+      section { display: block; clear: both; }
+      body { font-family: Arial, Verdana, Helvetica, sans-serif; }      
+    </style>      
+  </head>
+  <body>
+    <h1>MultiselectJS demo application</h1>
+
+    <p>
+        This application demonstrates various selection geometries and
+        that they can be changed without distorting the current
+        selection, or the undo and redo stacks. Filtering and various
+        mouse/keyboard selections can be freely intermixed. The
+        key-bindings below are given assuming a Mac computer; Windows
+        users should use the <b>ctrl</b> modifier key instead
+        of <b>command</b>, and <b>alt</b> instead of <b>opt</b>.  Key-bindings are only active if focus is
+        on the selection area. Please hit <b>TAB</b> to change focus.
+    </p>
+    <div>
+      <div id="div1">
+        <fieldset>
+          <legend>Geometry selection</legend>
+          <table>
+            <tr>
+              <td><input type="radio" name="geometry" value="rectangular" checked></td>
+              <td><b>Rectangular:</b>
+                Selects all elements that intersect a rectangle. No keyboard commands.
+                <hr></hr>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="geometry" value="rowwise"></td>
+              <td><b>Row-wise:</b> The anchor and active end specify a
+                range; elements are ordered row-wise.  All arrows are
+                operational. The default for right/down is the first
+                element and left/up the last. Dragging or
+                shift-clicking outside of all elements has no impact.
+                <hr></hr>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="geometry" value="snake"></td>
+              <td><b>Snake:</b>
+                A drag or shift-click adds a new point to the path; all elements that touch the path are selected.
+                Dragging backwards removes elements from the path. No keyboard commands.
+                <hr></hr>
+              </td>
+            </tr>
+            <tr>            
+              <td><input type="radio" name="geometry" value="pointwise"></td>
+              <td><b>Point-wise:</b>
+                A drag or shift-click adds new point to the path; all elements that touch any of the path's points are selected.
+                No keyboard commands.
+                <hr></hr>
+              </td>
+            </tr>
+            <tr>                          
+              <td><input type="radio" name="geometry" value="mixed"></td>
+              <td><b>Mixed:</b>
+                Rectangular selection when the anchor is outside of all elements and row-wise selection when it is
+                within an element. This corresponds to, say, iPhoto's selection.
+                <hr></hr>
+              </td>
+            </tr>
+          </table>
+        </fieldset>
+        <fieldset>
+          <legend>Filtering</legend>
+          <b>String:</b> <input type="text" id="filter"></input><button id="commit_filter">Commit filter</button><br>
+          If the given string is a substring of an element, the element is selected. Modifying the string
+          modifies the active set (it behaves like shift-click in this regard). The <i>Commit filter</i> button or any mouse or
+          keyboard operation commits the active set.
+          </fieldset>
+          <fieldset><legend>(De)select all</legend>
+          <button id="select_all">Select all</button>
+          <button id="deselect_all">Deselect all</button>
+        </fieldset>
+      </div>
+      <div id="selectable_area" tabIndex="0">
+      </div>
+    </div>
+    <section>
+    <br>      
+      <table>
+        <tr>
+          <td valign="top">
+            <h3>Mouse operations</h3>
+            
+            <ul> 
+              <li><b>click</b>: clear all, set anchor, select anchor
+              <li><b>command-click</b>: set anchor, set selection mode based on anchor, toggle anchor
+              <li><b>shift-click</b>: set active end (or extend selection path), select/deselect active set
+              <li><b>drag</b>: mouse move during a drag is a shift-click
+            </ul>
+
+          </td>
+          <td valign="top">
+            <h3>Keyboard operations</h3>
+            
+            <ul>
+              <li><b>space</b>: click on cursor
+              <li><b>command-space</b>: command-click on cursor
+              <li><b>shift-space</b>: shift-click on cursor
+              <li><b>arrow<sub><tt>dir</tt></sub></b>: move cursor to the direction <tt>dir</tt>
+              <li><b>command-arrow<sub><tt>dir</tt></sub></b>: command-space, move cursor to the direction <tt>dir</tt>
+              <li><b>shift-arrow<sub><tt>dir</tt></sub></b>: move cursor to the direction <tt>dir</tt>, shift-space
+              <li><b>opt-z</b>: undo
+              <li><b>shift-opt-z</b>: redo
+            </ul>
+          </td>
+        </tr>
+      </table>
+    </section>
+  </body>
+</html>

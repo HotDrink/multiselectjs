@@ -1,0 +1,36 @@
+{
+  "name": "multiselectjs",
+  "version": "0.99.0",
+  "description": "A library for implementing multiselection in GUIs.",
+  "main": "js/main.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "build-debug": "node_modules/.bin/browserify js/multiselect.js -d -s multiselect > dist/multiselect.js",
+    "build-debug-extras": "node_modules/.bin/browserify js/multiselect_with_extras.js -d -s multiselect > dist/multiselect_with_extras.js",
+    "build-min": "node_modules/.bin/browserify js/multiselect.js -s multiselect -t babelify | uglifyjs > dist/multiselect.min.js",
+    "build-min-extras": "node_modules/.bin/browserify js/multiselect_with_extras.js -s multiselect -t babelify | uglifyjs > dist/multiselect_with_extras.min.js",    
+    "build": "npm run build-debug && npm run build-min && npm run build-debug-extras && npm run build-min-extras",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HotDrink/multiselectjs.git"
+  },
+  "author": "Jaakko Järvi",
+  "license": "MIT",
+  "devDependencies": {
+    "babelify": "^6.1.3",
+    "browserify": "^11.0.1",
+    "jquery": "^2.1.0",
+    "qunitjs": "^1.16.0",
+    "uglify-js": "^2.4.13"
+  },
+  "dependencies": {},
+  "bugs": {
+    "url": "https://github.com/HotDrink/multiselectjs/issues"
+  },
+  "homepage": "https://github.com/HotDrink/multiselectjs#readme"
+}

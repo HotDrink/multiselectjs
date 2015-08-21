@@ -8,11 +8,14 @@
     "test": "test"
   },
   "scripts": {
-    "build-debug": "node_modules/.bin/browserify js/multiselect.js -d -s multiselect > dist/multiselect.js",
-    "build-debug-extras": "node_modules/.bin/browserify js/multiselect_with_extras.js -d -s multiselect > dist/multiselect_with_extras.js",
+    "build-debug": "node_modules/.bin/browserify js/multiselect.js -d -s multiselect > dist/multiselect.debug.js",
+    "build-debug-extras": "node_modules/.bin/browserify js/multiselect_with_extras.js -d -s multiselect > dist/multiselect_with_extras.debug.js",
+    "build-no-debug": "node_modules/.bin/browserify js/multiselect.js -s multiselect > dist/multiselect.js",
+    "build-no-debug-extras": "node_modules/.bin/browserify js/multiselect_with_extras.js -s multiselect > dist/multiselect_with_extras.js",
     "build-min": "node_modules/.bin/browserify js/multiselect.js -s multiselect -t babelify | uglifyjs > dist/multiselect.min.js",
     "build-min-extras": "node_modules/.bin/browserify js/multiselect_with_extras.js -s multiselect -t babelify | uglifyjs > dist/multiselect_with_extras.min.js",    
-    "build": "npm run build-debug && npm run build-min && npm run build-debug-extras && npm run build-min-extras",
+    "build": "npm run build-no-debug && npm run build-no-debug-extras",
+    "build-d": "npm run build-debug && npm run build-debug-extras",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

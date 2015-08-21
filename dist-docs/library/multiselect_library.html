@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>MultiselectJS &#x2014; <code>multiselect_library.org</code></title>
-<!-- 2015-08-21 Fri 20:53 -->
+<!-- 2015-08-21 Fri 22:38 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="Jaakko Järvi" />
@@ -393,8 +393,18 @@ We use a few helper functions to deal with sets and maps:
   <span style="color: #0000FF;">function</span> <span style="color: #006699;">isEmpty</span>(<span style="color: #BA36A5;">collection</span>) { <span style="color: #0000FF;">return</span> collection.size === 0; }
   <span style="color: #0000FF;">function</span> <span style="color: #006699;">isSingleton</span>(<span style="color: #BA36A5;">collection</span>) { <span style="color: #0000FF;">return</span> collection.size === 1; }
 
-  <span style="color: #0000FF;">function</span> <span style="color: #006699;">firstKey</span>(<span style="color: #BA36A5;">collection</span>) {
-    <span style="color: #0000FF;">return</span> collection.keys().next().value; 
+  <span style="color: #0000FF;">function</span> <span style="color: #006699;">firstKey</span>(<span style="color: #BA36A5;">collection</span>) {  
+    <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">The body should be:</span>
+    <span style="color: #8D8D84;">//   </span><span style="color: #8D8D84; font-style: italic;">return collection.keys().next().value; </span>
+    <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">but Safari 8 does not support .next, therefore the workarounds below</span>
+
+    <span style="color: #0000FF;">if</span> (<span style="color: #0000FF;">typeof</span> collection.keys().next === <span style="color: #008000;">'function'</span>) {
+      <span style="color: #0000FF;">return</span> collection.keys().next().value;
+    } <span style="color: #0000FF;">else</span> {
+      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">it</span> = collection.keys();
+      <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">v</span> of it) <span style="color: #0000FF;">return</span> v;
+      <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">undefined</span>;
+    }
   }
 
   <span style="color: #0000FF;">function</span> <span style="color: #006699;">copySet</span> (<span style="color: #BA36A5;">s</span>) { 

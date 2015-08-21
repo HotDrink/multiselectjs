@@ -11,8 +11,18 @@
       function isEmpty(collection) { return collection.size === 0; }
       function isSingleton(collection) { return collection.size === 1; }
     
-      function firstKey(collection) {
-        return collection.keys().next().value; 
+      function firstKey(collection) {  
+        // The body should be:
+        //   return collection.keys().next().value; 
+        // but Safari 8 does not support .next, therefore the workarounds below
+    
+        if (typeof collection.keys().next === 'function') {
+          return collection.keys().next().value;
+        } else {
+          var it = collection.keys();
+          for (var v of it) return v;
+          return undefined;
+        }
       }
     
       function copySet (s) { 

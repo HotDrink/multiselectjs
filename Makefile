@@ -21,9 +21,9 @@ OTHER_DOCS := \
 # deployable scripts
 DIST_SCRIPTS := \
   dist/multiselect.js \
-  dist/multiselect.min.js \
-  dist/multiselect_with_extras.js \
-  dist/multiselect_with_extras.min.js \
+  dist/multiselect_with_extras.js 
+#  dist/multiselect.min.js \
+#  dist/multiselect_with_extras.min.js \
 
 dist: $(DIST_SCRIPTS)
 
@@ -63,7 +63,8 @@ pages: docs dist
 	mkdir -p ../multiselectjs-pages/examples/demo
 	rsync -v examples/demo/* ../multiselectjs-pages/examples/demo/
 	mkdir -p ../multiselectjs-pages/dist
-	rsync -v dist/multiselect.min.js ../multiselectjs-pages/dist
+#	rsync -v dist/multiselect.min.js ../multiselectjs-pages/dist
+	rsync -v dist/multiselect.js ../multiselectjs-pages/dist
 
 GENERATED_INDEX_FILES := org-docs/index/index.html
 

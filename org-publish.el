@@ -1,13 +1,16 @@
+;; The load-path setting is because org-mode's html export needs htmlize.el
+;; If this is not an appropriate path, you can set the EMACSLOADPATH environment variable
 (setq load-path (cons "~/elisp/org-mode/lisp"
                       (cons "~/elisp/org-mode/contrib/lisp" load-path)))
-;; the path setting is because org-mode's html export needs htmlize.el
 
 (require 'org)
-(require 'ox-html)
-(require 'ox-latex)
+;; (require 'ox-html)
+;; (require 'ox-latex)
 
+;; building the tutorial generates some figures via latex and tikz
 (setq org-latex-to-pdf-process (list "latexmk -pdf %f"))
 
+;; using some prettier colors
 (custom-set-faces
  `(font-lock-builtin-face ((t (:foreground "#006FE0"))))
  `(font-lock-comment-delimiter-face ((t (:foreground "#8D8D84")))) ; #696969
@@ -28,8 +31,9 @@
 (custom-set-variables
  '(org-confirm-babel-evaluate nil)
  '(org-src-preserve-indentation t)
- '(org-babel-use-quick-and-dirty-noweb-expansion t)
+ '(org-babel-use-quick-and-dirty-noweb-expansion t) ;; withoug this, tangling is very slow
 
+ ;; tutorial uses tricks that needs org included
  '(org-babel-load-languages
    (quote
     ((emacs-lisp . t)
@@ -47,7 +51,6 @@
         (targetpath (or targetpath ".")))
 
     (load-theme 'dichromacy)
-    ;;    (org-babel-tangle)
     
     (org-html-export-as-html)
     

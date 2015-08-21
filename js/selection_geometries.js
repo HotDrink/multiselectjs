@@ -1,45 +1,7 @@
-* Selection geometries
-
-** Imports
-
-#+NAME: imports
-#+BEGIN_SRC js
 var M = require("./multiselect");
 var Rect = require("./rectangle");
 
 var makeEmptyMap = M.detail.makeEmptyMap;
-#+END_SRC
-
-#+NAME: multiselect_with_extras
-#+BEGIN_SRC js :tangle ../js/multiselect_with_extras.js :noweb yes :padline no
-  <<generated-banner>>
-
-  module.exports = require("./multiselect");
-
-  module.exports.Geometries = require("./selection_geometries");
-
-  // module.exports.Rect = require("./rectangle");
-  // module.exports.Drawing = require("./drawing");
-#+END_SRC
-
-
-#+BEGIN_SRC js :tangle ../js/selection_geometries.js :noweb yes :exports none :padline no
-<<imports>>
-<<ordered-geometry>>
-<<vertical-geometry>>
-<<horizontal-geometry>>
-<<dom-cs>>
-<<iphoto-dom-cs>>
-#+END_SRC
-
-
-** Ordered geometries
-
-A common geometries for elements that are linearly ordered,
-and indexed by natural numbers up to some preset maximum.
-
-#+NAME: ordered-geometry
-#+BEGIN_SRC js
 var OrderedGeometry = function (size) {
   M.DefaultGeometry.call(this);
   this._size = size;
@@ -66,14 +28,6 @@ OrderedGeometry.prototype.filter = function (predicate) {
 OrderedGeometry.prototype.size = function () { return this._size; };
 
 exports.OrderedGeometry = OrderedGeometry;
-#+END_SRC
-
-The vertical and horizontal geometries agument the ordered
-geometry, respectively, with the ability to step up/down and
-left/right with the arrow functions:
-
-#+NAME: vertical-geometry
-#+BEGIN_SRC js
 var VerticalGeometry = function (size) {
   OrderedGeometry.call(this, size);
 };
@@ -90,10 +44,6 @@ VerticalGeometry.prototype.step = function (dir, vpoint) {
 };
 
 exports.VerticalGeometry = VerticalGeometry;
-#+END_SRC
-
-#+NAME: horizontal-geometry
-#+BEGIN_SRC js
 var HorizontalGeometry = function (size) {
   OrderedGeometry.call(this, size);
 };
@@ -110,17 +60,6 @@ HorizontalGeometry.prototype.step = function (dir, vpoint) {
 };
 
 exports.HorizontalGeometry = HorizontalGeometry;
-#+END_SRC
-
-** Coordinate system for an array of DOM objects
-
-The constructor takes an array of DOM elements. 
-These are considered to be in order.
-Given a mouse coordinate, ~m2v~ converts that coordinate to the index
-of the DOM element in this array.
-
-#+NAME: dom-cs
-#+BEGIN_SRC js 
 var DomGeometry = function (parent, elements) {
   OrderedGeometry.call(this, elements.length);
   
@@ -158,18 +97,6 @@ DomGeometry.prototype.defaultCursor = function (dir) {
 };
   
 exports.DomGeometry = DomGeometry;
-#+END_SRC
-
-
-** IPhoto Coordinate system for an array of DOM objects
-
-The constructor takes an array of DOM elements. 
-These are considered to be in order.
-Given a mouse coordinate, ~m2v~ converts that coordinate to the index
-of the DOM element in this array.
-
-#+NAME: iphoto-dom-cs
-#+BEGIN_SRC js 
 var IPhotoDomGeometry = function (parent, elements) {
   return DomGeometry.call(this, parent, elements);
 };
@@ -246,27 +173,3 @@ IPhotoDomGeometry.prototype.selectionDomain = function (spath) {
 }; 
   
 exports.IPhotoDomGeometry = IPhotoDomGeometry;
-#+END_SRC
-
-* Export configuration                                              :ARCHIVE:
-  
-  #+SETUPFILE: org-settings.org
-  #+TITLE:     {{{msjs}}} --- ~selection_geometries.org~
-  #+AUTHOR:    Jaakko Järvi
-  #+EMAIL:     jarvij@gmail.com
-  #+DATE:      
-  
-  
-* File local variables                                              :ARCHIVE:
-  
-# Local Variables:
-# mode: org
-# org-html-postamble: nil
-# org-src-preserve-indentation: t 
-# org-babel-use-quick-and-dirty-noweb-expansion: t
-# End:
-
-
-
-
-

@@ -1,27 +1,10 @@
 * Export configuration                                             :noexport:
-  
-  #+MACRO: msjs MultiselectJS
-  #+TITLE:     {{{msjs}}}
+
+  #+SETUPFILE: org-settings.org
+  #+TITLE:     {{{msjs}}} --- ~multiselect_library.org~
   #+AUTHOR:    Jaakko Järvi
   #+EMAIL:     jarvij@gmail.com
-  #+DATE:      <2015-02-16 Mon>
-  #+DESCRIPTION:
-  #+KEYWORDS:
-  #+LANGUAGE:  en
-  #+OPTIONS:   H:5 num:t toc:t \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t ':t
-  #+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
-  #+OPTIONS:   arch:nil
-  
-  #+EXPORT_SELECT_TAGS: export
-  #+EXPORT_EXCLUDE_TAGS: noexport
-
-  #+OPTIONS: html-postamble:nil html-preamble:nil html-scripts:nil 
-
-  #+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="org.css" />
-  #+HTML_DOCTYPE: xhtml5
-
-  #+HTML_HEAD_EXTRA: <style>.org-src-name { font-weight: normal; text-decoration: overline underline;  font-family: monospace; margin-top: 1cm; }</style>
-  # +HTML_HEAD_EXTRA: <style>.org-src-name:before { font-family: initial; content: ""; }</style>
+  #+DATE:      
 
 * Introduction
   
@@ -2360,13 +2343,16 @@ click to select and a click to start a drag can vary.
 We provide a few definitions intended to help implementing
 event handling.
 
-** Detecting user's event
+** Detecting mouse/keyboard events
 
 We define a set of constants to correspond to particular choices of
 modifier keys that can be held down at the time of a mouse click or a
-an arrow or space key press:
+an arrow or space key press. The ~modifierKeys~ function extracts 
+the modifier key
+information from an /event/ object. Both meta and control
+keys are accepted as the command modifier.
 
-#+NAME: modifier-key-constants
+#+NAME: modifier-keys
 #+BEGIN_SRC js
 const M_NONE = 1, 
       M_SHIFT = 2, 
@@ -2374,14 +2360,7 @@ const M_NONE = 1,
       M_SHIFT_CMD = 4, 
       M_OPT = 5, 
       M_SHIFT_OPT = 6;
-#+END_SRC
 
-The ~modifierKeys~ function extracts the modifier key
-information from an /event/ object. Both meta and control
-keys are accepted as the command modifier.
-
-#+NAME: modifier-keys
-#+BEGIN_SRC js
 function modifierKeys (evt) {
   
   if (evt.shiftKey && isCmdKey(evt)) return M_SHIFT_CMD;
@@ -2494,7 +2473,6 @@ var test = QUnit.test;
 #+END_SRC
 
 #+BEGIN_SRC js :exports none :tangle ../js/multiselect.js :noweb yes :padline no
-//  "use strict";
   <<generated-banner>>
 
   // -------------------------------------------------------------------
@@ -2598,7 +2576,7 @@ var test = QUnit.test;
 #+END_SRC
 
 
-* File local variables                                              :ARCHIVE:
+* File local variables                                     :ARCHIVE:noexport:
   
 # Local Variables:
 # mode: org

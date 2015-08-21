@@ -1,4 +1,4 @@
-#+SETUPFILE: ../org-settings.org
+#+SETUPFILE: ../../org/org-settings.org
 #+TITLE: {{{msjs}}} Tutorial
 
 * Introduction 
@@ -671,23 +671,6 @@ elements as a [[https://developer.mozilla.org/en-US/docs/Web/JavaScript/Referenc
 Another means to inspect the current selection state, not used here,
 is the ~isSelected(i)~ method that returns the selection state of
 element ~i~.
-
-
-The above pieces of code are collected to a 
-single file here.
-
-#+BEGIN_SRC org :tangle animal-example.org :noweb yes :exports none
-#+TITLE Animal Example: Full Code
-
-<<animal-code>>
-
-#+END_SRC
-
-#+NAME: animal-code
-#+BEGIN_SRC js :exports none
-var x = 3;
-#+END_SRC
-
 
 #+NAME: ordered-list-js-code-before-ready
 #+BEGIN_SRC js :exports none :noweb yes

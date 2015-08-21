@@ -1,4 +1,4 @@
-#+SETUPFILE: ../org-settings.org
+#+SETUPFILE: ../../org/org-settings.org
 #+TITLE: {{{msjs}}}
 
 {{{msjs}}} is a library for implementing selection of multiple elements from visual collections with a mouse and keyboard.

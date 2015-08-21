@@ -1,4 +1,7 @@
 /node_modules/
+/dist/
+/dist-docs/
+/js/
 /org-docs/index/index.html
 /org-docs/tutorial/example-1-source.org
 /org-docs/tutorial/example-1.html
@@ -14,3 +17,5 @@
 /org/extras.tangled
 /org/multiselect_library.html
 /org/multiselect_library.tangled
+/org/extras.html
+/org/selection_geometries.html

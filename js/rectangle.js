@@ -1,20 +1,3 @@
-* Export configuration                                             :noexport:
-  
-  #+SETUPFILE: org-settings.org
-  #+TITLE:     {{{msjs}}} --- extras.org
-  #+AUTHOR:    Jaakko Järvi
-  #+EMAIL:     jarvij@gmail.com
-  #+DATE:
-
-* Introduction
-
-This file contains definitions that are used in the examples, demos, and tutorials.
-Two files are generated: ~rectangle.js~ and ~drawing.hs~.
-The latter depends on the former, and imports it with ~require~.
-
-** Points, lines, and rectangles
-
-#+BEGIN_SRC js :tangle ../js/rectangle.js :noweb yes :padline no
   // public functions of the Rectangle module
   module.exports = {
     rect: rect,
@@ -195,43 +178,43 @@ The latter depends on the former, and imports it with ~require~.
 
   /* PORTED FROM:
 
-   ,* lines_intersect:  AUTHOR: Mukesh Prasad
-   ,*
-   ,*   This function computes whether two line segments,
-   ,*   respectively joining the input points (x1,y1) -- (x2,y2)
-   ,*   and the input points (x3,y3) -- (x4,y4) intersect.
-   ,*   If the lines intersect, the output variables x, y are
-   ,*   set to coordinates of the point of intersection.
-   ,*
-   ,*   All values are in integers.  The returned value is rounded
-   ,*   to the nearest integer point.
-   ,*
-   ,*   If non-integral grid points are relevant, the function
-   ,*   can easily be transformed by substituting floating point
-   ,*   calculations instead of integer calculations.
-   ,*
-   ,*   Entry
-   ,*        x1, y1,  x2, y2   Coordinates of endpoints of one segment.
-   ,*        x3, y3,  x4, y4   Coordinates of endpoints of other segment.
-   ,*
-   ,*   Exit
-   ,*        x, y              Coordinates of intersection point.
-   ,*
-   ,*   The value returned by the function is one of:
-   ,*
-   ,*        DONT_INTERSECT    0
-   ,*        DO_INTERSECT      1
-   ,*        COLLINEAR         2
-   ,*
-   ,* Error conditions:
-   ,*
-   ,*     Depending upon the possible ranges, and particularly on 16-bit
-   ,*     computers, care should be taken to protect from overflow.
-   ,*
-   ,*     In the following code, 'long' values have been used for this
-   ,*     purpose, instead of 'int'.
-   ,*
-   ,*/
+   * lines_intersect:  AUTHOR: Mukesh Prasad
+   *
+   *   This function computes whether two line segments,
+   *   respectively joining the input points (x1,y1) -- (x2,y2)
+   *   and the input points (x3,y3) -- (x4,y4) intersect.
+   *   If the lines intersect, the output variables x, y are
+   *   set to coordinates of the point of intersection.
+   *
+   *   All values are in integers.  The returned value is rounded
+   *   to the nearest integer point.
+   *
+   *   If non-integral grid points are relevant, the function
+   *   can easily be transformed by substituting floating point
+   *   calculations instead of integer calculations.
+   *
+   *   Entry
+   *        x1, y1,  x2, y2   Coordinates of endpoints of one segment.
+   *        x3, y3,  x4, y4   Coordinates of endpoints of other segment.
+   *
+   *   Exit
+   *        x, y              Coordinates of intersection point.
+   *
+   *   The value returned by the function is one of:
+   *
+   *        DONT_INTERSECT    0
+   *        DO_INTERSECT      1
+   *        COLLINEAR         2
+   *
+   * Error conditions:
+   *
+   *     Depending upon the possible ranges, and particularly on 16-bit
+   *     computers, care should be taken to protect from overflow.
+   *
+   *     In the following code, 'long' values have been used for this
+   *     purpose, instead of 'int'.
+   *
+   */
 
   function sameSigns(a, b) { return a >= 0 && b >= 0 || a < 0 && b < 0; }
 
@@ -240,7 +223,7 @@ The latter depends on the former, and imports it with ~require~.
                           p3,   /* Second line segment */
                           p4,
                           p5    /* Output value:
-                                 ,* point of intersection */
+                                 * point of intersection */
                         )
   {
 
@@ -253,23 +236,23 @@ The latter depends on the former, and imports it with ~require~.
     var denom, offset, num;     /* Intermediate values */
 
     /* Compute a1, b1, c1, where line joining points 1 and 2
-     ,* is "a1 x  +  b1 y  +  c1  =  0".
-     ,*/
+     * is "a1 x  +  b1 y  +  c1  =  0".
+     */
   
     a1 = p2.y - p1.y;
     b1 = p1.x - p2.x;
     c1 = p2.x * p1.y - p1.x * p2.y;
 
     /* Compute r3 and r4.
-     ,*/
+     */
   
   
     r3 = a1 * p3.x + b1 * p3.y + c1;
     r4 = a1 * p4.x + b1 * p4.y + c1;
   
     /* Check signs of r3 and r4.  If both point 3 and point 4 lie on
-     ,* same side of line 1, the line segments do not intersect.
-     ,*/
+     * same side of line 1, the line segments do not intersect.
+     */
   
     if ( r3 != 0 &&
          r4 != 0 &&
@@ -288,9 +271,9 @@ The latter depends on the former, and imports it with ~require~.
     r2 = a2 * p2.x + b2 * p2.y + c2;
   
     /* Check signs of r1 and r2.  If both point 1 and point 2 lie
-     ,* on same side of second line segment, the line segments do
-     ,* not intersect.
-     ,*/
+     * on same side of second line segment, the line segments do
+     * not intersect.
+     */
   
     if ( r1 !== 0 &&
          r2 !== 0 &&
@@ -298,7 +281,7 @@ The latter depends on the former, and imports it with ~require~.
       return ( DONT_INTERSECT );
 
     /* Line segments intersect: compute intersection point. 
-     ,*/
+     */
   
     denom = a1 * b2 - a2 * b1;
     if ( denom === 0 )
@@ -306,9 +289,9 @@ The latter depends on the former, and imports it with ~require~.
     offset = denom < 0 ? - denom / 2 : denom / 2;
   
     /* The denom/2 is to get rounding instead of truncating.  It
-     ,* is added or subtracted to the numerator, depending upon the
-     ,* sign of the numerator.
-     ,*/
+     * is added or subtracted to the numerator, depending upon the
+     * sign of the numerator.
+     */
   
     num = b1 * c2 - b2 * c1;
     p5.x = ( num < 0 ? num - offset : num + offset ) / denom;
@@ -328,134 +311,3 @@ The latter depends on the former, and imports it with ~require~.
     if (lineIntersect(p1, p2, { x: r.right, y: r.bottom }, { x: r.left, y: r.bottom }, p) !== 0) return true;
     return pointInRect(p1, r) || pointInRect(p2, r);
   }
-#+END_SRC
-        
-
-
-** Drawing anchors, cursors, and rubber bands on Canvas
-
-#+BEGIN_SRC js :tangle ../js/drawing.js :noweb yes :padline no
-var Rect = require("./rectangle");
-
-function createBaseCanvas (parent) {
-  var canvas = document.createElement("canvas");
-  var rect = parent.getBoundingClientRect();
-  canvas.style.position = 'absolute';
-  canvas.width=Rect.width(rect);
-  canvas.height=Rect.height(rect);
-  canvas.style.zIndex = 0;
-  canvas.style.overflow = 'hidden';
-  parent.insertBefore(canvas, parent.firstChild);
-  return canvas;
-}
-
-// Create n canvases on top of the baseCanvas, insert them into
-// the DOM, and push them into layerArray, and return layerArray.
-// The zIndex
-// is consequtive, up from baseCanvas's zIndex.  New canvases have
-// no border or background.
-function createLayers (baseCanvas, n, layers) {
-  var z = baseCanvas.style.zIndex || 0;
-  layers = layers || [];
-  for (var i = 0; i < n; ++i) {
-    var canvas = baseCanvas.cloneNode(true);
-    canvas.style.position = 'absolute';
-    canvas.style.top = baseCanvas.style.top;
-    canvas.style.left = baseCanvas.style.left;
-    canvas.style.zIndex = z + 1 + i;
-    canvas.style.background = null;
-    layers.push(canvas);
-    baseCanvas.parentNode.insertBefore(canvas, baseCanvas);            
-  }
-  return layers;
-};
-
-//////////////////////
-// Cursor    canvas //
-//////////////////////
-
-exports.CursorCanvas = function (parent) {
-  
-  this.baseCanvas = createBaseCanvas(parent);
-  this.layers = createLayers(this.baseCanvas, 3, []);
-  // construct 3 layers, one each for activeEnd, anchor, rubber
-
-//  this.eventCanvas = this.layers[this.layers.length-1];
-  // last layer captures mouse events
-
-  this.rubberCtx = this.layers[0].getContext('2d'); 
-  this.anchorCtx = this.layers[1].getContext('2d'); 
-  this.cursorCtx = this.layers[2].getContext('2d');
-  
-  this.anchorCtx.strokeStyle = 'blue';
-  this.anchorCtx.lineWidth = 1;
-  
-  this.cursorCtx.strokeStyle = 'deeppink';
-  this.cursorCtx.lineWidth = 1;
-  
-  this.rubberCtx.strokeStyle = 'darkgreen';
-  this.rubberCtx.lineWidth = 2;
-  if (this.rubberCtx.setLineDash) 
-    this.rubberCtx.setLineDash([6,3]); // Not in all browsers
-}
-
-exports.CursorCanvas.prototype.resize = function (w, h) {        
-  for (var i = 0; i < this.layers.length; ++i) {
-    this.layers[i].width = w;
-    this.layers[i].height = h;          
-  }
-};
-
-exports.CursorCanvas.prototype.clear = function (ctx) {
-  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-}
-
-
-//////////////////////////////////////////////////////
-// Helper functions for drawing shapes on a context //
-//////////////////////////////////////////////////////
-
-// pre: objects in path have members x and y
-exports.drawPath = function (ctx, path) {    
-  if (path.length < 2) return;
-  ctx.beginPath();
-  ctx.moveTo(path[0].x, path[0].y);
-  for (var i=1; i<path.length; ++i) ctx.lineTo(path[i].x, path[i].y);
-  ctx.stroke();
-}
-
-// pre: r is a rect
-exports.drawBox = function (ctx, r) {
-  ctx.strokeRect(r.left, r.top, Rect.width(r), Rect.height(r));
-
-}
-
-exports.drawLine = function (ctx, p1, p2) {
-  ctx.beginPath();
-  ctx.moveTo(p1.x, p1.y);
-  ctx.lineTo(p2.x, p2.y);
-  ctx.stroke();
-}
-
-exports.drawCircle = function (ctx, point) {
-  ctx.beginPath();
-  ctx.arc(point.x, point.y, 4, 0, Math.PI*2, true); 
-  ctx.stroke();
-}
-
-exports.drawSmallCircle = function (ctx, point) {
-  ctx.beginPath();
-  ctx.arc(point.x, point.y, 2, 0, Math.PI*2, true); 
-  ctx.stroke();
-}
-
-
-#+END_SRC
-
-* File local variables                                     :ARCHIVE:noexport:
-  
-# Local Variables:
-# mode: org
-# org-html-postamble: nil
-# org-babel-use-quick-and-dirty-noweb-expansion: t
-# End:

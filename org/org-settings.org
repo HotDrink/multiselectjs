@@ -19,3 +19,6 @@
 #+HTML_CONTAINER: div
 
 #+HTML_HEAD_EXTRA: <style>body { font-family: Arial, Verdana, Helvetica, sans-serif; }</style>
+
+#+HTML_HEAD_EXTRA: <style>.org-src-name { font-weight: normal; text-decoration: overline underline;  font-family: monospace; margin-top: 1cm; }</style>
+# +HTML_HEAD_EXTRA: <style>.org-src-name:before { font-family: initial; content: ""; }</style>

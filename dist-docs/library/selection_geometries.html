@@ -1,0 +1,438 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>MultiselectJS &#x2014; <code>selection_geometries.org</code></title>
+<!-- 2015-08-21 Fri 18:44 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="Jaakko Järvi" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<style>body { font-family: Arial, Verdana, Helvetica, sans-serif; }</style>
+<style>.org-src-name { font-weight: normal; text-decoration: overline underline;  font-family: monospace; margin-top: 1cm; }</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">MultiselectJS &#x2014; <code>selection_geometries.org</code></h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Selection geometries</a>
+<ul>
+<li><a href="#sec-1-1">1.1. Imports</a></li>
+<li><a href="#sec-1-2">1.2. Ordered geometries</a></li>
+<li><a href="#sec-1-3">1.3. Coordinate system for an array of DOM objects</a></li>
+<li><a href="#sec-1-4">1.4. IPhoto Coordinate system for an array of DOM objects</a></li>
+</ul>
+</li>
+<li><a href="#sec-2">2. Export configuration</a></li>
+<li><a href="#sec-3">3. File local variables</a></li>
+</ul>
+</div>
+</div>
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Selection geometries</h2>
+<div class="outline-text-2" id="text-1">
+</div><div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1"><span class="section-number-3">1.1</span> Imports</h3>
+<div class="outline-text-3" id="text-1-1">
+<div class="org-src-container">
+
+<pre class="src src-js" id="imports"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">M</span> = require(<span style="color: #008000;">"./multiselect"</span>);
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">Rect</span> = require(<span style="color: #008000;">"./rectangle"</span>);
+
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">makeEmptyMap</span> = M.detail.makeEmptyMap;
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="multiselect_with_extras">  module.exports = require(<span style="color: #008000;">"./multiselect"</span>);
+
+  module.exports.Geometries = require(<span style="color: #008000;">"./selection_geometries"</span>);
+
+  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">module.exports.Rect = require("./rectangle");</span>
+  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">module.exports.Drawing = require("./drawing");</span>
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2"><span class="section-number-3">1.2</span> Ordered geometries</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+A common geometries for elements that are linearly ordered,
+and indexed by natural numbers up to some preset maximum.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="ordered-geometry"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">OrderedGeometry</span> = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">size</span>) {
+  M.DefaultGeometry.call(<span style="color: #8b1a1a;">this</span>);
+  <span style="color: #8b1a1a;">this</span>._size = size;
+};
+
+OrderedGeometry.<span style="color: #8b1a1a;">prototype</span> = Object.create(M.DefaultGeometry.<span style="color: #8b1a1a;">prototype</span>);
+OrderedGeometry.<span style="color: #8b1a1a;">prototype</span>.constructor = OrderedGeometry;
+
+OrderedGeometry.<span style="color: #8b1a1a;">prototype</span>.selectionDomain = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">spath</span>) {
+  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = makeEmptyMap();
+  <span style="color: #0000FF;">if</span> (spath.length === 0) <span style="color: #0000FF;">return</span> J;
+
+  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">b</span> = Math.max(0, Math.min(M.anchor(spath), M.activeEnd(spath)));
+  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">e</span> = Math.min(<span style="color: #8b1a1a;">this</span>._size-1, Math.max(M.anchor(spath), M.activeEnd(spath)));
+  <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> = b; i&lt;=e; ++i) J.set(i, <span style="color: #8b1a1a;">true</span>);
+  <span style="color: #0000FF;">return</span> J; 
+};
+OrderedGeometry.<span style="color: #8b1a1a;">prototype</span>.filter = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">predicate</span>) {
+  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = makeEmptyMap();
+  <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> = 0; i &lt; <span style="color: #8b1a1a;">this</span>._size; ++i) <span style="color: #0000FF;">if</span> (predicate(i)) J.set(i, <span style="color: #8b1a1a;">true</span>);
+  <span style="color: #0000FF;">return</span> J;
+};
+
+OrderedGeometry.<span style="color: #8b1a1a;">prototype</span>.size = <span style="color: #0000FF;">function</span> () { <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._size; };
+
+exports.OrderedGeometry = OrderedGeometry;
+</pre>
+</div>
+
+<p>
+The vertical and horizontal geometries agument the ordered
+geometry, respectively, with the ability to step up/down and
+left/right with the arrow functions:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="vertical-geometry"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">VerticalGeometry</span> = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">size</span>) {
+  OrderedGeometry.call(<span style="color: #8b1a1a;">this</span>, size);
+};
+
+VerticalGeometry.<span style="color: #8b1a1a;">prototype</span> = Object.create(OrderedGeometry.<span style="color: #8b1a1a;">prototype</span>);
+VerticalGeometry.<span style="color: #8b1a1a;">prototype</span>.constructor = VerticalGeometry;
+
+VerticalGeometry.<span style="color: #8b1a1a;">prototype</span>.step = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>, <span style="color: #BA36A5;">vpoint</span>) {
+  <span style="color: #0000FF;">switch</span> (dir) {
+    <span style="color: #0000FF;">case</span> M.UP: <span style="color: #0000FF;">return</span> Math.max(0, vpoint-1);
+    <span style="color: #0000FF;">case</span> M.DOWN: <span style="color: #0000FF;">return</span> Math.min(<span style="color: #8b1a1a;">this</span>._size-1, vpoint+1);
+    <span style="color: #0000FF;">default</span>: <span style="color: #0000FF;">return</span> vpoint;
+  }
+};
+
+exports.VerticalGeometry = VerticalGeometry;
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="horizontal-geometry"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">HorizontalGeometry</span> = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">size</span>) {
+  OrderedGeometry.call(<span style="color: #8b1a1a;">this</span>, size);
+};
+
+HorizontalGeometry.<span style="color: #8b1a1a;">prototype</span> = Object.create(OrderedGeometry.<span style="color: #8b1a1a;">prototype</span>);
+HorizontalGeometry.<span style="color: #8b1a1a;">prototype</span>.constructor = HorizontalGeometry;
+
+HorizontalGeometry.<span style="color: #8b1a1a;">prototype</span>.step = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>, <span style="color: #BA36A5;">vpoint</span>) {
+  <span style="color: #0000FF;">switch</span> (dir) {
+    <span style="color: #0000FF;">case</span> M.LEFT: <span style="color: #0000FF;">return</span> Math.max(0, vpoint-1);
+    <span style="color: #0000FF;">case</span> M.RIGHT: <span style="color: #0000FF;">return</span> Math.min(<span style="color: #8b1a1a;">this</span>._size-1, vpoint+1);
+    <span style="color: #0000FF;">default</span>: <span style="color: #0000FF;">return</span> vpoint;
+  }
+};
+
+exports.HorizontalGeometry = HorizontalGeometry;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3"><span class="section-number-3">1.3</span> Coordinate system for an array of DOM objects</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+The constructor takes an array of DOM elements. 
+These are considered to be in order.
+Given a mouse coordinate, <code>m2v</code> converts that coordinate to the index
+of the DOM element in this array.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="dom-cs"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">DomGeometry</span> = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">parent</span>, <span style="color: #BA36A5;">elements</span>) {
+  OrderedGeometry.call(<span style="color: #8b1a1a;">this</span>, elements.length);
+  
+  <span style="color: #8b1a1a;">this</span>._parent = parent;
+  <span style="color: #8b1a1a;">this</span>._elements = elements;
+};
+DomGeometry.<span style="color: #8b1a1a;">prototype</span> = Object.create(OrderedGeometry.<span style="color: #8b1a1a;">prototype</span>);
+DomGeometry.constructor = DomGeometry;
+
+DomGeometry.<span style="color: #8b1a1a;">prototype</span>.m2v = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">mpoint</span>) {
+  <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span>=0; i&lt;<span style="color: #8b1a1a;">this</span>._elements.length; ++i) {
+    <span style="color: #0000FF;">if</span> (Rect.pointInRects(mpoint, 
+                          Rect.getOffsetRects(
+                            <span style="color: #8b1a1a;">this</span>._parent, <span style="color: #8b1a1a;">this</span>._elements[i])))
+      <span style="color: #0000FF;">return</span> i;
+  }
+  <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">null</span>;
+};
+
+DomGeometry.<span style="color: #8b1a1a;">prototype</span>.step = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>, <span style="color: #BA36A5;">vpoint</span>) {
+  <span style="color: #0000FF;">switch</span> (dir) {
+  <span style="color: #0000FF;">case</span> M.LEFT: <span style="color: #0000FF;">return</span> Math.max(0, vpoint - 1);
+  <span style="color: #0000FF;">case</span> M.RIGHT: <span style="color: #0000FF;">return</span> Math.min(<span style="color: #8b1a1a;">this</span>._size - 1, vpoint + 1);
+  <span style="color: #0000FF;">default</span>: <span style="color: #0000FF;">return</span> vpoint;
+  }
+};
+
+DomGeometry.<span style="color: #8b1a1a;">prototype</span>.defaultCursor = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>) {
+  <span style="color: #0000FF;">switch</span> (dir) {
+  <span style="color: #0000FF;">case</span> M.LEFT: <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._size-1;
+  <span style="color: #0000FF;">case</span> M.RIGHT: <span style="color: #0000FF;">return</span> 0; 
+  <span style="color: #0000FF;">case</span> M.NO_DIRECTION: <span style="color: #0000FF;">return</span> 0;
+  <span style="color: #0000FF;">default</span>: <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">null</span>;
+  }
+};
+  
+exports.DomGeometry = DomGeometry;
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-sec-1-4" class="outline-3">
+<h3 id="sec-1-4"><span class="section-number-3">1.4</span> IPhoto Coordinate system for an array of DOM objects</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+The constructor takes an array of DOM elements. 
+These are considered to be in order.
+Given a mouse coordinate, <code>m2v</code> converts that coordinate to the index
+of the DOM element in this array.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="iphoto-dom-cs"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">IPhotoDomGeometry</span> = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">parent</span>, <span style="color: #BA36A5;">elements</span>) {
+  <span style="color: #0000FF;">return</span> DomGeometry.call(<span style="color: #8b1a1a;">this</span>, parent, elements);
+};
+IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span> = Object.create(DomGeometry.<span style="color: #8b1a1a;">prototype</span>);
+IPhotoDomGeometry.constructor = IPhotoDomGeometry;
+
+IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span>.m2v = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">mpoint</span>) {
+  <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span>=0; i&lt;<span style="color: #8b1a1a;">this</span>._elements.length; ++i) {
+    <span style="color: #0000FF;">if</span> (Rect.pointInRects(mpoint, 
+                            Rect.getOffsetRects(
+                              <span style="color: #8b1a1a;">this</span>._parent, <span style="color: #8b1a1a;">this</span>._elements[i])))
+      <span style="color: #0000FF;">return</span> { index: i, location: mpoint }
+  }
+  <span style="color: #0000FF;">return</span> { index: <span style="color: #8b1a1a;">undefined</span>, location: mpoint };
+};
+IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span>.v2m = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">mpoint</span>) {
+  <span style="color: #0000FF;">if</span> (mpoint === <span style="color: #8b1a1a;">undefined</span>) <span style="color: #0000FF;">return</span> mpoint;
+  <span style="color: #0000FF;">if</span> (mpoint.location !== <span style="color: #8b1a1a;">undefined</span>) <span style="color: #0000FF;">return</span> mpoint.location;
+  <span style="color: #0000FF;">return</span> Rect.midPoint(Rect.getOffsetRects(<span style="color: #8b1a1a;">this</span>._parent, <span style="color: #8b1a1a;">this</span>._elements[mpoint.index])[0]);
+}
+IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span>.vpath2mpath = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">vpath</span>) {
+  <span style="color: #0000FF;">return</span> vpath.map(<span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">mp</span>) { <span style="color: #0000FF;">return</span> mp.location; });
+}
+
+IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span>.defaultCursor = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>) {
+  <span style="color: #0000FF;">switch</span> (dir) {
+    <span style="color: #0000FF;">case</span> M.RIGHT: <span style="color: #0000FF;">return</span> { index: -1 };
+    <span style="color: #0000FF;">case</span> M.LEFT: <span style="color: #0000FF;">return</span> { index: <span style="color: #8b1a1a;">this</span>._size };
+    <span style="color: #0000FF;">default</span>: <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">undefined</span>;
+  }
+};
+IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span>.step = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>, <span style="color: #BA36A5;">vpoint</span>) {
+  <span style="color: #0000FF;">if</span> (vpoint.index === <span style="color: #8b1a1a;">undefined</span>) <span style="color: #0000FF;">return</span> vpoint;
+  <span style="color: #0000FF;">switch</span> (dir) {
+    <span style="color: #0000FF;">case</span> M.LEFT: <span style="color: #0000FF;">return</span> { index: Math.max(0, vpoint.index-1) };
+    <span style="color: #0000FF;">case</span> M.RIGHT: <span style="color: #0000FF;">return</span> { index: Math.min(<span style="color: #8b1a1a;">this</span>._size-1, vpoint.index+1) };
+    <span style="color: #0000FF;">default</span>: <span style="color: #0000FF;">return</span> vpoint;
+  }
+};
+
+IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span>.boundToElement = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">vpoint</span>) {
+  <span style="color: #0000FF;">return</span> vpoint.index !== <span style="color: #8b1a1a;">undefined</span>;
+};
+IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span>.extendPath = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">spath</span>, <span style="color: #BA36A5;">vpoint</span>) {
+  <span style="color: #0000FF;">if</span> (spath.length === 0) <span style="color: #0000FF;">return</span> [];
+  <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>.boundToElement(anchor(spath))) {
+    <span style="color: #0000FF;">if</span> (!<span style="color: #8b1a1a;">this</span>.boundToElement(vpoint)) <span style="color: #0000FF;">return</span> spath;
+  } <span style="color: #0000FF;">else</span> {
+    vpoint.index = <span style="color: #8b1a1a;">undefined</span>; <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">set vpoint not be bound to element</span>
+  }
+  spath.push(vpoint); 
+  <span style="color: #0000FF;">return</span> spath;
+<span style="color: #8D8D84;">//  </span><span style="color: #8D8D84; font-style: italic;">return DomGeometry.prototype.extendPath.call(this, spath, vpoint);</span>
+};
+
+IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span>.selectionDomain = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">spath</span>) {
+  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = makeEmptyMap();
+  <span style="color: #0000FF;">if</span> (spath.length === 0) <span style="color: #0000FF;">return</span> J;
+  <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>.boundToElement(anchor(spath))) {
+    <span style="color: #0000FF;">return</span> DomGeometry.<span style="color: #8b1a1a;">prototype</span>.selectionDomain.call(
+      <span style="color: #8b1a1a;">this</span>, spath.map(<span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">v</span>) { <span style="color: #0000FF;">return</span> v.index; }));
+  }
+  <span style="color: #0000FF;">else</span>
+  {
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">bbox</span> = Rect.rect(anchor(spath).location, M.activeEnd(spath).location);
+    <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span>=0; i&lt;<span style="color: #8b1a1a;">this</span>._elements.length; ++i) {
+      <span style="color: #0000FF;">if</span> (Rect.intersectWithAny(bbox,
+                                Rect.getOffsetRects(
+                                  <span style="color: #8b1a1a;">this</span>._parent, <span style="color: #8b1a1a;">this</span>._elements[i])))
+        J.set(i, <span style="color: #8b1a1a;">true</span>);
+    }
+  }
+  <span style="color: #0000FF;">return</span> J;
+}; 
+  
+exports.IPhotoDomGeometry = IPhotoDomGeometry;
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Export configuration</h2>
+</div>
+
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> File local variables</h2>
+</div>
+</div>
+</body>
+</html>

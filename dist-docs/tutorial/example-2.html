@@ -1,0 +1,353 @@
+  <html>
+    <head>
+      <script type="text/javascript" src="../../dist/multiselect.min.js"></script>
+      <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+        <style>
+          #selectable_area2 { border:1px solid black; cursor:default; }
+          .selectable2 { outline:1px solid; padding:1px 4px 1px 4px; 
+                         margin:2px; display:inline-block; }
+          .selected2 { background-color: khaki; }
+        </style>
+
+      <script type="text/javascript">
+ 
+        // determine which modifier keys were held down during event
+        const M_NONE = 1, 
+              M_SHIFT = 2, 
+              M_CMD = 3, 
+              M_SHIFT_CMD = 4, 
+              M_OPT = 5, 
+              M_SHIFT_OPT = 6;
+        
+        function modifierKeys (evt) {
+          
+          if (evt.shiftKey && isCmdKey(evt)) return M_SHIFT_CMD;
+          if (isCmdKey(evt)) return M_CMD;
+          if (evt.shiftKey && evt.altKey) return M_SHIFT_OPT;
+          if (evt.altKey) return M_OPT;
+          if (evt.shiftKey) return M_SHIFT;
+          return M_NONE;
+        
+          function isCmdKey (evt) { return evt.metaKey || evt.ctrlKey; }
+        }
+        
+
+        // helper functions to deal with points, rectangles, etc.
+          function pointInRectangle(mp, r) {
+            return mp.x >= r.left && mp.x <= r.right && 
+                   mp.y >= r.top && mp.y <= r.bottom;
+          }
+
+        function createCanvas (parent) {
+        
+          var canvas = document.createElement("canvas");
+          canvas.style.position = 'absolute';
+          parent.insertBefore(canvas, parent.firstChild);
+        
+          $(window).resize(resizeCanvas); 
+          resizeCanvas();
+        
+          return canvas;
+        
+          function resizeCanvas() {
+            var rect = parent.getBoundingClientRect();
+            canvas.width = rect.right - rect.left;
+            canvas.height = rect.bottom - rect.top;    
+          }
+        }
+        
+          function topLeftCorner(r) { return { x: r.left, y: r.top }; }
+            
+          function offsetRectangle(p, r) {
+            return {
+              left: r.left - p.x, top: r.top - p.y, 
+              right: r.right - p.x, bottom: r.bottom - p.y 
+            };
+          }
+        
+          function getOffsetRectangle(parent, elem) {
+            return offsetRectangle(topLeftCorner(parent.getBoundingClientRect()),
+                                   elem.getBoundingClientRect());
+          }
+        
+          function offsetMousePos(parent, evt) { 
+            var p = topLeftCorner(parent.getClientRects()[0]);
+            return { x: evt.clientX - p.x, y: evt.clientY - p.y }; 
+          }
+        
+        function mkRefresh (elements, cls) {
+          return (function (changed) {
+            changed.forEach(function (value, i) { 
+              $(elements[i]).toggleClass(cls, value); 
+            });
+          });
+        }
+        
+        // row-wise geometry
+        var RowwiseGeometry = function (parent, elements) {
+          this._parent = parent;
+          this._elements = elements;
+        }
+        RowwiseGeometry.prototype = Object.create(multiselect.DefaultGeometry.prototype);
+        
+          RowwiseGeometry.prototype.m2v = function(mp) {
+            for (var i=0; i<this._elements.length; ++i) {
+              var r = getOffsetRectangle(this._parent, this._elements[i]);
+              if (pointInRectangle(mp, r)) return { index: i, point: mp };        
+            }
+            return { index: null, point: mp };
+          }
+        
+          RowwiseGeometry.prototype.extendPath = function(path, p) {
+            if (path.length > 0 &&
+                multiselect.anchor(path).index !== null && p.index === null) return null;
+            if (path.length == 2) path.pop();
+            path.push(p); 
+          }
+        
+          RowwiseGeometry.prototype.selectionDomain = function(path) {
+            var J = multiselect.makeEmptyMap();
+            var a = multiselect.anchor(path);
+            var b = multiselect.activeEnd(path);
+        
+            if (a.index !== null) {
+              for (var i=Math.min(a.index, b.index); i<=Math.max(a.index, b.index); ++i) 
+                J.set(i, true);
+            } else {
+              var r1 = { left:   Math.min(a.point.x, b.point.x),
+                         right:  Math.max(a.point.x, b.point.x),
+                         top:    Math.min(a.point.y, b.point.y),
+                         bottom: Math.max(a.point.y, b.point.y) };
+              for (var i = 0; i < this._elements.length; ++i) {
+                var r2 = getOffsetRectangle(this._parent, this._elements[i]);
+                if (rectangleIntersect(r1, r2)) J.set(i, true);
+              }
+            }
+        
+            return J;
+          }
+        
+          function rectangleIntersect(r1, r2) {
+            return r1.left <= r2.right && r1.right >= r2.left && 
+                   r1.top <= r2.bottom && r1.bottom >= r2.top;
+          }
+        
+          RowwiseGeometry.prototype.step = function (dir, p) {
+            if (p.index === null) return p;
+            var ind = null;
+            switch (dir) {
+            case multiselect.LEFT:  ind = Math.max(p.index - 1, 0); break;
+            case multiselect.RIGHT: ind = Math.min(p.index + 1, this._elements.length-1); break;
+            case multiselect.UP: 
+              ind = findClosestP.call(this, this._parent, this._elements, p.index, isAbove); 
+              break;
+            case multiselect.DOWN: 
+              ind = findClosestP.call(this, this._parent, this._elements, p.index, 
+                                            function (a, b) { return isAbove(b, a); }); 
+              break; 
+            default: return p;
+            }
+            return { index: ind, point: centerPoint(getOffsetRectangle(this._parent, this._elements[ind])) };
+          }
+        
+          function centerPoint (r) { return { x: (r.left + r.right)/2, 
+                                              y: (r.top + r.bottom)/2 }; }
+        
+          function distance (p1, p2) {
+            var dx = p1.x - p2.x;
+            var dy = p1.y - p2.y;
+            return Math.sqrt(dx * dx + dy * dy);
+          }
+        
+          function isAbove(r1, r2) { return centerPoint(r2).y < r1.top; }
+        
+          function findClosestP(parent, elements, j, pred) {
+            var r = getOffsetRectangle(parent, elements[j]);
+            var candidateIndex = null; 
+            var candidateDistance = Number.MAX_VALUE;
+        
+            for (var i=0; i<elements.length; ++i) {
+              var rc = getOffsetRectangle(parent, elements[i]);
+              if (pred(r, rc) && distance(centerPoint(r), centerPoint(rc)) < candidateDistance) {
+                candidateIndex = i; 
+                candidateDistance = distance(centerPoint(r), centerPoint(rc));
+              }
+            }
+            if (candidateIndex === null) return j; else return candidateIndex;
+          }
+        
+          RowwiseGeometry.prototype.filter = function(p) {   
+            var J = multiselect.makeEmptyMap();
+            for (var i = 0; i < this._elements.length; ++i) if (p(i)) J.set(i, true);
+            return J;
+          }
+        
+          RowwiseGeometry.prototype.defaultCursor = function (dir) {
+            var ind;
+            switch (dir) {
+            case multiselect.RIGHT: 
+            case multiselect.DOWN: ind = 0; break;
+            case multiselect.LEFT: 
+            case multiselect.UP: ind = this._elements.length - 1; break;
+            default: return undefined;
+            }
+            return { index: ind, point: centerPoint(getOffsetRectangle(this._parent, this._elements[ind])) };
+          }
+        
+        // Mouse events
+        function setupMouseEvents (parent, canvas, selection) {
+        
+          function mousedownHandler(evt) {
+        
+            var mousePos = selection.geometry().m2v(offsetMousePos(parent, evt));
+            switch (modifierKeys(evt)) {
+            case M_NONE: selection.click(mousePos); break;
+            case M_CMD: selection.cmdClick(mousePos); break;
+            case M_SHIFT: selection.shiftClick(mousePos); break;
+            default: return;
+            }    
+        
+            selection.geometry().drawIndicators(selection, canvas, true, true, false);
+            document.addEventListener('mousemove', mousemoveHandler, false);
+            document.addEventListener('mouseup', mouseupHandler, false);
+            evt.preventDefault();
+            evt.stopPropagation();
+          };
+        
+          function mousemoveHandler (evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            var mousePos = selection.geometry().m2v(offsetMousePos(parent, evt));
+            selection.shiftClick(mousePos);
+            selection.geometry().drawIndicators(selection, canvas, true, true, true);
+          };
+        
+          function mouseupHandler (evt) {
+            document.removeEventListener('mousemove', mousemoveHandler, false);
+            document.removeEventListener('mouseup', mouseupHandler, false);
+            selection.geometry().drawIndicators(selection, canvas, true, true, false);
+          };
+        
+          parent.addEventListener('mousedown', mousedownHandler, false);
+        }
+        
+        // Keyboard events
+          function setupKeyboardEvents(parent, canvas, selection) {
+        
+            parent.addEventListener('keydown', keydownHandler, false);
+            parent.addEventListener('mousedown', function() { parent.focus(); }, false);
+        
+            function keydownHandler(evt) {
+              var handled = false; 
+              var mk = modifierKeys(evt);
+              switch (evt.which) {          
+              case 37: handled = callArrow(mk, multiselect.LEFT); break;
+              case 38: handled = callArrow(mk, multiselect.UP); break;             
+              case 39: handled = callArrow(mk, multiselect.RIGHT); break;
+              case 40: handled = callArrow(mk, multiselect.DOWN); break;
+              case 32: handled = callSpace(mk); break;
+              case 90: handled = callUndoRedo(mk); break;
+              default: return; // exit this handler for unrecognized keys
+              }
+              if (!handled) return;
+        
+              // event is recognized
+              selection.geometry().drawIndicators(selection, canvas, true, true, false);
+              evt.preventDefault(); 
+              evt.stopPropagation();
+            }  
+          
+            function callUndoRedo (mk) {
+              switch (mk) {
+              case M_OPT: selection.undo(); break;
+              case M_SHIFT_OPT: selection.redo(); break;
+              default: return false;
+              }      
+              return true;
+            }
+        
+            function callArrow (mk, dir) {
+              switch (mk) {
+              case M_NONE: selection.arrow(dir); break;
+              case M_CMD: selection.cmdArrow(dir); break;
+              case M_SHIFT: selection.shiftArrow(dir); break;
+              default: return false;
+              }
+              return true;
+            }
+          
+            function callSpace (mk) {
+              switch (mk) {
+              case M_NONE: selection.space(); break;
+              case M_CMD: selection.cmdSpace(); break;
+              case M_SHIFT: selection.shiftSpace(); break;
+              default: return false;      
+              }
+              return true;
+            }
+          }
+  
+        document.addEventListener("DOMContentLoaded", function() { 
+            var selectableArea2 = document.getElementById("selectable_area2");
+            for (var i = 0; i<400; ++i) {
+              var e = document.createElement("span");
+              e.setAttribute("class", "selectable2");
+              e.textContent = i;
+              selectableArea2.appendChild(e);
+            }
+          
+            var selectables2 = selectableArea2.getElementsByClassName("selectable2");
+          
+          var refresh2 = mkRefresh(selectables2, 'selected2');
+          
+            var geometry2 = new RowwiseGeometry(selectableArea2, selectables2);
+            var selection2 = new multiselect.SelectionState(geometry2, refresh2, true);
+          
+            var canvas2 = createCanvas(selectableArea2);
+            setupMouseEvents(selectableArea2, canvas2, selection2);
+          setupKeyboardEvents(selectableArea2, canvas2, selection2);
+          
+            geometry2.drawIndicators = function (selection, canvas, drawAnchor, drawCursor, drawRubber) {
+              var ctx = canvas.getContext('2d');
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              if (drawAnchor) { 
+                ctx.strokeStyle = 'DarkRed';
+                var p = multiselect.anchor(selection.selectionPath());
+                if (p !== undefined) {
+                  if (p.index === null) { // in-between point, draw a circle
+                    ctx.beginPath();
+                    ctx.arc(p.point.x, p.point.y, 4, 0, Math.PI*2, true); 
+                    ctx.stroke();
+                  } else { // point on an element, draw a frame
+                    var r = getOffsetRectangle(canvas, selection.geometry()._elements[p.index]);
+                    ctx.strokeRect(r.left, r.top, r.right-r.left, r.bottom-r.top);
+                  }
+                }
+              }
+              if (drawCursor) { 
+                ctx.strokeStyle = 'blue';
+                var p = selection.cursor();
+                if (p !== undefined && p.index !== null) { 
+                  var r = getOffsetRectangle(canvas, selection.geometry()._elements[p.index]);
+                  ctx.strokeRect(r.left, r.top, r.right-r.left, r.bottom-r.top);
+                }
+              }
+              if (drawRubber) { 
+                ctx.strokeStyle = 'green';
+                var p1 = multiselect.anchor(selection.selectionPath());
+                if (p1 !== undefined && p1.index === null) {
+                  var p2 = multiselect.activeEnd(selection.selectionPath());
+                  ctx.strokeRect(Math.min(p1.point.x, p2.point.x),
+                                 Math.min(p1.point.y, p2.point.y),
+                                 Math.abs(p1.point.x-p2.point.x),
+                                 Math.abs(p1.point.y-p2.point.y));
+                }
+              }
+            }
+        });
+      </script>
+    </head>
+    <body>
+      <div id="selectable_area2" tabIndex="0"></div>
+    </body>
+  </html>

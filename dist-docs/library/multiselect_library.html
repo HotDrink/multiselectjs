@@ -1,0 +1,2308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>MultiselectJS &#x2014; <code>multiselect_library.org</code></title>
+<!-- 2015-08-21 Fri 18:41 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="Jaakko Järvi" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<style>body { font-family: Arial, Verdana, Helvetica, sans-serif; }</style>
+<style>.org-src-name { font-weight: normal; text-decoration: overline underline;  font-family: monospace; margin-top: 1cm; }</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/javascript" src="http://orgmode.org/mathjax/MathJax.js"></script>
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+    MathJax.Hub.Config({
+        // Only one of the two following lines, depending on user settings
+        // First allows browser-native MathML display, second forces HTML/CSS
+        //  config: ["MMLorHTML.js"], jax: ["input/TeX"],
+            jax: ["input/TeX", "output/HTML-CSS"],
+        extensions: ["tex2jax.js","TeX/AMSmath.js","TeX/AMSsymbols.js",
+                     "TeX/noUndefined.js"],
+        tex2jax: {
+            inlineMath: [ ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"], ["\\begin{displaymath}","\\end{displaymath}"] ],
+            skipTags: ["script","noscript","style","textarea","pre","code"],
+            ignoreClass: "tex2jax_ignore",
+            processEscapes: false,
+            processEnvironments: true,
+            preview: "TeX"
+        },
+        showProcessingMessages: true,
+        displayAlign: "center",
+        displayIndent: "2em",
+
+        "HTML-CSS": {
+             scale: 100,
+             availableFonts: ["STIX","TeX"],
+             preferredFont: "TeX",
+             webFont: "TeX",
+             imageFont: "TeX",
+             showMathMenu: true,
+        },
+        MMLorHTML: {
+             prefer: {
+                 MSIE:    "MML",
+                 Firefox: "MML",
+                 Opera:   "HTML",
+                 other:   "HTML"
+             }
+        }
+    });
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">MultiselectJS &#x2014; <code>multiselect_library.org</code></h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Introduction</a>
+<ul>
+<li><a href="#sec-1-1">1.1. Definitions</a></li>
+<li><a href="#sec-1-2">1.2. Code conventions</a></li>
+<li><a href="#sec-1-3">1.3. Utility functions</a>
+<ul>
+<li><a href="#sec-maps-and-sets">1.3.1. Maps and sets</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#sec-selection-functions">2. Selection functions</a></li>
+<li><a href="#sec-selection-mapping">3. Selection mapping</a></li>
+<li><a href="#sec-4">4. Selection operations</a></li>
+<li><a href="#sec-composition">5. Composition of selection operations</a></li>
+<li><a href="#sec-6">6. Selection state</a>
+<ul>
+<li><a href="#sec-6-1">6.1. Accessing the selection state of elements</a></li>
+<li><a href="#sec-6-2">6.2. Click functions</a>
+<ul>
+<li><a href="#sec-6-2-1">6.2.1. Click</a></li>
+<li><a href="#sec-6-2-2">6.2.2. Command-click</a></li>
+<li><a href="#sec-6-2-3">6.2.3. Shift-click</a></li>
+<li><a href="#sec-6-2-4">6.2.4. Call selection domain</a></li>
+<li><a href="#sec-6-2-5">6.2.5. Flush</a></li>
+</ul>
+</li>
+<li><a href="#sec-6-3">6.3. Manipulating the selection path</a></li>
+<li><a href="#sec-6-4">6.4. Analyzing elements under point</a></li>
+<li><a href="#sec-6-5">6.5. Empty pairs</a></li>
+<li><a href="#sec-6-6">6.6. Baking</a></li>
+<li><a href="#sec-undo-redo">6.7. Undo and redo operations</a></li>
+<li><a href="#sec-6-8">6.8. Selecting and deselecting with a predicate</a></li>
+<li><a href="#sec-6-9">6.9. Set geometry</a></li>
+<li><a href="#sec-access-cursor-data">6.10. Access functions</a></li>
+<li><a href="#sec-6-11">6.11. Keyboard operations</a></li>
+</ul>
+</li>
+<li><a href="#sec-selection-geometries">7. Selection geometries</a></li>
+<li><a href="#sec-8">8. Events</a>
+<ul>
+<li><a href="#sec-8-1">8.1. Detecting mouse/keyboard events</a></li>
+</ul>
+</li>
+<li><a href="#sec-9">9. Library API</a></li>
+</ul>
+</div>
+</div>
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Introduction</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+This document describes the implementation of the <i>MultiselectJS</i>
+library.  MultiselectJS encapsulates the state of maintaining
+selections of elements in indexable collections. It helps in
+implementing multi-selection in varied contexts in GUIs.  The
+implementation faithfully follows the abstractions described in the
+manuscript <i>One Way to Select Many</i> by Jaakko Järvi and Sean Parent.
+</p>
+</div>
+
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1"><span class="section-number-3">1.1</span> Definitions</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+ \( 
+   \newcommand{\true}{\mathsf{true}} 
+   \newcommand{\false}{\mathsf{false}}
+   \newcommand{\selset}{{\mathbf{2}}}
+   \newcommand{\esp}[2]{\mathsf{op}^{#1}_{#2}} 
+   \newcommand{\inds}{\mathsf{s\_dom}}
+   \) 
+To understand the implementation, it is useful to know some of the
+definitions from the manuscript. The descriptions here are terse,
+the manuscript gives more thorough explanations.
+</p>
+
+<ul class="org-ul">
+<li>The library assumes that for any collection of elements \(M\), there
+is an indexed family \(x: I \to M\) and subsequently only deals with
+the index set \(I\).</li>
+
+<li>Which elements of a collection are selected and which are not is
+represented by a <i>selection mapping</i> \(s: I \to \selset\), where
+\(\selset = \{\true, \false \}\); \(s(i) = \true\) indicates that the
+element \(x_i\) is selected and \(s(i) = \false\) that it is not.</li>
+
+<li><p>
+Let \(x: I \to M\) be a collection, \(J \subseteq I\), and \(f: \selset
+    \to \selset\) a mapping.  \(J\) and \(f\) (uniquely) determine a
+<i>primitive selection operation</i>:
+</p>
+
+\begin{equation*}
+\esp{f}{J}: (I \to \selset) \to (I \to \selset), s \mapsto
+\lambda i.\left\{ 
+  \begin{array}{ll} 
+    f(s(i)), & i \in J\\
+    s(i), & i \notin J
+  \end{array}
+\right.
+\end{equation*}
+
+<p>
+The function \(f\) in \(\esp{f}{J}\) is the <i>selection function</i> and
+the set \(J\) the <i>selection domain</i>. There are four possible
+selection functions: \(\lambda x. x\), \(\lambda x. \neg x\),
+\(\lambda x.\true\), and \(\lambda x.\false\). The selection domain
+is the set of indices to which the selection function applies.
+</p></li>
+</ul>
+
+<p>
+A primitive selection operation \(\esp{f}{J}\) can be applied to a
+selection mapping \(s\) to obtain a new selection mapping
+\(\esp{f}{J}(s)\).  Selection operations compose: starting from
+the &ldquo;no elements selected&rdquo; selection mapping \(e: I \to \selset{}, i
+\mapsto \false\), the selection mapping that results after applying a series
+of primitive selection operations \(\esp{f_1}{J_1}, \esp{f_2}{J_2},
+\ldots, \esp{f_n}{J_n}\) is
+</p>
+
+\begin{equation*}
+  (\esp{f_n}{J_n} \circ \esp{f_{n-1}}{J_{n-1}} \circ \ldots \circ \esp{f_1}{J_1})(e).
+\end{equation*}
+
+<p>
+In a nutshell, the library operates as follows.  The selection mapping
+of the elements of a collection is maintained in two parts: (1) a
+&ldquo;base&rdquo; selection mapping \(s_b\) and (2) a composition of selection
+operations \(\mathit{ops}\). The current selection mapping is then
+obtained as \(\mathit{ops}(s_b)\).  In other words, the element \(x_i\) is
+selected if \(\mathit{ops}(s_b)(i) = \true\), and not selected if it is
+\(\false\).
+</p>
+
+<p>
+Various selection commands, triggered by mouse or keyboard events,
+impact the selection mapping by adding new selection
+operations to \(\mathit{ops}\), or by replacing or removing the most
+recently added operation(s). The least recently added operation can also
+be removed with its effect &ldquo;baked&rdquo; into the base selection mapping
+permanently. This baking operation changes both \(\mathit{ops}\) to a
+new composition \(\mathit{ops}'\) and \(s_b\) to a new base selection
+mapping \(s'_b\), but the current selection mapping observed by the user
+does not change. That is, \(\mathit{ops}(s_b) = \mathit{ops}'(s'_b)\).
+</p>
+
+<p>
+User commands indicate points in the <i>mouse coordinate space</i>.  It is
+the task of a <i>selection geometry</i> to interpret how sequences of these
+points correspond to element indices. For this, a selection geometry
+defines two functions: <code>m2v</code> to translate a single point in the mouse
+coordinate space into a point in the <i>selection space</i>, and
+<code>selectionDomain</code> to translate a path of selection space points, the
+<i>selection path</i>, into a set of element indices, the <i>selection
+domain</i>. Each user command modifies the current selection path. The
+first element of the a selection path is called the <i>anchor</i>, the last
+the <i>active end</i>. 
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2"><span class="section-number-3">1.2</span> Code conventions</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+Member variables and functions that start with an underscore are
+intended to be private to the class they are defined in. Client code
+should not refer to such members.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3"><span class="section-number-3">1.3</span> Utility functions</h3>
+<div class="outline-text-3" id="text-1-3">
+</div><div id="outline-container-sec-maps-and-sets" class="outline-4">
+<h4 id="sec-maps-and-sets"><a id="sec-1-3-1"></a><span class="section-number-4">1.3.1</span> Maps and sets</h4>
+<div class="outline-text-4" id="text-sec-maps-and-sets">
+<p>
+Selection mappings and selection domains are represented using
+JavaScript&rsquo;s built-in <code>Set</code> and <code>Map</code> types. These are features that
+are planned for EcmaScript 6 (known as &ldquo;ES6 Harmony&rdquo;), and supported
+by modern browsers.  The benefit of using <code>Set</code> and <code>Map</code> over
+JavaScript&rsquo;s built-in property maps is that <code>Set</code> and <code>Map</code> accept any
+types as keys, whereas property maps&rsquo; keys are strings.  Object
+references as keys are convenient. For example, a <code>Map</code> from object
+references to objects is a natural indexed family for a set of
+DOM-elements; the order of the indices is their insertion order to the
+map.
+</p>
+
+<p>
+We use a few helper functions to deal with sets and maps:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="set-and-map-functions">  <span style="color: #0000FF;">function</span> <span style="color: #006699;">makeEmptySet</span>() { <span style="color: #0000FF;">return</span> <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">Set</span>(); }
+  <span style="color: #0000FF;">function</span> <span style="color: #006699;">makeEmptyMap</span>() { <span style="color: #0000FF;">return</span> <span style="color: #0000FF;">new</span> <span style="color: #6434A3;">Map</span>(); }
+
+  <span style="color: #0000FF;">function</span> <span style="color: #006699;">isEmpty</span>(<span style="color: #BA36A5;">collection</span>) { <span style="color: #0000FF;">return</span> collection.size === 0; }
+  <span style="color: #0000FF;">function</span> <span style="color: #006699;">isSingleton</span>(<span style="color: #BA36A5;">collection</span>) { <span style="color: #0000FF;">return</span> collection.size === 1; }
+
+  <span style="color: #0000FF;">function</span> <span style="color: #006699;">firstKey</span>(<span style="color: #BA36A5;">collection</span>) {
+    <span style="color: #0000FF;">return</span> collection.keys().next().value; 
+  }
+
+  <span style="color: #0000FF;">function</span> <span style="color: #006699;">copySet</span> (<span style="color: #BA36A5;">s</span>) { 
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">s2</span> = makeEmptySet();
+    s.forEach(<span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">key</span>) { s2.add(key); });
+    <span style="color: #0000FF;">return</span> s2;
+  }
+
+  <span style="color: #0000FF;">function</span> <span style="color: #006699;">copyMap</span> (<span style="color: #BA36A5;">s</span>) { 
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">s2</span> = makeEmptyMap();
+    s.forEach(<span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">value</span>, <span style="color: #BA36A5;">key</span>) { s2.set(key, value); });
+    <span style="color: #0000FF;">return</span> s2;
+  }
+</pre>
+</div>
+
+<p>
+The <code>firstKey</code> function returns the first key of a collection in
+insertion order, or <code>undefined</code> if the collection is empty. The
+<code>isEmpty</code>, <code>isSingleton</code>, and <code>firstKey</code> functions work for both <code>Set</code>
+and <code>Map</code> types.
+</p>
+
+<p>
+The <code>equalKeys</code> function implements set equality between two <code>Set</code> objects, 
+and set equality of keys between two <code>Map</code> objects. 
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="equal-keys">  <span style="color: #0000FF;">function</span> <span style="color: #006699;">equalKeys</span>(<span style="color: #BA36A5;">a</span>, <span style="color: #BA36A5;">b</span>) { 
+    <span style="color: #0000FF;">if</span> (a.size !== b.size) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">false</span>;
+    <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of a.keys()) <span style="color: #0000FF;">if</span> (!b.has(i)) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">false</span>;
+    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">true</span>;
+  }
+</pre>
+</div>
+
+<p>
+The <code>setUnion</code> takes zero or more collections as argments, 
+and returns the union of their keys as a <code>Set</code>:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="set-union">  <span style="color: #0000FF;">function</span> <span style="color: #006699;">setUnion</span> () {
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">s</span> = makeEmptySet();
+    <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span>=0; i&lt;<span style="color: #8b1a1a;">arguments</span>.length; ++i) {
+       <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">j</span> of <span style="color: #8b1a1a;">arguments</span>[i].keys()) s.add(j);
+    }
+    <span style="color: #0000FF;">return</span> s;
+  }
+</pre>
+</div>
+
+<p>
+The <code>mapSymmetricDifference</code> computes the symmetric difference of the
+keys of the collections <code>left</code> and <code>right</code> as a <code>Map</code>. The keys of the
+result are the elements that belong to exactly one of <code>left</code> and
+<code>right</code>. The values for keys that only belong to <code>left</code> are set to
+<code>leftValue</code>, and those to <code>right</code> to <code>rightValue</code>.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="map-symmetric-difference">  <span style="color: #0000FF;">function</span> <span style="color: #006699;">mapSymmetricDifference</span> (<span style="color: #BA36A5;">left</span>, <span style="color: #BA36A5;">right</span>, <span style="color: #BA36A5;">leftValue</span>, <span style="color: #BA36A5;">rightValue</span>) {
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">s</span> = makeEmptyMap();
+    <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of left.keys()) <span style="color: #0000FF;">if</span> (!right.has(i)) s.set(i, leftValue);
+    <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of right.keys()) <span style="color: #0000FF;">if</span> (!left.has(i)) s.set(i, rightValue);
+    <span style="color: #0000FF;">return</span> s; 
+  }
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-selection-functions" class="outline-2">
+<h2 id="sec-selection-functions"><a id="sec-2"></a><span class="section-number-2">2</span> Selection functions</h2>
+<div class="outline-text-2" id="text-sec-selection-functions">
+<p>
+Implementations of the four possible selection functions, of type
+<code>bool</code> \(\to\) <code>bool</code>, are as follows:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-functions">  <span style="color: #0000FF;">function</span> <span style="color: #006699;">tt</span>(<span style="color: #BA36A5;">_</span>)  { <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">true</span>; };  tt.constant  = <span style="color: #8b1a1a;">true</span>;
+  <span style="color: #0000FF;">function</span> <span style="color: #006699;">ff</span>(<span style="color: #BA36A5;">_</span>)  { <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">false</span>; }; ff.constant  = <span style="color: #8b1a1a;">true</span>;
+  <span style="color: #0000FF;">function</span> <span style="color: #006699;">id</span>(<span style="color: #BA36A5;">b</span>)  { <span style="color: #0000FF;">return</span> b; };     id.constant  = <span style="color: #8b1a1a;">false</span>;
+  <span style="color: #0000FF;">function</span> <span style="color: #006699;">not</span>(<span style="color: #BA36A5;">b</span>) { <span style="color: #0000FF;">return</span> !b; };    not.constant = <span style="color: #8b1a1a;">false</span>;
+</pre>
+</div>
+
+<p>
+Only these functions (rather than arbitrary user-defined functions of
+type <code>bool</code> \(\to\) <code>bool</code>) are used as selection functions of selection
+operations. This is because some library functions need to (1) know
+whether the function is constant and (2) compare functions for
+equality. Both of these determinations can be done easily for
+arbitrary functions of type <code>bool</code> \(\to\) <code>bool</code> but determining
+constness based on the <code>constant</code> flag and function equality via
+object identity comparisons is even easier.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-selection-mapping" class="outline-2">
+<h2 id="sec-selection-mapping"><a id="sec-3"></a><span class="section-number-2">3</span> Selection mapping</h2>
+<div class="outline-text-2" id="text-sec-selection-mapping">
+<p>
+The <code>makeSelectionMapping()</code> factory function creates a selection
+mapping.  This function object<sup><a id="fnr.1" class="footref" href="#fn.1">1</a></sup> realizes a function from indices,
+the set \(I\), to <code>bool</code>.  The mapping is internally represented as a
+<code>Set</code> whose elements are exactly those indices that map to <code>true</code>.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-mapping">  <span style="color: #0000FF;">function</span> <span style="color: #006699;">makeSelectionMapping</span> () {
+
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">s</span> = makeEmptySet();
+
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">func</span> = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">i</span>) { <span style="color: #0000FF;">return</span> s.has(i); };
+
+    func.set = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">i</span>, <span style="color: #BA36A5;">v</span>) {
+      <span style="color: #0000FF;">if</span> (v === <span style="color: #8b1a1a;">true</span>) s.add(i); <span style="color: #0000FF;">else</span> s.<span style="color: #0000FF;">delete</span>(i); 
+    }
+
+    func.selected = <span style="color: #0000FF;">function</span>() { <span style="color: #0000FF;">return</span> s.keys(); } 
+
+    func.bake = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">op</span>) {
+      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">s2</span> = op(func);
+      op.domain.forEach(<span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">_</span>, <span style="color: #BA36A5;">i</span>) { func.set(i, s2(i)); });
+    }
+
+    <span style="color: #0000FF;">return</span> func;
+  }
+</pre>
+</div>
+
+<p>
+The selection mapping function object has three member functions:
+</p>
+
+<ul class="org-ul">
+<li><p>
+<code>set(i, v)</code>
+</p>
+
+<p>
+Sets the element <code>i</code> to value <code>v</code>. After <code>s.set(i, v)</code>, <code>s(i) ===
+  true</code> if <code>v === true</code>, otherwise <code>s(i) === false</code>.
+</p></li>
+
+<li><p>
+<code>selected()</code>
+</p>
+
+<p>
+Returns an <code>Iterator</code> of the entries in the set (the selected
+elements).  The elements are iterated in insertion order, which is
+what JavaScript&rsquo;s <code>Set</code> provides.
+</p></li>
+
+<li><p>
+<code>bake(op)</code> 
+</p>
+
+<p>
+Updates the selection mapping to the result of applying the
+selection operation <code>op</code> to it. If <code>op(s)</code> realizes some mapping
+\(m\), after <code>s.bake(op)</code>, <code>s</code> realizes that mapping \(m\).
+</p></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> Selection operations</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+The <code>makeOp(f, domain)</code> factory function constructs a selection
+operation.  Its parameters are:
+</p>
+
+<ul class="org-ul">
+<li><code>f</code> &#x2014; the selection function (one of <code>tt</code>, <code>ff</code>, <code>id</code>, or <code>not</code>,
+see Section <a href="#sec-selection-functions">2</a>).</li>
+<li><code>domain</code> &#x2014; the selection domain. This value is expected to 
+be of type <code>Map</code>, even though conceptually it is a set. The
+selection domain as a set is all the keys in that <code>Map</code> object, regardless
+of the value in that entry. Why selection domains are implemented as maps is explained
+in Section <a href="#sec-composition">5</a>.</li>
+</ul>
+
+<p>
+Both arguments to <code>makeOp</code> are stored as members of the resulting (function) object,
+as <code>f</code> and <code>domain</code>.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="primitive-selection-operation">  <span style="color: #0000FF;">function</span> <span style="color: #006699;">makeOp</span> (<span style="color: #BA36A5;">f</span>, <span style="color: #BA36A5;">domain</span>) {
+
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">func</span>;
+    <span style="color: #0000FF;">if</span> (f.constant) {
+      func = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">s</span>) {
+        <span style="color: #0000FF;">return</span> <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">i</span>) {
+          <span style="color: #0000FF;">return</span> (domain.has(i)) ? f() : s(i);
+        }
+      }
+    } <span style="color: #0000FF;">else</span> {
+      func = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">s</span>) {
+        <span style="color: #0000FF;">return</span> <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">i</span>) {
+          <span style="color: #0000FF;">return</span> (domain.has(i)) ? f(s(i)) : s(i);
+        }
+      }
+    }
+    
+    func.f = f;
+    func.domain = domain;
+
+    <span style="color: #0000FF;">return</span> func;
+  }
+</pre>
+</div>
+
+<p>
+The function call operator of the selection operator object takes one
+of two of definitions, based on whether <code>f</code> is a constant function or
+not;  if <code>f</code> is constant, there is no need to access the previous
+state <code>s(i)</code> if <code>i</code> is within the operator&rsquo;s <code>domain</code>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-composition" class="outline-2">
+<h2 id="sec-composition"><a id="sec-5"></a><span class="section-number-2">5</span> Composition of selection operations</h2>
+<div class="outline-text-2" id="text-sec-composition">
+<p>
+The function <code>makeOpComposition</code> creates a composition of 
+selection operations.  This function object is a selection operation
+itself, so applying it to a selection mapping produces a selection
+mapping. In symbols, if <code>c</code> is a composition and <code>s</code> a selection
+mapping, <code>c(s)</code> is also a selection mapping.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="op-composition">    <span style="color: #0000FF;">function</span> <span style="color: #006699;">makeOpComposition</span> () {
+
+      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">ops</span> = [];                
+      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">domain</span> = makeEmptyMap(); 
+      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">gen</span> = 0;                                                    
+
+      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">func</span> = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">s</span>) {
+        &lt;&lt;op-composition-<span style="color: #0000FF;">function</span>-call-operator-body&gt;&gt;
+      }
+     
+      func.domain = domain;
+      
+      <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">member functions of func</span>
+      &lt;&lt;op-composition-push&gt;&gt;
+      &lt;&lt;op-composition-pop&gt;&gt;
+      &lt;&lt;op-composition-top&gt;&gt;
+      &lt;&lt;op-composition-top2&gt;&gt;
+      &lt;&lt;op-composition-shift&gt;&gt;
+      &lt;&lt;op-composition-size&gt;&gt;
+      &lt;&lt;op-composition-remove-index&gt;&gt;
+      
+      <span style="color: #0000FF;">return</span> func;
+    }
+</pre>
+</div>
+
+<p>
+The composed selection operations are stored in the <code>ops</code>
+array.  The keys of the <code>domain</code> map are the union of the domains
+of all selection operations in <code>ops</code>. The counter <code>gen</code>
+grows with each added selection operation. 
+</p>
+
+<p>
+Assume the composition object represents the value \(f \circ g \circ h\).
+Then <code>ops</code> is the array <code>[h, g, f]</code>.  The selection status of an element \(i\) in \((f \circ g
+\circ h)(s)\), where \(s\) is the base selection mapping, could simply be
+determined by computing <code>f(g(h(s)))(i)</code>. Often the result, however,
+does not depend on all functions in the composition. For example, if
+<code>f</code>&rsquo;s selection function is constant and <code>i</code> belongs to <code>f</code>&rsquo;s domain,
+then <code>f(g(h(s)))(i)</code> is equal to <code>f(s)(i)</code>. Or if <code>i</code> is not in <code>f</code>&rsquo;s
+or <code>g</code>&rsquo;s domain, then <code>f(g(h(s)))(i)</code> is equal to <code>h(s)(i)</code>.  The
+composition object maintains extra information to avoid unnecessary
+evaluations. 
+</p>
+
+<p>
+The basic scheme is that <code>domain</code> maps each index <code>i</code> to the first
+selection operation whose domain includes <code>i</code>, and the
+domain of that selection operation maps <code>i</code> to the next
+selection operation whose domain includes <code>i</code>, and so
+forth. In more details:
+</p>
+
+<ul class="org-ul">
+<li>If for some composition object <code>domain.has(i)</code> is true,
+then <code>ops[ops.length-1 - (gen - domain.get(i))]</code> is the first
+(counting backwards from the end of the array) selection
+operation that defines a value for index <code>i</code>.  If <code>domain.has(i)</code> is
+false, then <code>i</code> does not belong to the domain of any of the
+selection operators in <code>ops</code>.</li>
+
+<li>The value of <code>gen</code> is increased with every addition of a 
+selection operation to the composition. The purpose of <code>gen</code>
+is to avoid updating every element of <code>domain</code> when new operations
+are added to <code>ops</code>.</li>
+
+<li>Assume <code>ops[n]</code> is the first selection operation that
+defines <code>i</code>.  If <code>op</code>&rsquo;s selection function <code>f</code> is not constant (it
+is <code>id</code> or <code>not</code>), then to obtain the selection status of <code>i</code>, <code>i</code>&rsquo;s
+prior status is needed. This prior status is determined by the
+closest selection operation that has <code>i</code> in its domain,
+which is found as follows.
+The expression <code>ops[n].domain.get(i)</code> has
+some integral value <code>k</code>. The meaning of <code>k</code> is the distance in the
+<code>ops</code> array to the closest entry that defines the selection status
+of <code>i</code>. In other words, <code>ops[n-k].domain.has(i)</code> is <code>true</code>, and for
+all <code>0 &lt; j &lt; k</code>, <code>ops[n-j].domain.has(i)</code> is <code>false</code>.  If <code>k &gt; n</code>,
+<code>i</code> belongs to the domain of no prior primitive selection operation;
+<code>i</code>&rsquo;s selection state is then <code>s(i)</code>, determined only by the base
+selection mapping <code>s</code>.</li>
+</ul>
+
+<p>
+The implementation of <code>func</code>&rsquo;s function call operator takes advantage
+of the avove encodings. First, if an element <code>i</code> is not in the
+selection domain of some selection operation, the selection
+function of that operation is never evaluated when determining the
+selection status of <code>i</code>. Second, if an element <code>i</code> is in the 
+domain of a selection operation whose selection function is
+constant, and that function is evaluated to find out the
+selection status of <code>i</code>, then no further selection functions are
+invoked.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><code>&lt;&lt;op-composition-function-call-operator-body&gt;&gt;</code></label>
+<pre class="src src-js" id="op-composition-function-call-operator-body">  <span style="color: #0000FF;">return</span> <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">i</span>) {
+    <span style="color: #0000FF;">return</span> evaluate(domain.has(i) ? (ops.length-1) - (gen-domain.get(i)) : -1, i)(i);
+  }
+
+  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">determine selection state of i but only access the elements </span>
+  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">of ops (staring from ind) that have i in their domain</span>
+  <span style="color: #0000FF;">function</span> <span style="color: #006699;">evaluate</span>(<span style="color: #BA36A5;">ind</span>, <span style="color: #BA36A5;">i</span>) {
+    <span style="color: #0000FF;">if</span> (ind &lt; 0) <span style="color: #0000FF;">return</span> s; <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">i defined in the base selection mapping s</span>
+    <span style="color: #0000FF;">else</span> {
+      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">op</span> = ops[ind];
+      <span style="color: #0000FF;">return</span> op(<span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">j</span>) { <span style="color: #0000FF;">return</span> evaluate(ind - op.domain.get(i), j)(i); });
+      <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">the call to evaluate is wrapped to a lambda to make the call lazy.</span>
+      <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">op will only call the lambda if op.f.constant is false</span>
+    }
+  }
+</pre>
+</div>
+
+<p>
+The public methods of a composition object are:
+</p>
+
+<ul class="org-ul">
+<li><code>push(op)</code> 
+
+<ul class="org-ul">
+<li><p>
+Adds <code>op</code> to the composition; if <code>c</code> represents the 
+composition \(r_1 \circ r_2 \circ \cdots \circ r_n\), 
+then <code>c.push(op)</code> represents the
+composition <code>op</code> \(\circ\, r_1 \circ r_2 \circ \cdots \circ r_n\).
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><code>&lt;&lt;op-composition-push&gt;&gt;</code></label>
+<pre class="src src-js" id="op-composition-push">  func.push = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">op</span>) {
+    ops.push(op);
+    ++gen
+    op.domain.forEach(<span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">_</span>, <span style="color: #BA36A5;">i</span>) {
+      op.domain.set(i, domain.has(i) ? gen - domain.get(i) : ops.length);
+      domain.set(i, gen); 
+    });
+  }
+</pre>
+</div></li>
+
+<li>When <code>op</code> is pushed to <code>ops</code>, each element <code>i</code> in its domain is
+assigned the distance to the previous operation in <code>ops</code> that
+defines <code>i</code>. If none defines <code>i</code>, the distance is the length of
+<code>ops</code>, indicating that the previous definition is the base
+selection mapping. The composition&rsquo;s domain is also updated for
+each <code>i</code>, setting the newly added operation <code>op</code> as the most
+recent one that defines the selection state of <code>i</code>.</li>
+</ul></li>
+
+<li><code>pop()</code>
+
+<ul class="org-ul">
+<li><p>
+Removes the most recently pushed operation from the composition.
+If <code>c</code> is \(r_1 \circ r_2 \circ \cdots \circ r_n\), then
+<code>c.pop()</code> is \(r_2 \circ \cdots \circ r_n\). 
+</p>
+
+<p>
+<i>Precondition:</i> <code>ops</code> not empty.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><code>&lt;&lt;op-composition-pop&gt;&gt;</code></label>
+<pre class="src src-js" id="op-composition-pop">  func.pop = <span style="color: #0000FF;">function</span> () {
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">n</span> = ops.length;
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">op</span> = ops.pop();
+    --gen;
+    <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">domain updated for those elements that are in op.domain</span>
+    op.domain.forEach(<span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">_</span>, <span style="color: #BA36A5;">i</span>) {
+      <span style="color: #0000FF;">if</span> (op.domain.get(i) &gt;= n) domain.<span style="color: #0000FF;">delete</span>(i); <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">no op defines i</span>
+      <span style="color: #0000FF;">else</span> domain.set(i, domain.get(i) - op.domain.get(i)); 
+    });
+    <span style="color: #0000FF;">return</span> op;
+  }
+</pre>
+</div></li>
+</ul></li>
+
+<li><code>top()</code>
+
+<ul class="org-ul">
+<li><p>
+Returns a reference to the most recently pushed operation.
+</p>
+
+<p>
+<i>Precondition:</i> <code>ops</code> not empty.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><code>&lt;&lt;op-composition-top&gt;&gt;</code></label>
+<pre class="src src-js" id="op-composition-top">  func.top = <span style="color: #0000FF;">function</span> () { <span style="color: #0000FF;">return</span> ops[ops.length - 1]; }
+</pre>
+</div></li>
+</ul></li>
+
+<li><code>top2()</code>
+
+<ul class="org-ul">
+<li><p>
+Returns a reference to the second-most recently pushed operation.
+</p>
+
+<p>
+<i>Precondition:</i> <code>ops</code> has at least two elements.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><code>&lt;&lt;op-composition-top2&gt;&gt;</code></label>
+<pre class="src src-js" id="op-composition-top2">  func.top2 = <span style="color: #0000FF;">function</span> () { <span style="color: #0000FF;">return</span> ops[ops.length - 2]; }
+</pre>
+</div></li>
+</ul></li>
+
+<li><code>shift()</code>
+
+<ul class="org-ul">
+<li><p>
+Removes the least recently pushed operation from the composition.
+If <code>c</code> is \(r_1 \circ r_2 \cdots \circ r_n\), then
+<code>c.shift()</code> is \(r_1 \circ r_2 \cdots \circ r_{n-1}\). Returns
+the removed operation.
+</p>
+
+<p>
+<i>Precondition:</i> <code>ops</code> not empty.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><code>&lt;&lt;op-composition-shift&gt;&gt;</code></label>
+<pre class="src src-js" id="op-composition-shift">  func.shift = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">bmap</span>) {
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">op</span> = ops.shift();
+    op.domain.forEach(<span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">_</span>, <span style="color: #BA36A5;">i</span>) {
+      <span style="color: #0000FF;">if</span> (domain.get(i) - gen === ops.length) { domain.<span style="color: #0000FF;">delete</span>(i); }
+      <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">if lastOp the only op that defines i, remove i from domain</span>
+    });
+    <span style="color: #0000FF;">return</span> op;
+  }
+</pre>
+</div></li>
+</ul></li>
+
+<li><code>size()</code>
+
+<ul class="org-ul">
+<li><p>
+Returns the number of operations in <code>ops</code>.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><code>&lt;&lt;op-composition-size&gt;&gt;</code></label>
+<pre class="src src-js" id="op-composition-size">  func.size = <span style="color: #0000FF;">function</span> () { <span style="color: #0000FF;">return</span> ops.length; }
+</pre>
+</div></li>
+</ul></li>
+
+<li><code>removeIndex(i)</code>
+
+<ul class="org-ul">
+<li><p>
+Removes an index from <code>domain</code> and all domains in <code>ops</code>.
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><code>&lt;&lt;op-composition-remove-index&gt;&gt;</code></label>
+<pre class="src src-js" id="op-composition-remove-index">  func.removeIndex = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">i</span>) {
+    <span style="color: #0000FF;">if</span> (!domain.has(i)) <span style="color: #0000FF;">return</span>;
+
+    <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">find the first op in ops that defines i</span>
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">j</span> = (ops.length - 1) - (gen - domain.get(i));
+
+    <span style="color: #0000FF;">while</span> (j &gt;= 0) {
+      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">d</span> = ops[j].domain.get(i);
+      ops[j].domain.<span style="color: #0000FF;">delete</span>(i);
+      j -= d;
+    }
+    domain.<span style="color: #0000FF;">delete</span>(i);
+  }
+</pre>
+</div></li>
+</ul></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6"><span class="section-number-2">6</span> Selection state</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+The <code>SelectionState</code> class stores all state of a multi-selection, 
+that is, the information contained in the &ldquo;selection state tuple&rdquo;
+described in the manuscript.  <code>SelectionState</code> is (most of) the public
+API of MultiselectJS.  Its constructor&rsquo;s parameters are:
+</p>
+
+<ul class="org-ul">
+<li>a <i>selection geometry</i> (see Section <a href="#sec-selection-geometries">7</a>),</li>
+<li>a callback (<code>refresh</code>) that defines how to display the selection
+state (the default is a function that does nothing),</li>
+<li>a flag that controls whether <i>change tracking</i> should be used or
+not (the default is <code>false</code>: no tracking), and</li>
+<li>the maximum number of undo operations (the default is 10).</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state">  <span style="color: #0000FF;">function</span> <span style="color: #006699;">SelectionState</span> (<span style="color: #BA36A5;">geometry</span>, <span style="color: #BA36A5;">refresh</span>, <span style="color: #BA36A5;">tracking</span>, <span style="color: #BA36A5;">maxUndo</span>) {
+
+    <span style="color: #0000FF;">if</span> (refresh === <span style="color: #8b1a1a;">undefined</span>) refresh = <span style="color: #0000FF;">function</span> () {};
+    <span style="color: #0000FF;">if</span> (tracking === <span style="color: #8b1a1a;">undefined</span>) tracking = <span style="color: #8b1a1a;">false</span>;
+    <span style="color: #0000FF;">if</span> (maxUndo === <span style="color: #8b1a1a;">undefined</span>) maxUndo = 10;
+
+    <span style="color: #8b1a1a;">this</span>._geometry = geometry;
+    <span style="color: #8b1a1a;">this</span>._tracking = tracking;
+    <span style="color: #8b1a1a;">this</span>._refresh = refresh;
+    <span style="color: #8b1a1a;">this</span>._maxOps = Math.max(2, 2 * maxUndo);
+    <span style="color: #8b1a1a;">this</span>.reset();
+  }
+</pre>
+</div>
+
+<p>
+If <code>tracking</code> is <code>true</code>, <code>refresh</code> will be called with a <code>Map</code> whose
+keys are the indices of the changed elements, and values their current
+selection status (<code>true</code> or <code>false</code>).  If <code>tracking</code> is false,
+<code>refresh</code> will be called with the current selection mapping.  Tracking
+can simplify visualizing the selection, but it requires additional
+computation and memory, so it is left optional.
+</p>
+
+<p>
+The maximum number of selection operations, <code>_maxOps</code>, is
+twice <code>maxUndo</code>, as each undoable operation consists of two 
+selection operations.  At least one pair of selection
+operations must be allowed, otherwise shift-click will not work as
+expected (if each operation is immediately baked into the permanent
+selection mapping, shift-click would not remember the prior state of
+the elements under the current selection domain).
+</p>
+
+<p>
+The rest of the initialization code is in the <code>reset</code> method.  This
+method can be used if the entire selection state must be reset (e.g.,
+to respond to the indexed family \(I\) being changed).
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-reset">  SelectionState.<span style="color: #8b1a1a;">prototype</span>.reset = <span style="color: #0000FF;">function</span> () {
+
+    <span style="color: #8b1a1a;">this</span>._s = makeSelectionMapping();
+    <span style="color: #8b1a1a;">this</span>._ops = makeOpComposition();
+    <span style="color: #8b1a1a;">this</span>._spath = [];
+    <span style="color: #8b1a1a;">this</span>._cursor = <span style="color: #8b1a1a;">undefined</span>;
+
+    <span style="color: #8b1a1a;">this</span>._redoStack = [];
+    <span style="color: #8b1a1a;">this</span>._current = <span style="color: #8b1a1a;">this</span>._ops(<span style="color: #8b1a1a;">this</span>._s); <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">current selection</span>
+    
+    <span style="color: #8b1a1a;">this</span>._opsStatus = ACTIVE_NONE;        
+    <span style="color: #8b1a1a;">this</span>._queuedCommand = <span style="color: #0000FF;">function</span> () {};
+  };
+
+  <span style="color: #0000FF;">const</span> <span style="color: #BA36A5;">ACTIVE_NONE</span> = 0, <span style="color: #BA36A5;">ACTIVE_FILTER</span> = 1, <span style="color: #BA36A5;">ACTIVE_SHIFT_CLICK_OR_SET_PATH</span> = 2;
+  <span style="color: #0000FF;">const</span> <span style="color: #BA36A5;">C_SHIFT_CLICK</span> = 0, <span style="color: #BA36A5;">C_SET_PATH</span> = 1;
+</pre>
+</div>
+
+<p>
+The elements of the <i>selection state tuple</i> described 
+in the manuscript are represented by <code>SelectionState</code>&rsquo;s member
+variables:
+</p>
+
+<ol class="org-ol">
+<li><code>_s</code> is the selection mapping,</li>
+<li><code>_ops</code> is the composition of primitive selection operations (it
+is an invariant that <code>_ops</code> always has an even number of
+selection operations),</li>
+<li><code>_spath</code> is the selection path,</li>
+<li><code>_cursor</code> is the keyboard cursor, and</li>
+<li><code>_opsStatus</code> is an indicator of whether the topmost selection
+operation is <i>active</i> (open for modification) and for which command. It can
+take values <code>ACTIVE_NONE</code>, <code>ACTIVE_SHIFT_CLICK_OR_SET_PAHT</code>, or <code>ACTIVE_FILTER</code>.
+If the status is <code>ACTIVE_NONE</code>, then both shift-click/set path and filter
+methods will first add a new empty pair of selection operators to
+<code>_ops</code>.  If it is <code>ACTIVE_SHIFT_CLICK</code>, then shift-click or set path will not
+add a new pair, but filter will. The roles are reversed with
+<code>ACTIVE_FILTER</code>.</li>
+</ol>
+
+
+<p>
+The <code>_redoStack</code> variable contains the redoable commands (selection
+operations).  The <code>_current</code> variable is bound to the value
+<code>_ops(_s)</code>, and it is thus the selection mapping that reflects the
+current selection status of the elements. Finally, <code>_queuedCommand</code> is
+a one-element command queue, which is used in combining several
+consecutive shift-click operations, or several consequtive set path
+operations, to one.
+</p>
+</div>
+
+<div id="outline-container-sec-6-1" class="outline-3">
+<h3 id="sec-6-1"><span class="section-number-3">6.1</span> Accessing the selection state of elements</h3>
+<div class="outline-text-3" id="text-6-1">
+<p>
+The selection state of the element at index <code>i</code> is given by the
+<code>isSelected(i)</code> function:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-is-selected">  SelectionState.<span style="color: #8b1a1a;">prototype</span>.isSelected = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">i</span>) { 
+    <span style="color: #8b1a1a;">this</span>._flush();
+    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._current(i); 
+  }
+</pre>
+</div>
+
+<p>
+The <code>_flush</code> method is described with the shift-click command; its purpose is
+to complete a possibly pending selection operation stored in <code>_queuedCommand</code>.
+The flush is called at the beginning of many of the methods of <code>SelectionState</code>.
+</p>
+
+<p>
+The <code>selected</code> function constructs a <code>Set</code> consisting of the currently selected
+elements.  To determine which elements are selected, it suffices to
+inspect the elements that are selected in the base selection mapping
+and elements that are in the domain of the current composition. The
+iteration order of the resulting <code>Set</code> offers no useful guarantees.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-selected">  SelectionState.<span style="color: #8b1a1a;">prototype</span>.selected = <span style="color: #0000FF;">function</span> () {
+    <span style="color: #8b1a1a;">this</span>._flush();
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = makeEmptySet();
+    <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of <span style="color: #8b1a1a;">this</span>._s.selected()) <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._current(i)) J.add(i);
+    <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of <span style="color: #8b1a1a;">this</span>._ops.domain.keys()) <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._current(i)) J.add(i);
+    <span style="color: #0000FF;">return</span> J;
+  }
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6-2" class="outline-3">
+<h3 id="sec-6-2"><span class="section-number-3">6.2</span> Click functions</h3>
+<div class="outline-text-3" id="text-6-2">
+<p>
+The three basic selection commands are <code>click(p)</code>, <code>cmdClick(p)</code>, and
+<code>shiftClick(p)</code>.  They follow the specification in the manuscript,
+with a couple additional details. 
+</p>
+</div>
+
+<div id="outline-container-sec-6-2-1" class="outline-4">
+<h4 id="sec-6-2-1"><span class="section-number-4">6.2.1</span> Click</h4>
+<div class="outline-text-4" id="text-6-2-1">
+<p>
+The <code>click(vp)</code> function expects a selection space coordinate, which
+will (usually) become the new anchor and the new keyboard cursor.  The
+method clears the selection path, then extends the empty path with
+<code>vp</code>.  The selection geometry&rsquo;s <code>extendPath</code> method may still leave
+the path empty&#x2014;some geometries will have coordinate values that
+should not be stored to the selection path, such as points outside any
+selectable element.  The <code>extendPath</code> must return <code>null</code> if <code>path</code>
+is not changed. If the selection path is left empty, the anchor is
+undefined and the keyboard cursor remains unchanged.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-click">  SelectionState.<span style="color: #8b1a1a;">prototype</span>.click = <span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">vp</span>) {
+    <span style="color: #8b1a1a;">this</span>._flush();
+    <span style="color: #8b1a1a;">this</span>._spath = []; 
+    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._geometry.extendPath(<span style="color: #8b1a1a;">this</span>._spath, vp) !== <span style="color: #8b1a1a;">null</span>) <span style="color: #8b1a1a;">this</span>._cursor = vp;
+
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J1</span> = <span style="color: #8b1a1a;">this</span>._callSelectionDomain(<span style="color: #8b1a1a;">this</span>._spath);
+
+    <span style="color: #0000FF;">if</span> (clickIsNop.call(<span style="color: #8b1a1a;">this</span>, J1)) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J0</span> = makeEmptyMap();
+    <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of <span style="color: #8b1a1a;">this</span>._s.selected()) <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._current(i)) J0.set(i, <span style="color: #8b1a1a;">true</span>);
+    <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of <span style="color: #8b1a1a;">this</span>._ops.domain.keys()) <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._current(i)) J0.set(i, <span style="color: #8b1a1a;">true</span>);
+
+    <span style="color: #8b1a1a;">this</span>._ops.push(makeOp(ff, J0));
+    <span style="color: #8b1a1a;">this</span>._ops.push(makeOp(tt, J1));
+    <span style="color: #8b1a1a;">this</span>._bake();
+
+    <span style="color: #8b1a1a;">this</span>._opsStatus = ACTIVE_SHIFT_CLICK_OR_SET_PATH;
+
+    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._tracking) <span style="color: #8b1a1a;">this</span>._refresh(mapSymmetricDifference(J0, J1, <span style="color: #8b1a1a;">false</span>, <span style="color: #8b1a1a;">true</span>));
+    <span style="color: #0000FF;">else</span> <span style="color: #8b1a1a;">this</span>._refresh(<span style="color: #8b1a1a;">this</span>._current);
+    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+  };
+</pre>
+</div>
+
+<p>
+A click command clears the current selection, then adds the
+elements of the selection domain to the selection.  This effect is
+achieved by pushing two selection operations: first <code>ff</code>
+over all selected elements, then <code>tt</code> over the new selection domain.
+</p>
+
+<p>
+The <code>callSelectionDomain</code> method wraps a call to <code>selectionMode</code>;
+its details are explained below.
+</p>
+
+<p>
+The helper function <code>clickIsNop(J)</code> detects clicks that would not have
+any effect on the selection state. Such clicks are ignored to avoid
+creating unnecessary undoable states. 
+</p>
+
+<p>
+If <code>_ops</code> grows too big, <i><code>_bake</code></i> reduces the size of <code>_ops</code>
+by one undoable operation (two selection operations).
+</p>
+
+<p>
+The <code>_opsStatus</code> is set to <code>ACTIVE_SHIFT_CLICK_OR_SET_APTH</code> to
+indicate that shift-click or set path can modify the topmost
+selection operation that is pushed to <code>_ops</code>.
+</p>
+
+<p>
+Finally, the <code>_refresh</code> callback is invoked.  If tracking is on, its
+argument is a newly constructed <code>Map</code> of the changed elements.  The
+keys of the map indicate the changed elements, and the values their
+current state (<code>true</code> selected, <code>false</code> not selected).  If tracking is
+off, the argument is the current selection mapping.
+</p>
+</div>
+
+<ol class="org-ol"><li><a id="sec-6-2-1-1"></a>Detecting a nop<br  /><div class="outline-text-5" id="text-6-2-1-1">
+<p>
+Assume <code>op1</code> and <code>op2</code> are the two tompost selection operations of the <code>_ops</code> composition.
+</p>
+
+<p>
+Then, if the most recent command was
+</p>
+
+<ul class="org-ul">
+<li>click, <code>op1.f</code> is <code>tt</code> and <code>op2.f</code> is <code>ff</code>;</li>
+<li>command-click, <code>op1.f</code> is either <code>tt</code> or <code>ff</code> and <code>op2.f</code> is <code>id</code>;</li>
+<li>any other command, either the conditions of click or command-click hold.</li>
+</ul>
+
+<p>
+A click is deemed a nop if the previous command was also a click, and 
+if the new selection domain is equal to the previous one:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="click-is-nop">  <span style="color: #0000FF;">function</span> <span style="color: #006699;">clickIsNop</span>(<span style="color: #BA36A5;">J</span>) {      
+    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._ops.size() &gt;= 2 &amp;&amp;
+      <span style="color: #8b1a1a;">this</span>._ops.top2().f === ff &amp;&amp; <span style="color: #8b1a1a;">this</span>._ops.top().f === tt &amp;&amp; 
+      equalKeys(J, <span style="color: #8b1a1a;">this</span>._ops.top().domain);
+  }
+</pre>
+</div>
+
+<p>
+A command-click operation toggles, so for it to have no effect, <code>J</code> must
+be empty. Though this guarantees no change to elements&rsquo; selection
+status, it is not yet a suffcient condition for a nop, since the
+selection mode may have to change. (This case results to indistinguishable
+undo states.)
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="cmd-click-is-nop">  <span style="color: #0000FF;">function</span> <span style="color: #006699;">cmdClickIsNop</span>(<span style="color: #BA36A5;">J</span>, <span style="color: #BA36A5;">mode</span>) {      
+    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._ops.size() &gt;= 2 &amp;&amp;
+      <span style="color: #8b1a1a;">this</span>._ops.top2().f === id &amp;&amp; <span style="color: #8b1a1a;">this</span>._ops.top().f === mode &amp;&amp;
+      isEmpty(J) &amp;&amp; isEmpty(<span style="color: #8b1a1a;">this</span>._ops.top().domain);
+  }
+</pre>
+</div>
+
+<p>
+The above rules can let equivalent undo states through in rare cases.
+It would be possible to add additional checking to the undo operation, 
+but it is perhaps not worth the complication.
+</p>
+</div></li></ol>
+</div>
+
+<div id="outline-container-sec-6-2-2" class="outline-4">
+<h4 id="sec-6-2-2"><span class="section-number-4">6.2.2</span> Command-click</h4>
+<div class="outline-text-4" id="text-6-2-2">
+<p>
+The implementation differs from <code>click</code> on five counts: First, the
+selection mode depends on whether the clicked point <code>vp</code> is on a
+selected element or not. Second, command-clicking does not clear the
+current selection. Third, the conditions for detecting a nop differ.
+Fourth, computing which elements were changed is different.
+The second parameter, <code>selmode</code>, is an additional variation point that is
+not used in typical selection geometries.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-cmd-click">  SelectionState.<span style="color: #8b1a1a;">prototype</span>.cmdClick = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">vp</span>, <span style="color: #BA36A5;">selmode</span>) {
+    <span style="color: #8b1a1a;">this</span>._flush();
+    <span style="color: #8b1a1a;">this</span>._spath = []; 
+    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._geometry.extendPath(<span style="color: #8b1a1a;">this</span>._spath, vp) !== <span style="color: #8b1a1a;">null</span>) <span style="color: #8b1a1a;">this</span>._cursor = vp;
+
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = <span style="color: #8b1a1a;">this</span>._callSelectionDomain(<span style="color: #8b1a1a;">this</span>._spath);
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">mode</span>;
+    <span style="color: #0000FF;">if</span> (selmode === <span style="color: #8b1a1a;">undefined</span>) mode = <span style="color: #8b1a1a;">this</span>._onSelectedIndex(J) ? ff : tt;
+    <span style="color: #0000FF;">else</span> mode = selmode ? tt : ff;
+
+    <span style="color: #0000FF;">if</span> (cmdClickIsNop.call(<span style="color: #8b1a1a;">this</span>, J, mode)) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">changed</span> = makeEmptyMap();
+    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._tracking) {
+      <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of J.keys()) {
+        <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">state</span> = <span style="color: #8b1a1a;">this</span>._current(i);
+        <span style="color: #0000FF;">if</span> (state !== mode(state)) changed.set(i, mode(state));
+      }
+    }
+    <span style="color: #8b1a1a;">this</span>._ops.push(makeOp(id, makeEmptyMap()));
+    <span style="color: #8b1a1a;">this</span>._ops.push(makeOp(mode, J));
+    <span style="color: #8b1a1a;">this</span>._bake();
+
+    <span style="color: #8b1a1a;">this</span>._opsStatus = ACTIVE_SHIFT_CLICK_OR_SET_PATH;
+
+    <span style="color: #8b1a1a;">this</span>._refresh(<span style="color: #8b1a1a;">this</span>._tracking ? changed : <span style="color: #8b1a1a;">this</span>._current);
+    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+  }
+</pre>
+</div>
+
+<p>
+The selection <code>mode</code> is either <code>ff</code> or <code>tt</code>, and determined by whether
+the point <code>vp</code> is considered to be on an element that is selected, or
+not. This determination is made by <code>_onSelectedIndex(J)</code>, which
+returns <code>true</code> exactly when <code>J</code> contains exactly one index and that
+index is selected.
+</p>
+
+<p>
+The selection mode can also be set explicitly; if the second parameter
+<code>selmode</code> is <code>true</code>, the selection mode is set to <code>tt</code>, and if 
+<code>false</code>, to <code>ff</code>. This mechanism is meant for applications that
+have a &ldquo;non-standard&rdquo; way of choosing the selection mode, such as 
+a particular modifier key to deselect.
+</p>
+
+<p>
+For tracking changes, it suffices to consider the indices in <code>J</code>.  The
+current selection state of each index is compared to what
+the state will be, <code>mode(state)</code>, when the new primitive operations
+have been pushed to <code>_ops</code>. If those states differ, the index is added
+to <code>changed</code>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-6-2-3" class="outline-4">
+<h4 id="sec-6-2-3"><span class="section-number-4">6.2.3</span> Shift-click</h4>
+<div class="outline-text-4" id="text-6-2-3">
+<p>
+The semantics of shift-clicking guarantees that that the effect of two
+consecutive shift-clicks, say, at points \(p_1\) and \(p_2\), is the same
+as first extending the selection path with \(p_1\), then shift-clicking
+at \(p_2\).  To take advantage of this property when many shift-click
+events happen in rapid succession, a shift-click command is queued,
+instead of executed immediately.  At most one command can be queued at
+a time.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-shift-click">  SelectionState.<span style="color: #8b1a1a;">prototype</span>.shiftClick = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">vp</span>) {
+
+    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._geometry.extendPath(<span style="color: #8b1a1a;">this</span>._spath, vp) === <span style="color: #8b1a1a;">null</span>) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+    <span style="color: #8b1a1a;">this</span>._cursor = <span style="color: #8b1a1a;">this</span>._spath[<span style="color: #8b1a1a;">this</span>._spath.length-1];
+
+    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._queuedCommand.pending &amp;&amp; 
+        <span style="color: #8b1a1a;">this</span>._queuedCommand.type === C_SHIFT_CLICK) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+    <span style="color: #0000FF;">else</span> <span style="color: #8b1a1a;">this</span>._flush();
+
+    <span style="color: #8b1a1a;">this</span>._queuedCommand = mkDelayedCommand(<span style="color: #8b1a1a;">this</span>, C_SHIFT_CLICK);
+    setTimeout(<span style="color: #8b1a1a;">this</span>._queuedCommand, 0);
+    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+  }
+</pre>
+</div>
+
+<p>
+Shift-click first extends the selection path and sets the cursor,
+except in the case that <code>vp</code> did not change the selection path.  Not
+setting the cursor seems to be the natural behavior.  Consider
+geometries where every selection space point is bound to some index,
+and some mouse locations (such as those outside the extents of any
+element) map to, say, <code>null</code>.  In such a (likely common) setting,
+dragging the mouse past an element to a <code>null</code> location during a
+rubber band selection would cause the cursor location to be lost.
+</p>
+
+<p>
+If a shift-click command is currently pending, nothing more needs to
+be done. Eventually that pending command will get to execute, with the
+selection path that was just extended with <code>vp</code>.  In the case where
+either no commands are pending or another kind of command (there is
+only one possibility: <i>set path</i>) is pending, the queue is flushed,
+and a new command is created with <code>mkDelayedCommand</code> and scheduled.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="mk-delayed-command">  <span style="color: #0000FF;">function</span> <span style="color: #006699;">mkDelayedCommand</span>(<span style="color: #BA36A5;">sel</span>, <span style="color: #BA36A5;">cmdType</span>) {
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">cmd</span> = <span style="color: #0000FF;">function</span> () {
+      <span style="color: #0000FF;">if</span> (cmd.pending === <span style="color: #8b1a1a;">false</span>) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">null</span>;
+      cmd.pending = <span style="color: #8b1a1a;">false</span>;
+
+      <span style="color: #0000FF;">if</span> (sel._opsStatus !== ACTIVE_SHIFT_CLICK_OR_SET_PATH) { 
+        sel._opsStatus = ACTIVE_SHIFT_CLICK_OR_SET_PATH; 
+        sel._addEmptyPair(); 
+      }
+
+      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">changed</span> = makeEmptyMap();
+      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">op</span> = sel._ops.pop();
+      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">mode</span> = op.f;
+
+      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">oldJ</span> = sel._tracking ? copyMap(op.domain) : op.domain;
+
+      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = sel._callSelectionDomain(sel._spath, cmdType, oldJ);
+
+      <span style="color: #0000FF;">if</span> (sel._tracking) {
+        mapSymmetricDifference(J, op.domain, <span style="color: #8b1a1a;">true</span>, <span style="color: #8b1a1a;">false</span>).forEach((<span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">value</span>, <span style="color: #BA36A5;">i</span>) {
+          <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">tmp</span> = sel._current(i);
+          <span style="color: #0000FF;">if</span> (mode(tmp) === tmp) <span style="color: #0000FF;">return</span>;
+          <span style="color: #0000FF;">if</span> (value) changed.set(i, mode(tmp)); <span style="color: #0000FF;">else</span> changed.set(i, tmp);
+        }).bind(sel));
+      }
+
+      sel._ops.push(makeOp(mode, J));
+      sel._refresh(sel._tracking ? changed : sel._current);
+    };
+
+    cmd.pending = <span style="color: #8b1a1a;">true</span>;
+    cmd.type = cmdType;
+    <span style="color: #0000FF;">return</span> cmd;
+  }
+</pre>
+</div>
+
+<p>
+The parameters to <code>mkDelayedcommand</code> are the selection state <code>sel</code> and
+the a command type (<code>C_SHIFT_CLICK</code> or <code>C_SET_PATH</code>). 
+The function constructs a command, marks it as pending, remembers the
+method that created the command, and returns the constructed command.
+</p>
+
+<p>
+Due to how the scheduling is arranged, a command may be executed more
+than once.  Therefore the command tests first if it is still pending
+or not, and returns immediately if it has already been executed.  When
+the command gets to be executed, it must check whether to add a new
+empty pair of selection operations. This is necessary, for example,
+after <code>undo</code>, <code>redo</code>, and <code>reset</code>, but must not be done after a click,
+command-click or another shift-click.  This mechanism is to prevent
+shift-click from overwriting a selection domain that is in an already
+&ldquo;committed&rdquo; state.
+</p>
+
+<p>
+After popping the topmost <code>_ops</code> element, the selection domain is
+calculated; the old selection domain is passed as a hint to the
+selection domain calculations. The <code>selectionDomain</code> function is
+allowed to modify the hint parameter <code>oldJ</code>. If tracking is on, such
+modifications would cause errors, and we first thus take a copy of
+<code>oldJ</code>. The details of calling <code>selectionDomain</code> are in
+the <code>_callSelectionDomain</code> function, explained below.
+</p>
+
+<p>
+The effect of the <code>pop</code> and <code>push</code> calls is to change the
+domain of the topmost selection operation, and thus to modify the
+current selection domain. The selection function of the operation
+remains the same. 
+</p>
+
+<p>
+The logic of tracking changes is as follows. Since shift-click only
+modifies the selection domain (<code>op.domain</code> is replaced with <code>J</code>), the
+only indices that need to be inspected are those that belong to <code>J</code>
+but not to <code>op.domain</code> (added indices), and those that belong to
+<code>op.domain</code> but not <code>J</code> (removed indices).  We construct a symmetric
+difference map of these indices, where added indices have the value
+<code>true</code> and removed the value <code>false</code>.  Then we detect if the current
+selection function (<code>mode</code>) changes those values, and if so, set the
+corresponding index in <code>changed</code> to the new value.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-6-2-4" class="outline-4">
+<h4 id="sec-6-2-4"><span class="section-number-4">6.2.4</span> Call selection domain</h4>
+<div class="outline-text-4" id="text-6-2-4">
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-call-selection-domain">  SelectionState.<span style="color: #8b1a1a;">prototype</span>._callSelectionDomain = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">path</span>, <span style="color: #BA36A5;">cmdType</span>, <span style="color: #BA36A5;">J</span>) {
+    <span style="color: #0000FF;">if</span> (cmdType === <span style="color: #8b1a1a;">undefined</span> || cmdType !== <span style="color: #8b1a1a;">this</span>._previousCmdType) {
+      <span style="color: #8b1a1a;">this</span>._previousCmdType = cmdType;
+      <span style="color: #0000FF;">if</span> (path.length === 0) <span style="color: #0000FF;">return</span> makeEmptyMap();
+      <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._geometry.selectionDomain(path);
+    } <span style="color: #0000FF;">else</span> {
+      <span style="color: #0000FF;">if</span> (path.length === 0) <span style="color: #0000FF;">return</span> makeEmptyMap();
+      <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._geometry.selectionDomain(path, cmdType, J);
+    }
+  }
+</pre>
+</div>
+
+<p>
+The client should define <code>selectionDomain</code> function in such a way that
+if it is called with no arguments other than a selection path, it
+correctly computes the selection domain. The other two arguments
+enable taking advantage of the result of the previous call to
+<code>selectionDomain</code>, which is beneficial in some selection
+geometries. This possibility exists in two calling contexts, in the
+command objects created either in the <code>shiftClick</code> or <code>setPath</code>
+methods. The purpose of <code>_callSelectionDomain</code> is to only pass the
+information about the previous result to <code>selectionDomain</code> if the source
+of the call is the same as the source of the previous call.
+</p>
+
+<p>
+Note that <code>_callSelectionDomain</code> takes care of the empty path
+case, so that <code>selectionDomain</code> functions can assume they
+are never called with an empty path.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-6-2-5" class="outline-4">
+<h4 id="sec-6-2-5"><span class="section-number-4">6.2.5</span> Flush</h4>
+<div class="outline-text-4" id="text-6-2-5">
+<p>
+The <code>_flush</code> method is simply a call to the queued command. Flushing
+does not remove the queued command object; it may still be executed
+later by the main event loop or another call to <code>_flush</code>. Hence, each
+command must know how to behave if executed more than once (they
+should be no-ops). Only <code>shiftClick</code> and <code>setPath</code> methods schedule
+commands.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-flush">  SelectionState.<span style="color: #8b1a1a;">prototype</span>._flush = <span style="color: #0000FF;">function</span> () { 
+    <span style="color: #8b1a1a;">this</span>._queuedCommand();
+  }
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6-3" class="outline-3">
+<h3 id="sec-6-3"><span class="section-number-3">6.3</span> Manipulating the selection path</h3>
+<div class="outline-text-3" id="text-6-3">
+<p>
+The purpose of the <code>setPath</code> function is to make it possible to
+implement geometry-specific means to modify the current selection path
+directly.  For example, the visualization of a lasso selection could
+make the corners of the lasso-polygon visible and draggable, so that
+the user could directly manipulate the selection path.  This would
+require modifying an aribtrary point of the selection path, not just
+adding a point at the end.
+</p>
+
+<p>
+This function is very similar to shift-click, except that instead of
+extending the selection path with a new point, it replaces the entire
+path.  Calls to <code>setPath</code> are queued the same way as those to <code>shiftClick</code>,
+so that consequtive calls can be combined.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-set-path">  SelectionState.<span style="color: #8b1a1a;">prototype</span>.setPath = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">path</span>) {
+    <span style="color: #8b1a1a;">this</span>._spath = path;
+    <span style="color: #8b1a1a;">this</span>._cursor = activeEnd(path);
+
+    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._queuedCommand.pending &amp;&amp;
+        <span style="color: #8b1a1a;">this</span>._queuedCommand.type === C_SET_PATH) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+    <span style="color: #0000FF;">else</span> <span style="color: #8b1a1a;">this</span>._flush();
+
+    <span style="color: #8b1a1a;">this</span>._queuedCommand = mkDelayedCommand(<span style="color: #8b1a1a;">this</span>, C_SET_PATH); 
+    setTimeout(<span style="color: #8b1a1a;">this</span>._queuedCommand, 0);
+    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+  }
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6-4" class="outline-3">
+<h3 id="sec-6-4"><span class="section-number-3">6.4</span> Analyzing elements under point</h3>
+<div class="outline-text-3" id="text-6-4">
+<p>
+The <code>onSelected(p)</code> function determines if a selection space point <code>p</code>
+is on a selected element. Many selection contexts need this
+functionality, e.g., to decide whether to interpret a click as a
+selection operation or as a beginning of a drag-and-drop. The
+<code>cmdClick</code> function needs this same information for choosing between
+selecting and deselecting, but to obtain the information it uses the
+function <code>_onSelectedIndex(J)</code>.  While <code>onSelected</code> calculates a
+selection domain from a selection space coordinate, <code>_onSelectedIndex</code>
+uses directly the selection domain that <code>cmdClick</code> has already
+computed.  Both functions return <code>true</code> exactly when the selection
+domain (either computed or given as a parameter) is a singleton whose
+only element is selected.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-on-selected">  SelectionState.<span style="color: #8b1a1a;">prototype</span>.onSelected = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">vp</span>) {
+    <span style="color: #8b1a1a;">this</span>._flush();
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">path</span> = [];
+    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._geometry.extendPath(path, vp) === <span style="color: #8b1a1a;">null</span>) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">false</span>;
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = <span style="color: #8b1a1a;">this</span>._callSelectionDomain(path);
+    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._onSelectedIndex(J);
+  };
+
+  SelectionState.<span style="color: #8b1a1a;">prototype</span>._onSelectedIndex = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">J</span>) {
+    <span style="color: #0000FF;">return</span> isSingleton(J) &amp;&amp; <span style="color: #8b1a1a;">this</span>.isSelected(firstKey(J)); <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">isSelected calls _flush</span>
+  };
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6-5" class="outline-3">
+<h3 id="sec-6-5"><span class="section-number-3">6.5</span> Empty pairs</h3>
+<div class="outline-text-3" id="text-6-5">
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-dummy-op-functions">  SelectionState.<span style="color: #8b1a1a;">prototype</span>._addEmptyPair = <span style="color: #0000FF;">function</span> () {
+    <span style="color: #8b1a1a;">this</span>._ops.push(makeOp(id, makeEmptyMap()));
+    <span style="color: #8b1a1a;">this</span>._ops.push(makeOp(tt, makeEmptyMap()));
+  }
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-6-6" class="outline-3">
+<h3 id="sec-6-6"><span class="section-number-3">6.6</span> Baking</h3>
+<div class="outline-text-3" id="text-6-6">
+<p>
+The <code>_bake</code> function is a utility, called by <code>click</code> and <code>cmdClick</code> etc.,
+to remove the oldest two selection operations from <code>_ops</code> 
+when its maximum size is exceeded. 
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-bake">  SelectionState.<span style="color: #8b1a1a;">prototype</span>._bake = <span style="color: #0000FF;">function</span> () {
+    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._ops.size() &gt; <span style="color: #8b1a1a;">this</span>._maxOps) {
+      <span style="color: #8b1a1a;">this</span>._s.bake(<span style="color: #8b1a1a;">this</span>._ops.shift());
+      <span style="color: #8b1a1a;">this</span>._s.bake(<span style="color: #8b1a1a;">this</span>._ops.shift());
+    }
+  }
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-undo-redo" class="outline-3">
+<h3 id="sec-undo-redo"><a id="sec-6-7"></a><span class="section-number-3">6.7</span> Undo and redo operations</h3>
+<div class="outline-text-3" id="text-sec-undo-redo">
+<p>
+Undoing and redoing is simply removing from and adding to the
+operation composition <code>_ops</code>. Similar to other user operations, undo
+and redo push and pop primitive selection operations in pairs.  Both
+undo and redo leave the <code>_ops</code> stack in a state where the selection
+path is empty. 
+</p>
+
+<p>
+Both operations mark the commit status as <code>ACTIVE_NONE</code>.  This is 
+important. Assume it was not done.  After undo some earlier selection
+operation <code>op</code> is at the top of <code>_ops</code>. The selection path that
+determined <code>op</code>&rsquo;s selection domain, however, is no longer available.
+Click and command-click would still behave well as they would not
+modify <code>op</code>.  A shift-click at this state, however, would likely
+produce surprising results&#x2014;shift-click replaces the topmost
+selection operation with a new operation that has a different domain,
+and would thus cause seemingly random elements to become either
+selected or unselected.  By setting the commit status to <code>ACTIVE_NONE</code>,
+shift-click is forced add a new empty pair of selection operations.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-undo-redo">  SelectionState.<span style="color: #8b1a1a;">prototype</span>.undo = <span style="color: #0000FF;">function</span> () {
+    <span style="color: #8b1a1a;">this</span>._flush();
+    <span style="color: #8b1a1a;">this</span>._spath = [];
+
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">changed</span> = makeEmptyMap();
+    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._ops.size() &gt;= 2) {
+      <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._tracking) {
+        <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of <span style="color: #8b1a1a;">this</span>._ops.top().domain.keys()) changed.set(i, <span style="color: #8b1a1a;">this</span>._current(i));
+        <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of <span style="color: #8b1a1a;">this</span>._ops.top2().domain.keys()) changed.set(i, <span style="color: #8b1a1a;">this</span>._current(i));
+      }
+      <span style="color: #8b1a1a;">this</span>._redoStack.push(<span style="color: #8b1a1a;">this</span>._ops.pop());
+      <span style="color: #8b1a1a;">this</span>._redoStack.push(<span style="color: #8b1a1a;">this</span>._ops.pop());
+    }
+    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._tracking) {
+      <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of changed.keys()) {
+        <span style="color: #0000FF;">if</span> (changed.get(i) === <span style="color: #8b1a1a;">this</span>._current(i)) changed.<span style="color: #0000FF;">delete</span>(i);
+        <span style="color: #0000FF;">else</span> changed.set(i, <span style="color: #8b1a1a;">this</span>._current(i));
+      }
+    }
+
+    <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">redoStack is not cleared ever,</span>
+    <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">so we limit its size (to same as undo stack's)</span>
+    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._redoStack.length &gt; <span style="color: #8b1a1a;">this</span>._maxOps) {
+      <span style="color: #8b1a1a;">this</span>._redoStack.shift();
+      <span style="color: #8b1a1a;">this</span>._redoStack.shift();
+    }
+    <span style="color: #8b1a1a;">this</span>._opsStatus = ACTIVE_NONE;
+    <span style="color: #8b1a1a;">this</span>._refresh(<span style="color: #8b1a1a;">this</span>._tracking ? changed : <span style="color: #8b1a1a;">this</span>._current);
+    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+  }
+
+  SelectionState.<span style="color: #8b1a1a;">prototype</span>.redo = <span style="color: #0000FF;">function</span> () {
+    <span style="color: #8b1a1a;">this</span>._flush();
+    <span style="color: #8b1a1a;">this</span>._spath = [];
+
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">changed</span> = makeEmptyMap();
+    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._redoStack.length &gt;= 2) {
+      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">op</span> = <span style="color: #8b1a1a;">this</span>._redoStack.pop();
+      <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._tracking) <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of op.domain.keys()) changed.set(i, <span style="color: #8b1a1a;">this</span>._current(i));
+      <span style="color: #8b1a1a;">this</span>._ops.push(op);
+      op = <span style="color: #8b1a1a;">this</span>._redoStack.pop();
+      <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._tracking) <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of op.domain.keys()) changed.set(i, <span style="color: #8b1a1a;">this</span>._current(i));
+      <span style="color: #8b1a1a;">this</span>._ops.push(op);
+    }
+    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._tracking) {
+      <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of changed.keys()) {
+        <span style="color: #0000FF;">if</span> (changed.get(i) === <span style="color: #8b1a1a;">this</span>._current(i)) changed.<span style="color: #0000FF;">delete</span>(i);
+        <span style="color: #0000FF;">else</span> changed.set(i, <span style="color: #8b1a1a;">this</span>._current(i));
+      }
+    }
+    <span style="color: #8b1a1a;">this</span>._opsStatus = ACTIVE_NONE;
+    <span style="color: #8b1a1a;">this</span>._refresh(<span style="color: #8b1a1a;">this</span>._tracking ? changed : <span style="color: #8b1a1a;">this</span>._current);
+    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+  }
+</pre>
+</div>
+
+<p>
+Undo and redo clear the selection path, but do not modify the cursor.
+An alternative design choice would be to clear the cursor (set it to
+<code>undefined</code>). It seems that there is no harm in keeping the value,
+but there might be harm in clearing it if the user is solely
+selecting with the keyboard.  One could imagine preserving the anchor
+from the path; it could be useful in some cases, but it could also
+lead to surprising behavior if the next command after undo was
+shift-click.
+</p>
+
+<p>
+Tracking changes in <code>undo</code> first constructs a candidate <code>changed</code> map
+and populates it with elements that are in either of the two topmost
+selection operations in <code>_ops</code>. After popping the
+operations, the elements that did not change are removed, and the
+values of those that did are set to the current selection state.
+Change tracking in <code>redo</code> is similar, except that the candidate
+set is the union of domains of the two topmost selection 
+operations in the redo stack.
+</p>
+
+<p>
+The semantics of <code>redo</code> could be chosen differently; any click
+operation could clear the entire <code>redo</code> stack.  We chose to not do
+that, but instead every selection operation that is popped by
+<code>undo</code> is pushed to the redo stack; it is thus possible to, e.g., undo
+twice, redo once, select more with various clicks, and then redo
+again.  We do limit the redo stack size to the maximum size of the
+undo stack. 
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-6-8" class="outline-3">
+<h3 id="sec-6-8"><span class="section-number-3">6.8</span> Selecting and deselecting with a predicate</h3>
+<div class="outline-text-3" id="text-6-8">
+<p>
+Some applications provide means to select or deselect elements based
+on properties of the elements, such as selecting all file names that
+end with &ldquo;<code>.pdf</code>&rdquo;.  The <code>filter(predicate, state)</code> method implements
+this functionality.  It relies on the <code>filter(predicate)</code> method of
+the geometry, which returns the subset of the indices that satisfy
+<code>predicate</code> as the selection domain.  If state is <code>false</code>, the effect
+is to deselect, otherwise to select.  A <code>filter</code> call following
+another <code>filter</code> call with the same <code>state</code> rewrites the topmost
+selection operation (so it behaves as shift-click in this sence); all
+other calls first add a new pair of selection operations first.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-filter">SelectionState.<span style="color: #8b1a1a;">prototype</span>.filter = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">predicate</span>, <span style="color: #BA36A5;">state</span>) {
+  <span style="color: #0000FF;">if</span> (state !== <span style="color: #8b1a1a;">false</span>) mode = tt; <span style="color: #0000FF;">else</span> mode = ff;
+
+  <span style="color: #8b1a1a;">this</span>._flush();
+  <span style="color: #8b1a1a;">this</span>._spath = [];
+  <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._opsStatus !== ACTIVE_FILTER || 
+      <span style="color: #8b1a1a;">this</span>._ops.size() &gt;= 2 &amp;&amp; <span style="color: #8b1a1a;">this</span>._ops.top().f !== mode) { <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">filter mode changed</span>
+    <span style="color: #8b1a1a;">this</span>._opsStatus = ACTIVE_FILTER; 
+    <span style="color: #8b1a1a;">this</span>._addEmptyPair(); 
+  }
+
+  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">changed</span> = makeEmptyMap();
+  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = <span style="color: #8b1a1a;">this</span>._geometry.filter(predicate);
+  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">op</span> = <span style="color: #8b1a1a;">this</span>._ops.pop();
+
+  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">self</span> = <span style="color: #8b1a1a;">this</span>;
+  <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._tracking) {
+    mapSymmetricDifference(J, op.domain, <span style="color: #8b1a1a;">true</span>, <span style="color: #8b1a1a;">false</span>).forEach((<span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">value</span>, <span style="color: #BA36A5;">i</span>) {
+      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">tmp</span> = self._current(i);
+      <span style="color: #0000FF;">if</span> (mode(tmp) === tmp) <span style="color: #0000FF;">return</span>;
+      <span style="color: #0000FF;">if</span> (value) changed.set(i, mode(tmp)); <span style="color: #0000FF;">else</span> changed.set(i, tmp);
+    }).bind(self));
+  }
+
+  <span style="color: #8b1a1a;">this</span>._ops.push(makeOp(mode, J));
+
+  <span style="color: #8b1a1a;">this</span>._refresh(<span style="color: #8b1a1a;">this</span>._tracking ? changed : <span style="color: #8b1a1a;">this</span>._current);
+  <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+}
+</pre>
+</div>
+
+<p>
+The <code>commit</code> function makes the current state not active, so that
+shift-click, set-path, and filter operations will be forced to add a new 
+selection operation pair.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-commit">SelectionState.<span style="color: #8b1a1a;">prototype</span>.commit = <span style="color: #0000FF;">function</span> () {
+  <span style="color: #8b1a1a;">this</span>._flush();
+  <span style="color: #8b1a1a;">this</span>._opsStatus = ACTIVE_NONE;
+}
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-sec-6-9" class="outline-3">
+<h3 id="sec-6-9"><span class="section-number-3">6.9</span> Set geometry</h3>
+<div class="outline-text-3" id="text-6-9">
+<p>
+The geometry can be changed on the fly. The path and cursor
+must then be reset and  a possible pending operation flushed.  
+Further, a commit is necessary so that if the next operation is,
+say, a shift-click, the
+previously current selection domain is not ``hi-jacked&rsquo;&rsquo;.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-set-geometry">  SelectionState.<span style="color: #8b1a1a;">prototype</span>.setGeometry = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">geometry</span>) {
+    <span style="color: #8b1a1a;">this</span>._flush(); 
+    <span style="color: #8b1a1a;">this</span>._spath = []; <span style="color: #8b1a1a;">this</span>._cursor = <span style="color: #8b1a1a;">undefined</span>;
+    <span style="color: #8b1a1a;">this</span>.commit();
+    <span style="color: #8b1a1a;">this</span>._geometry = geometry;
+    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+  }
+</pre>
+</div>
+
+<p>
+Even though the selection geometry <span class="underline">object</span> does not change, the object may change
+in such a way as to require resetting the selection path. For example, if the 
+positions of selectable elements change on a window, then selection space points 
+may no longer correspond to the same elements. The <code>resetPath</code> function 
+is for this purpose.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-reset-path">  SelectionState.<span style="color: #8b1a1a;">prototype</span>.resetPath = <span style="color: #0000FF;">function</span> () {
+    <span style="color: #8b1a1a;">this</span>._flush(); 
+    <span style="color: #8b1a1a;">this</span>._spath = []; <span style="color: #8b1a1a;">this</span>._cursor = <span style="color: #8b1a1a;">undefined</span>;
+    <span style="color: #8b1a1a;">this</span>.commit();
+    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+  }
+</pre>
+</div>
+
+<p>
+FIXME: is there a way to catch a resize event and force a flush
+before?  Otherwise it would be possible to get a resetPath
+call where flush is called and a pending shift click called when
+geometry object has already been modified.  (Very very unlikely in
+practice, but in theory possible.)
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-sec-access-cursor-data" class="outline-3">
+<h3 id="sec-access-cursor-data"><a id="sec-6-10"></a><span class="section-number-3">6.10</span> Access functions</h3>
+<div class="outline-text-3" id="text-sec-access-cursor-data">
+<p>
+The following are the ``getter&rsquo;&rsquo; functions for 
+the geometry, cursor, and selection path:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-getters">SelectionState.<span style="color: #8b1a1a;">prototype</span>.geometry = <span style="color: #0000FF;">function</span> () { <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._geometry; }
+SelectionState.<span style="color: #8b1a1a;">prototype</span>.cursor = <span style="color: #0000FF;">function</span> () { <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._cursor; }
+SelectionState.<span style="color: #8b1a1a;">prototype</span>.selectionPath = <span style="color: #0000FF;">function</span> () { <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._spath; }
+</pre>
+</div>
+
+<p>
+The client needs to access the geometry object for the <code>m2v</code> method
+that transforms mouse coordinate points to selection space, and
+possibly to obtain the cursor and selection path to visualize the keyboard
+cursor, anchor, and rubber band. Other than making these pieces of data
+readily available, MultiselectJS leaves the visualization to the client.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-6-11" class="outline-3">
+<h3 id="sec-6-11"><span class="section-number-3">6.11</span> Keyboard operations</h3>
+<div class="outline-text-3" id="text-6-11">
+<p>
+Keyboard operations are simple wrappers over <code>click</code>, <code>cmdClick</code> and
+<code>shiftClick</code> functions. Each of the <code>space</code> function has the same
+effect as a similarly modified <code>click</code> function on the position
+indicated by the keyboard cursor. If a cursor cannot be established,
+however, we choose to do nothing (rather than call the corresponding
+click method with <code>undefined</code>). Because the keyboard operations
+delegate to click methods, <code>_flush</code> calls are not needed.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-space-functions"><span style="color: #0000FF;">function</span> <span style="color: #006699;">valueOrDefault</span>(<span style="color: #BA36A5;">a</span>, <span style="color: #BA36A5;">def</span>) { <span style="color: #0000FF;">return</span> a === <span style="color: #8b1a1a;">undefined</span> ? def : a; }
+
+SelectionState.<span style="color: #8b1a1a;">prototype</span>.space = <span style="color: #0000FF;">function</span> () {
+  <span style="color: #0000FF;">if</span> (!<span style="color: #8b1a1a;">this</span>._acquireCursor(NO_DIRECTION)) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+  <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>.click(<span style="color: #8b1a1a;">this</span>._cursor);
+};
+SelectionState.<span style="color: #8b1a1a;">prototype</span>.cmdSpace = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>) {
+  <span style="color: #0000FF;">if</span> (!<span style="color: #8b1a1a;">this</span>._acquireCursor(valueOrDefault(dir, NO_DIRECTION))) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+  <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>.cmdClick(<span style="color: #8b1a1a;">this</span>._cursor);
+};
+SelectionState.<span style="color: #8b1a1a;">prototype</span>.shiftSpace = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>) {
+  <span style="color: #0000FF;">if</span> (!<span style="color: #8b1a1a;">this</span>._acquireCursor(valueOrDefault(dir, NO_DIRECTION))) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>; 
+  <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>.shiftClick(<span style="color: #8b1a1a;">this</span>._cursor);
+};
+</pre>
+</div>
+
+<p>
+The <code>_acquireCursor(dir)</code> function returns the current cursor if it is
+not <code>undefined</code>; otherwise it sets the cursor to a default value obtained
+from the selection geometry; the default of that default is
+<code>undefined</code>.  The <code>dir</code> parameter is one of <code>UP</code>, <code>DOWN</code>, <code>LEFT</code>, <code>RIGHT</code>
+when called from the arrow functions and <code>NO_DIRECTION</code> when called
+from the space functions.  The purpose of the <code>dir</code> parameter is to allow for a
+different default for different arrow keys. For example, the default
+for down arrow could be a point indicating the first index, and up arrow the last.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-acquire-cursor">  SelectionState.<span style="color: #8b1a1a;">prototype</span>._acquireCursor = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>) {
+    <span style="color: #8b1a1a;">this</span>._cursor = valueOrDefault(<span style="color: #8b1a1a;">this</span>._cursor, <span style="color: #8b1a1a;">this</span>._geometry.defaultCursor(dir));
+    <span style="color: #0000FF;">return</span> !(<span style="color: #8b1a1a;">this</span>._noCursor());
+  }
+  SelectionState.<span style="color: #8b1a1a;">prototype</span>._noCursor = <span style="color: #0000FF;">function</span> () { <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._cursor === <span style="color: #8b1a1a;">undefined</span>; }
+</pre>
+</div>
+
+<p>
+Note that the client calls <code>space</code>, <code>cmdSpace</code>, or <code>shiftSpace</code>
+without an argument, and thus <code>dir</code> is undefined. Thus, if <code>_cursor</code> is
+not defined, the default is queried with <code>NO_DIRECTION</code>. The arrow
+methods call the <code>cmdSpace</code> and <code>shiftSpace</code> methods with a direction
+argument, and therefore the default is queried with that direction
+value.
+</p>
+
+<p>
+The arrow methods are as follows:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-arrow-functions">SelectionState.<span style="color: #8b1a1a;">prototype</span>.arrow = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>) {
+  <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._noCursor()) { <span style="color: #8b1a1a;">this</span>._acquireCursor(dir); <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>; }
+  <span style="color: #8b1a1a;">this</span>._cursor = <span style="color: #8b1a1a;">this</span>._geometry.step(dir, <span style="color: #8b1a1a;">this</span>._cursor);
+  <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+}
+SelectionState.<span style="color: #8b1a1a;">prototype</span>.cmdArrow = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>) {
+  <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._noCursor()) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>.cmdSpace(dir);
+  <span style="color: #0000FF;">else</span> <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>.cmdSpace(dir).arrow(dir);
+};
+SelectionState.<span style="color: #8b1a1a;">prototype</span>.shiftArrow = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>) {
+  <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._noCursor()) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>.shiftSpace(dir);
+  <span style="color: #0000FF;">else</span> <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>.arrow(dir).shiftSpace(dir);
+}
+</pre>
+</div>
+
+<p>
+In all three arrow methods, if the cursor is undefined
+the cursor position is taken to be whatever default the 
+geometry provides. Shift-arrow does not move the 
+cursor before the <code>shiftSpace</code> call and command-arrow 
+does not move it after the <code>cmdSpace</code> call. This seems like
+the most natural behavior.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-selection-geometries" class="outline-2">
+<h2 id="sec-selection-geometries"><a id="sec-7"></a><span class="section-number-2">7</span> Selection geometries</h2>
+<div class="outline-text-2" id="text-sec-selection-geometries">
+<p>
+Aspects of selection that vary from one context to another are bundled
+into a <i>selection geometry</i> object.  The library provides the
+<code>DefaultGeometry</code> class, from which different geometry
+classes can inherit.  
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="default-geometry"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">DefaultGeometry</span> = <span style="color: #0000FF;">function</span> () {};
+
+<span style="color: #6434A3;">DefaultGeometry</span>.<span style="color: #8b1a1a;">prototype</span> = {
+  <span style="color: #006699;">m2v</span> : <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">mp</span>) { <span style="color: #0000FF;">return</span> mp; },
+  <span style="color: #006699;">extendPath</span> : <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">spath</span>, <span style="color: #BA36A5;">vp</span>) { 
+    <span style="color: #0000FF;">if</span> (vp === <span style="color: #8b1a1a;">null</span>) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">null</span>;
+    <span style="color: #0000FF;">if</span> (spath.length == 2) spath[1] = vp; <span style="color: #0000FF;">else</span> spath.push(vp); 
+  }, 
+  <span style="color: #006699;">step</span> : <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>, <span style="color: #BA36A5;">vp</span>) { <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">undefined</span>; },
+  <span style="color: #006699;">selectionDomain</span> : <span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">spath</span>, <span style="color: #BA36A5;">source</span>, <span style="color: #BA36A5;">J</span>) { 
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">m</span> = makeEmptyMap();
+    <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of spath) m.set(i, <span style="color: #8b1a1a;">true</span>); 
+    <span style="color: #0000FF;">return</span> m;
+  },
+  <span style="color: #006699;">defaultCursor</span> : <span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">dir</span>) { <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">undefined</span>; },
+  filter : <span style="color: #8b1a1a;">undefined</span>
+};
+</pre>
+</div>
+
+<p>
+The functions of a selection geometry are:
+</p>
+
+<ul class="org-ul">
+<li><code>m2v(mpoint)</code>
+<ul class="org-ul">
+<li>Transforms a point in the client&rsquo;s coordinate system (e.g., the
+mouse coordinate system) to a coordinate in the selection space
+(see Section 3.2.3 in the manuscript).
+In the default geometry this mapping is an identity.</li>
+</ul></li>
+
+<li><code>extendPath(spath, p)</code>
+<ul class="org-ul">
+<li>Extends the selection path with a new point (as a response to a
+shift-click). The function modifies the <code>spath</code> argument.  The
+return value <code>null</code> indicates that <code>p</code> did not affect <code>spath</code>.
+The default geometry ignores <code>null</code> values and limits the path
+size to two&#x2014;the anchor and the active end.</li>
+</ul></li>
+
+<li><code>step(dir, vp)</code>
+<ul class="org-ul">
+<li><p>
+Given a direction <code>dir</code> and a selection space coordinate <code>vp</code>,
+computes a new selection space coordinate to be used as the new keyboard
+cursor location. The possible values of <code>dir</code> are <code>UP</code>, <code>DOWN</code>, <code>LEFT</code>, 
+and <code>RIGHT</code>, defined in and exported from the multiselect module. 
+(The <code>step</code> function is never called with <code>NO_DIRECTION</code>.)
+</p>
+
+<p>
+The default is <code>undefined</code>, which means that no keyboard commands 
+have any effect.
+</p></li>
+</ul></li>
+
+<li><p>
+<code>selectionDomain(spath, source, J)</code>
+</p>
+<ul class="org-ul">
+<li><p>
+Computes the selection domain, a set of indices (represented as
+a <code>Map</code>; only the keys matter, values are insignificant), from
+the <code>spath</code> array of selection space points.  The first element
+in this array is the <i>anchor</i>, the last the <i>active end</i>.  The
+helper functions <code>anchor</code> and <code>activeEnd</code>, part of the
+multiselect module&rsquo;s API, extract these values. Often only these
+elements are relevant for determining the selection domain.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="geometry-utilities">  <span style="color: #0000FF;">function</span> <span style="color: #006699;">anchor</span>(<span style="color: #BA36A5;">path</span>) { 
+     <span style="color: #0000FF;">if</span> (path.length === 0) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">undefined</span>; 
+     <span style="color: #0000FF;">return</span> path[0]; 
+  };
+  <span style="color: #0000FF;">function</span> <span style="color: #006699;">activeEnd</span>(<span style="color: #BA36A5;">path</span>) { 
+     <span style="color: #0000FF;">if</span> (path.length === 0) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">undefined</span>; 
+     <span style="color: #0000FF;">return</span> path[path.length - 1]; 
+  };
+</pre>
+</div>
+
+<p>
+The <code>source</code> and <code>J</code> are defined when
+<code>selectionDomain</code> is called from <code>SelectionState</code>&rsquo;s <code>shiftClick</code>
+or <code>setPath</code> methods and it is a second consecutive call
+from the same method, otherwise they are both undefined. The
+<code>source</code> parameter is either <code>C_SHIFT_CLICK</code> or <code>C_SET_PATH</code>, identifying
+the caller. The <code>J</code> parameter is the current selection domain (computed
+by the most recent preceding call to <code>selectionDomain</code>).
+These two parameters are there so that the selection domain computation
+can take advantage of the results of the previous computation; in some selection
+geometries this can lead to notably more efficient implementations.
+</p>
+
+<p>
+Both shift-click and set-path commands schedule the operation
+to a one-element long queue, so that the selection path can be modified
+several times between calls to <code>selectionDomain</code>. The library
+guarantees that if <code>source</code> is <code>C_SHIFT_CLICK</code>,
+the previous call to <code>selectionDomain</code> was from the <code>shiftClick</code> method.
+The analogous guarantee holds for the <code>C_SET_PATH</code> value and <code>setPath</code> method.
+</p>
+
+<p>
+A skeleton for how to take advantage of <code>J</code> and <code>source</code> 
+is below. Note that it is not necessary to take a copy of <code>J</code>;
+it can be modified in-place.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-domain-skeleton">selectionDomain = <span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">spath</span>, <span style="color: #BA36A5;">source</span>, <span style="color: #BA36A5;">J</span>) { 
+  shift (source) {
+    <span style="color: #0000FF;">case</span> C_SHIFT_CLICK:                      
+      <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">modify J based on shift click cache</span>
+      <span style="color: #0000FF;">break</span>;
+    <span style="color: #0000FF;">case</span> C_SET_PATH:
+      <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">modify J based on set path cache</span>
+      <span style="color: #0000FF;">break</span>;
+    <span style="color: #0000FF;">default</span>: 
+      J = makeEmptyMap();           
+      <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">clear cache for shift-clicks</span>
+      <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">clear cache for set path</span>
+      <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">populate J from scratch</span>
+  }
+  <span style="color: #0000FF;">return</span> J;
+</pre>
+</div></li>
+</ul>
+<ul class="org-ul">
+<li>If <code>spath</code> has exactly one element, call it \(p\), the computed
+selection domain should have at most one element. In selection 
+geometries that allow overlapping elements, one might for example
+return the singleton set consisting of the index of the topmost
+element under \(p\).  This requirement is not strict&#x2014;nothing
+breaks if it is not followed, but the selection behavior might
+be unconventional since in most applications clicks and
+command-clicks can only select one element at a time.</li>
+
+<li>The default geometry defines <code>selectionDomain</code> to map the path elements
+to the elements of the selection domain.</li>
+</ul></li>
+
+<li><code>defaultCursor(dir)</code>
+<ul class="org-ul">
+<li>The <code>defaultCursor(dir)</code> function provides default values for
+the keyboard cursor.  It is called from either the space or
+arrow methods, when no cursor has yet been established (e.g., by
+some click command).  When called as a result of pressing one of
+the arrow keys, <code>defaultCursor</code> receives the parameter <code>dir</code> to
+indicate which arrow key was pressed&#x2014;the default may depend on
+the key. For example, in a horizontally stacked sequentially
+ordered elements, the down-arrow could start at the topmost
+element, whereas the up-arrow from the bottom element.  When
+<code>defaultCursor(dir)</code> is called as a result of pressing space,
+<code>dir</code> has value <code>NO_DIRECTION</code>.  It is fine to return
+<code>undefined</code> from <code>defaultCursor(dir)</code>; nothing breaks, except that 
+there will be no default values.</li>
+</ul></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-8" class="outline-2">
+<h2 id="sec-8"><span class="section-number-2">8</span> Events</h2>
+<div class="outline-text-2" id="text-8">
+<p>
+The MultiselectJS library does not encapsulate the code for setting up
+events that should be translated to selection operations. This is
+because the different contexts of multi-selection can vary in so many
+ways: different key bindings may be chosen, the set of operations that
+are supported may vary, dragging and dropping the selected elements
+may or may not be supported and the ways to distinguish between a
+click to select and a click to start a drag can vary.
+</p>
+
+<p>
+We provide a few definitions intended to help implementing
+event handling.
+</p>
+</div>
+
+<div id="outline-container-sec-8-1" class="outline-3">
+<h3 id="sec-8-1"><span class="section-number-3">8.1</span> Detecting mouse/keyboard events</h3>
+<div class="outline-text-3" id="text-8-1">
+<p>
+We define a set of constants to correspond to particular choices of
+modifier keys that can be held down at the time of a mouse click or a
+an arrow or space key press. The <code>modifierKeys</code> function extracts 
+the modifier key
+information from an <i>event</i> object. Both meta and control
+keys are accepted as the command modifier.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="modifier-keys"><span style="color: #0000FF;">const</span> <span style="color: #BA36A5;">M_NONE</span> = 1, 
+      M_SHIFT = 2, 
+      M_CMD = 3, 
+      M_SHIFT_CMD = 4, 
+      M_OPT = 5, 
+      M_SHIFT_OPT = 6;
+
+<span style="color: #0000FF;">function</span> <span style="color: #006699;">modifierKeys</span> (<span style="color: #BA36A5;">evt</span>) {
+  
+  <span style="color: #0000FF;">if</span> (evt.shiftKey &amp;&amp; isCmdKey(evt)) <span style="color: #0000FF;">return</span> M_SHIFT_CMD;
+  <span style="color: #0000FF;">if</span> (isCmdKey(evt)) <span style="color: #0000FF;">return</span> M_CMD;
+  <span style="color: #0000FF;">if</span> (evt.shiftKey &amp;&amp; evt.altKey) <span style="color: #0000FF;">return</span> M_SHIFT_OPT;
+  <span style="color: #0000FF;">if</span> (evt.altKey) <span style="color: #0000FF;">return</span> M_OPT;
+  <span style="color: #0000FF;">if</span> (evt.shiftKey) <span style="color: #0000FF;">return</span> M_SHIFT;
+  <span style="color: #0000FF;">return</span> M_NONE;
+  
+  <span style="color: #0000FF;">function</span> <span style="color: #006699;">isCmdKey</span> (<span style="color: #BA36A5;">evt</span>) { <span style="color: #0000FF;">return</span> evt.metaKey || evt.ctrlKey; }
+}
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-9" class="outline-2">
+<h2 id="sec-9"><span class="section-number-2">9</span> Library API</h2>
+<div class="outline-text-2" id="text-9">
+<p>
+The public names exported from the library are as follows.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="exports">  exports.SelectionState = SelectionState;
+  exports.Selection = Selection;
+
+  exports.UP = UP; 
+  exports.DOWN = DOWN; 
+  exports.LEFT = LEFT; 
+  exports.RIGHT = RIGHT;
+
+  exports.C_SHIFT_CLICK = C_SHIFT_CLICK;
+  exports.C_SET_PATH = C_SET_PATH;
+
+  exports.anchor = anchor;
+  exports.activeEnd = activeEnd;
+
+  exports.makeEmptyMap = makeEmptyMap;
+
+  exports.DefaultGeometry = DefaultGeometry;
+
+  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">The following are helpers for defining event handlers</span>
+  exports.NONE = M_NONE;
+  exports.SHIFT = M_SHIFT;
+  exports.CMD = M_CMD;
+  exports.SHIFT_CMD = M_SHIFT_CMD;
+  exports.OPT = M_OPT;
+  exports.SHIFT_OPT = M_SHIFT_OPT;
+
+  exports.modifierKeys = modifierKeys;
+</pre>
+</div>
+
+<p>
+In addition, the following names are exported to be used by tests
+under the <code>detail</code> ``namespace&rsquo;&rsquo;:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="exports-detail">  exports.detail = {};
+  exports.detail.tt = tt;
+  exports.detail.ff = ff;
+  exports.detail.not = not;
+  exports.detail.id = id;
+
+  exports.detail.makeOp = makeOp;
+  exports.detail.makeEmptySet = makeEmptySet;
+  exports.detail.makeEmptyMap = makeEmptyMap;
+
+  exports.detail.makeSelectionMapping = makeSelectionMapping;
+  exports.detail.makeOpComposition = makeOpComposition;
+
+  exports.detail.equalKeys = equalKeys;
+  exports.detail.isEmpty = isEmpty;
+</pre>
+</div>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1">1</a></sup> <p class="footpara">
+By <i>function object</i> we mean an object that can be called with
+the function call syntax. It can be stateful and have both member
+variables and member functions.
+</p></div>
+
+
+</div>
+</div></div>
+</body>
+</html>

@@ -1,0 +1,461 @@
+* Export configuration                                             :noexport:
+  
+  #+SETUPFILE: org-settings.org
+  #+TITLE:     {{{msjs}}} --- extras.org
+  #+AUTHOR:    Jaakko Järvi
+  #+EMAIL:     jarvij@gmail.com
+  #+DATE:
+
+* Introduction
+
+This file contains definitions that are used in the examples, demos, and tutorials.
+Two files are generated: ~rectangle.js~ and ~drawing.hs~.
+The latter depends on the former, and imports it with ~require~.
+
+** Points, lines, and rectangles
+
+#+BEGIN_SRC js :tangle ../js/rectangle.js :noweb yes :padline no
+  // public functions of the Rectangle module
+  module.exports = {
+    rect: rect,
+    point: point,
+    midPoint: midPoint,
+    getOffsetRect: getOffsetRect,
+    getOffsetRects: getOffsetRects,
+    pointInRect: pointInRect,
+    pointInRects: pointInRects,
+    findRectOfPoint: findRectOfPoint,
+    pointToRect: pointToRect,
+    union: union,
+    intersect: intersect,
+    intersectWithAny: intersectWithAny,
+    width: width,
+    height: height,
+    lineIntersect: lineIntersect,
+    lineRectIntersect: lineRectIntersect,
+    distance: distance,
+    distanceSquared: distanceSquared,
+    distanceToRectSquared: distanceToRectSquared,
+    isPointBelowRect: isPointBelowRect,
+    isPointAboveRect: isPointAboveRect,
+    isPointLeftOfRect: isPointLeftOfRect,
+    isPointRightOfRect: isPointRightOfRect,
+    within: within
+  };
+
+  function within(x, b, e) {
+    return x >= Math.min(b, e) && x <= Math.max(b, e);
+  }
+
+  function relativeToParent(pRect, eRect) {
+    return {
+      left: eRect.left - pRect.left,
+      top: eRect.top - pRect.top,
+      right: eRect.right - pRect.left,
+      bottom: eRect.bottom - pRect.top
+    }
+  }
+
+  function getOffsetRects(parent, elem) {
+    var parentBox = parent.getBoundingClientRect();
+    var boxes = elem.getClientRects();
+    var res = $.map(boxes, function (box) { return relativeToParent(parentBox, box); });
+    return res;
+  }
+
+  function getOffsetRect(parent, elem) {
+    // return elem's bounding box in relation to paren's top left corner
+    var parentBox = parent.getBoundingClientRect();
+    var box = elem.getBoundingClientRect();
+  
+    return {
+      left: box.left - parentBox.left,
+      top: box.top - parentBox.top,
+      right: box.right - parentBox.left,
+      bottom: box.bottom - parentBox.top
+    }
+  }
+
+  function rect(p1, p2) {
+    return { 
+      left: Math.min(p1.x, p2.x),
+      top: Math.min(p1.y, p2.y),
+      right: Math.max(p1.x, p2.x),
+      bottom: Math.max(p1.y, p2.y)
+    };        
+  }
+
+  function point(x, y) {
+    return { x: x, y: y };        
+  }
+
+  function midPoint (r) {
+    return { x: (r.left + r.right)/2, 
+             y: (r.top + r.bottom)/2 };
+  }
+
+  function pointInRect (p, r) {
+    return p.x >= r.left && p.x <= r.right
+      && p.y >= r.top && p.y <= r.bottom; 
+  }
+
+  function pointInRects (p, rs) {
+    for (var i = 0; i < rs.length; ++i)
+      if (pointInRect(p, rs[i])) return true;
+    return false;
+  }
+
+  function findRectOfPoint (p, rs) {
+    for (var i = 0; i < rs.length; ++i)
+      if (pointInRect(p, rs[i])) return rs[i];
+    return undefined;
+  }
+
+  function isPointBelowRect(p, r) { 
+    return p.y >= r.bottom; 
+  }
+
+  function isPointAboveRect(p, r) { 
+    return p.y <= r.top; 
+  }
+
+  function isPointLeftOfRect(p, r) { 
+    return p.x <= r.left; 
+  }
+
+  function isPointRightOfRect(p, r) { 
+    return p.x >= r.right; 
+  }
+
+  // a zero width, zero hight rectangle at point
+  function pointToRect (point) {
+    return { left: point.x, top: point.y, 
+             right: point.x, bottom: point.y };
+  }
+
+  function distance (p1, p2) {
+    return Math.sqrt(distanceSquared(p1, p2)); 
+  }
+
+  function distanceSquared (p1, p2) {
+    var dx = p2.x - p1.x;
+    var dy = p2.y - p1.y;
+    return (dx * dx) + (dy * dy); 
+  }
+
+  function distanceToRectSquared (p, r) {
+    var cand = Math.min(
+      distanceSquared(p, {x: r.left, y: r.top}),
+      distanceSquared(p, {x: r.left, y: r.bottom}),
+      distanceSquared(p, {x: r.right, y: r.top}),
+      distanceSquared(p, {x: r.right, y: r.bottom})
+    );
+    if (p.x > r.left && p.x < r.right) 
+      return Math.min(cand, Math.abs(p.y - r.top), Math.abs(p.y - r.bottom));
+    if (p.y > r.top && p.y < r.bottom) 
+      return Math.min(cand, Math.abs(p.x - r.left), Math.abs(p.x - r.right));
+    return cand;
+  }
+
+  // the smallest rectangle that includes r1 and r2
+  function union (r1, r2) {
+    var left = Math.min(r1.left, r2.left);
+    var top = Math.min(r1.top, r2.top);
+    var right = Math.max(r1.right, r2.right);
+    var bottom = Math.max(r1.bottom, r2.bottom);
+    return {
+      left: left,
+      top: top, 
+      right: right,
+      bottom: bottom
+    };
+  }
+
+  function width (r) { return r.right - r.left; }
+  function height (r) { return r.bottom - r.top; }
+
+  // do r1 and r2 intersect?
+  // two zero-width and heigth rectangles do 
+  // not intersect, even if they are the same point
+  // FIXME: this is not quite the right behavior
+  function intersect (r1, r2) {
+    return r1.left < r2.right
+      && r1.right > r2.left
+      && r1.top < r2.bottom
+      && r1.bottom > r2.top;
+  };
+
+  function intersectWithAny (r, rs) {
+    for (var i = 0; i < rs.length; ++i)
+      if (intersect(r, rs[i])) return true;
+    return false;
+  }
+
+
+
+  /* PORTED FROM:
+
+   ,* lines_intersect:  AUTHOR: Mukesh Prasad
+   ,*
+   ,*   This function computes whether two line segments,
+   ,*   respectively joining the input points (x1,y1) -- (x2,y2)
+   ,*   and the input points (x3,y3) -- (x4,y4) intersect.
+   ,*   If the lines intersect, the output variables x, y are
+   ,*   set to coordinates of the point of intersection.
+   ,*
+   ,*   All values are in integers.  The returned value is rounded
+   ,*   to the nearest integer point.
+   ,*
+   ,*   If non-integral grid points are relevant, the function
+   ,*   can easily be transformed by substituting floating point
+   ,*   calculations instead of integer calculations.
+   ,*
+   ,*   Entry
+   ,*        x1, y1,  x2, y2   Coordinates of endpoints of one segment.
+   ,*        x3, y3,  x4, y4   Coordinates of endpoints of other segment.
+   ,*
+   ,*   Exit
+   ,*        x, y              Coordinates of intersection point.
+   ,*
+   ,*   The value returned by the function is one of:
+   ,*
+   ,*        DONT_INTERSECT    0
+   ,*        DO_INTERSECT      1
+   ,*        COLLINEAR         2
+   ,*
+   ,* Error conditions:
+   ,*
+   ,*     Depending upon the possible ranges, and particularly on 16-bit
+   ,*     computers, care should be taken to protect from overflow.
+   ,*
+   ,*     In the following code, 'long' values have been used for this
+   ,*     purpose, instead of 'int'.
+   ,*
+   ,*/
+
+  function sameSigns(a, b) { return a >= 0 && b >= 0 || a < 0 && b < 0; }
+
+  function lineIntersect( p1,   /* First line segment */
+                          p2,
+                          p3,   /* Second line segment */
+                          p4,
+                          p5    /* Output value:
+                                 ,* point of intersection */
+                        )
+  {
+
+    const DONT_INTERSECT = 0;
+    const DO_INTERSECT = 1;
+    const COLLINEAR = 2;
+
+    var a1, a2, b1, b2, c1, c2; /* Coefficients of line eqns. */
+    var r1, r2, r3, r4;         /* 'Sign' values */
+    var denom, offset, num;     /* Intermediate values */
+
+    /* Compute a1, b1, c1, where line joining points 1 and 2
+     ,* is "a1 x  +  b1 y  +  c1  =  0".
+     ,*/
+  
+    a1 = p2.y - p1.y;
+    b1 = p1.x - p2.x;
+    c1 = p2.x * p1.y - p1.x * p2.y;
+
+    /* Compute r3 and r4.
+     ,*/
+  
+  
+    r3 = a1 * p3.x + b1 * p3.y + c1;
+    r4 = a1 * p4.x + b1 * p4.y + c1;
+  
+    /* Check signs of r3 and r4.  If both point 3 and point 4 lie on
+     ,* same side of line 1, the line segments do not intersect.
+     ,*/
+  
+    if ( r3 != 0 &&
+         r4 != 0 &&
+         sameSigns( r3, r4 ))
+      return ( DONT_INTERSECT );
+  
+    /* Compute a2, b2, c2 */
+  
+    a2 = p4.y - p3.y;
+    b2 = p3.x - p4.x;
+    c2 = p4.x * p3.y - p3.x * p4.y;
+  
+    /* Compute r1 and r2 */
+  
+    r1 = a2 * p1.x + b2 * p1.y + c2;
+    r2 = a2 * p2.x + b2 * p2.y + c2;
+  
+    /* Check signs of r1 and r2.  If both point 1 and point 2 lie
+     ,* on same side of second line segment, the line segments do
+     ,* not intersect.
+     ,*/
+  
+    if ( r1 !== 0 &&
+         r2 !== 0 &&
+         sameSigns( r1, r2 ))
+      return ( DONT_INTERSECT );
+
+    /* Line segments intersect: compute intersection point. 
+     ,*/
+  
+    denom = a1 * b2 - a2 * b1;
+    if ( denom === 0 )
+      return ( COLLINEAR );
+    offset = denom < 0 ? - denom / 2 : denom / 2;
+  
+    /* The denom/2 is to get rounding instead of truncating.  It
+     ,* is added or subtracted to the numerator, depending upon the
+     ,* sign of the numerator.
+     ,*/
+  
+    num = b1 * c2 - b2 * c1;
+    p5.x = ( num < 0 ? num - offset : num + offset ) / denom;
+  
+    num = a2 * c1 - a1 * c2;
+    p5.y = ( num < 0 ? num - offset : num + offset ) / denom;
+
+    return DO_INTERSECT;
+  } /* lines_intersect */
+
+  function lineRectIntersect(p1, p2, r) {
+    if (!intersect(rect(p1, p2), r)) return false; // if bounding boxes do not overlap, cannot intersect
+    var p = {};
+    if (lineIntersect(p1, p2, { x: r.left, y: r.top }, { x: r.left, y: r.bottom }, p) !== 0) return true;
+    if (lineIntersect(p1, p2, { x: r.left, y: r.top }, { x: r.right, y: r.top }, p) !== 0) return true;
+    if (lineIntersect(p1, p2, { x: r.right, y: r.bottom }, { x: r.right, y: r.top }, p) !== 0) return true;
+    if (lineIntersect(p1, p2, { x: r.right, y: r.bottom }, { x: r.left, y: r.bottom }, p) !== 0) return true;
+    return pointInRect(p1, r) || pointInRect(p2, r);
+  }
+#+END_SRC
+        
+
+
+** Drawing anchors, cursors, and rubber bands on Canvas
+
+#+BEGIN_SRC js :tangle ../js/drawing.js :noweb yes :padline no
+var Rect = require("./rectangle");
+
+function createBaseCanvas (parent) {
+  var canvas = document.createElement("canvas");
+  var rect = parent.getBoundingClientRect();
+  canvas.style.position = 'absolute';
+  canvas.width=Rect.width(rect);
+  canvas.height=Rect.height(rect);
+  canvas.style.zIndex = 0;
+  canvas.style.overflow = 'hidden';
+  parent.insertBefore(canvas, parent.firstChild);
+  return canvas;
+}
+
+// Create n canvases on top of the baseCanvas, insert them into
+// the DOM, and push them into layerArray, and return layerArray.
+// The zIndex
+// is consequtive, up from baseCanvas's zIndex.  New canvases have
+// no border or background.
+function createLayers (baseCanvas, n, layers) {
+  var z = baseCanvas.style.zIndex || 0;
+  layers = layers || [];
+  for (var i = 0; i < n; ++i) {
+    var canvas = baseCanvas.cloneNode(true);
+    canvas.style.position = 'absolute';
+    canvas.style.top = baseCanvas.style.top;
+    canvas.style.left = baseCanvas.style.left;
+    canvas.style.zIndex = z + 1 + i;
+    canvas.style.background = null;
+    layers.push(canvas);
+    baseCanvas.parentNode.insertBefore(canvas, baseCanvas);            
+  }
+  return layers;
+};
+
+//////////////////////
+// Cursor    canvas //
+//////////////////////
+
+exports.CursorCanvas = function (parent) {
+  
+  this.baseCanvas = createBaseCanvas(parent);
+  this.layers = createLayers(this.baseCanvas, 3, []);
+  // construct 3 layers, one each for activeEnd, anchor, rubber
+
+//  this.eventCanvas = this.layers[this.layers.length-1];
+  // last layer captures mouse events
+
+  this.rubberCtx = this.layers[0].getContext('2d'); 
+  this.anchorCtx = this.layers[1].getContext('2d'); 
+  this.cursorCtx = this.layers[2].getContext('2d');
+  
+  this.anchorCtx.strokeStyle = 'blue';
+  this.anchorCtx.lineWidth = 1;
+  
+  this.cursorCtx.strokeStyle = 'deeppink';
+  this.cursorCtx.lineWidth = 1;
+  
+  this.rubberCtx.strokeStyle = 'darkgreen';
+  this.rubberCtx.lineWidth = 2;
+  if (this.rubberCtx.setLineDash) 
+    this.rubberCtx.setLineDash([6,3]); // Not in all browsers
+}
+
+exports.CursorCanvas.prototype.resize = function (w, h) {        
+  for (var i = 0; i < this.layers.length; ++i) {
+    this.layers[i].width = w;
+    this.layers[i].height = h;          
+  }
+};
+
+exports.CursorCanvas.prototype.clear = function (ctx) {
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+}
+
+
+//////////////////////////////////////////////////////
+// Helper functions for drawing shapes on a context //
+//////////////////////////////////////////////////////
+
+// pre: objects in path have members x and y
+exports.drawPath = function (ctx, path) {    
+  if (path.length < 2) return;
+  ctx.beginPath();
+  ctx.moveTo(path[0].x, path[0].y);
+  for (var i=1; i<path.length; ++i) ctx.lineTo(path[i].x, path[i].y);
+  ctx.stroke();
+}
+
+// pre: r is a rect
+exports.drawBox = function (ctx, r) {
+  ctx.strokeRect(r.left, r.top, Rect.width(r), Rect.height(r));
+
+}
+
+exports.drawLine = function (ctx, p1, p2) {
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.stroke();
+}
+
+exports.drawCircle = function (ctx, point) {
+  ctx.beginPath();
+  ctx.arc(point.x, point.y, 4, 0, Math.PI*2, true); 
+  ctx.stroke();
+}
+
+exports.drawSmallCircle = function (ctx, point) {
+  ctx.beginPath();
+  ctx.arc(point.x, point.y, 2, 0, Math.PI*2, true); 
+  ctx.stroke();
+}
+
+
+#+END_SRC
+
+* File local variables                                     :ARCHIVE:noexport:
+  
+# Local Variables:
+# mode: org
+# org-html-postamble: nil
+# org-babel-use-quick-and-dirty-noweb-expansion: t
+# End:

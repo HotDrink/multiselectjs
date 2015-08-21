@@ -1,0 +1,32 @@
+#+SETUPFILE: ../../org/org-settings.org
+#+TITLE: {{{msjs}}}
+
+{{{msjs}}} is a library for implementing selection of multiple elements from visual collections with a mouse and keyboard.
+
+The library's multiselection abstraction is not bound to a widget or
+control; it can be applied to any context.  To implement
+multiselection, the application programmers main tasks are to:
+
+  - implement a /selection geometry/ object that determines how mouse
+    points indicate a set of elements (and a few other things);
+  - implement functions to visualize selected and not-selected
+    elements and cursors used in selecting elements; and
+  - bind mouse and keyboard events to {{{msjs}}}'s functions.
+
+The library provides a rich multiselection feature, including mouse
+and keyboard selection so that they are compatible with each other,
+undoing and redoing selections, selecting based on a predicate, and
+changing selection geometries on the fly.  The different aspecs of
+multiselection are showcased in [[file:examples/demo/multiselect-demo.html][a demo application]].
+
+Our [[file:docs/tutorial/tutorial.html][tutorial]] describes the basic concepts of multiselection and shows
+step-by-step how to apply the library in a few example situations.
+
+The manuscript /One Way to Select Many/, by Jaakko Järvi and Sean
+Parent, is a full account of the motivations behind {{{msjs}}} and the
+theory of of multi-selection that its design is based on. As the
+manuscript is currently under review, it is not publicly available at
+the moment. Please [[mailto:jarvij@gmail.com][request a copy by email]].
+
+The [[https://github.com/HotDrink/multiselectjs][project's GitHub page]] contains the sources and the releases.
+

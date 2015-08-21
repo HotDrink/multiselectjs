@@ -1,0 +1,2520 @@
+#+SETUPFILE: ../../org/org-settings.org
+#+TITLE: {{{msjs}}} Tutorial
+
+* Introduction 
+  :PROPERTIES:
+  :header_args: :padline no :eval yes
+  :END:
+
+{{{msjs}}} is a library for implementing /multi-selection/, i.e., the
+feature supporting selectitng and deselecting elements from a
+collection using the mouse (or another pointing device) or a
+keyboard. The visual aspects of selection, the shape and location of
+elements, their ordering, indicators of selection status, etc. vary
+from one application to another. These are the aspects that the client
+defines, {{{msjs}}} implements the rest.
+
+** Concepts
+
+The multi-selection task is to idenfity a subset of a
+collection of elements.  To abstract over what these elements are (DOM
+elements, characters in text, polygons drawn on a canvas, etc.), we
+assume that each element is uniquely identified by some
+/index/. Indices can be of any type that can be compared for equality
+with ~===~, such as numbers, object references, or strings.
+
+The selection state of elements is modeled as a function from indices
+to booleans, where ~true~ indicates that an element is selected,
+~false~ that it is not.  We call such a function a /selection
+mapping/.  User's selection actions, such as clicking the mouse on an
+element, dragging a ``rubber band'' around elements, or pressing an
+arrow key with the shift modifier key held down translate to one or
+more /selection operations/ that modify the selection mapping.
+
+Each selection operation is associated with a /selection domain/ that
+determines the set of indices that the operation affects, and a
+/selection function/ that determines whether the indices will be
+selected, deselected, or toggled.  The user indicates the selection
+domain through specifying a /selection path/, a sequence of points in
+some suitable coordinate space. This /selection space/ could be, for
+example, the mouse locations in a window or pairs of row and column
+indices in a grid of elements.  The first point of a selection path
+arises from a click or a command-click[fn:1], the subsequent points
+from shift-clicks (or mouse moves, when rubber band selecting).  The
+first point is called the /anchor/ and the last the /active end/ of
+the path. In the case of a one-element path, the anchor and active end
+coincide. The selection domain specified by the current selection path
+is the /active/ selection domain.
+
+Figure [[fig-selection-concepts-results]] shows concrete instances of the
+above concepts. The selectable elements are rectangles of arbitrary
+size, they are placed in arbitrary locations, and they can overlap. We
+make the following observations:
+
+  - The selected elements are items 2, 4, 5, and 6, and hence the
+    selection mapping maps the indices 2, 4, 5, and 6 to ~true~, and all
+    other indices to ~false~.
+  - The element 4 has been selected with a prior selection command.
+    To select the elements 2, 5, and 6, the user has clicked the
+    location marked with a red circle, and then dragged the mouse
+    (/rubber band selection/) through several other locations (small
+    blue dots). The last (or current) mouse location is marked with
+    the blue circle.
+  - The selection space coincides with the space of mouse coordinates.
+    The sequence of points indicated by the blue dots therefore
+    constitute the selection path.
+  - In most selection contexts, the anchor and active end are the only
+    points that matter in determining the selection domain. Here, the
+    anchor and active end serve as the opposite cornerns of a
+    rectangle---all elements that overlap with this rectangle (shown
+    in blue) belong to the active selection domain.
+
+#+NAME: fig-selection-concepts
+#+BEGIN_SRC latex :eval no-export :results raw :imagemagick yes :headers :file selection_concepts.png :headers '("\\usepackage{tikz}") :iminoptions -density 600 :imoutoptions -geometry 400 :fit yes
+  \tikzstyle{every path}=[shorten >= 1mm,line width=1pt]
+  \tikzstyle{every node}=[font=\scriptsize\tt]%, text width=2mm]
+
+  \edef\elementsize{1.4cm}
+  \tikzstyle{element}=[anchor=north west,line width=0.8pt,rectangle,draw,minimum width=\elementsize]
+  \tikzstyle{selected}=[anchor=north west,line width=0.8pt,rectangle,draw,minimum width=\elementsize,fill=black!20]
+  \tikzstyle{anchornode}=[line width=0.8pt,circle,draw=red!80,
+  inner sep=0pt, minimum size=4pt]
+  \tikzstyle{cursornode}=[line width=0.8pt,circle,draw=blue!80,
+  inner sep=0pt, minimum size=4pt]
+  \tikzstyle{pathnode}=[line width=0.8pt,circle,draw=blue!80,
+  inner sep=0pt, minimum size=1pt]
+  \begin{tikzpicture}
+  \begin{scope}[scale=1]
+      \draw 
+      (0, 0) node [element, minimum width=1.4cm] (1) {Item 1}
+      (1.2, -0.1) node [selected, minimum width=1cm, 
+                        minimum height=0.8cm] (2) {Item 2}
+      (3, 0) node [element, minimum width=1.4cm] (3) {Item 3};
+      \draw
+      (0, -1.3) node [selected, minimum width=1.2cm,
+                    minimum height=0.6cm] (4) {Item 4}
+      (1.5, -1.3) node [selected, minimum width=1.2cm, 
+                      minimum height=0.6cm] (5) {Item 5}
+      (3, -1.6) node [selected, minimum width=1.2cm,
+                    minimum height=0.6cm] (6) {Item 6};
+      \draw [draw=blue!80] (2.05, -2.1) node [anchornode] (a) {} node [pathnode] {}
+            rectangle (4.1, -0.75)
+            +(0, 0) node [cursornode] (a) {} node [pathnode] {};
+      \draw (2.4, -1.95) node [pathnode] {}
+            ++(0.4, 0.2) node [pathnode] {}
+            ++(0.2, 0.2) node [pathnode] {}
+            ++(0.2, 0.2) node [pathnode] {}
+            ++(0.3, 0.3) node [pathnode] {}
+            ++(0.2, 0.2) node [pathnode] {}
+            ++(0.2, 0.05) node [pathnode] {};
+  \end{scope}
+  \end{tikzpicture}
+#+END_SRC
+
+#+NAME: fig-selection-concepts-results
+#+CAPTION: A snapshot of a selection interaction. The selection path (the blue points) 
+#+CAPTION: give rise to the selection domain consisting of the items 2, 5 and 6. 
+#+RESULTS: fig-selection-concepts
+[[file:selection_concepts.png]]
+
+How the selection path determines the selection domain varies from one
+context to another. This variation is captured in the /selection
+geometry/.  Concretely, a selection geometry in {{{msjs}}} is an
+object that defines the functions:
+
+  - ~m2v(point)~ that converts mouse coordinates to selection space
+    coordinates;
+  - ~selectionDomain(path, cmdType, J)~ that maps a selection ~path~
+    to a selection domain (the ~cmdType~ and ~J~ parameters are to
+    enable optimizations, and they are explained later);
+  - ~extendPath(path, point)~ that defines how a new point is added to
+    the selection path;
+  - ~filter(pred)~ that computes a selection domain as the set of
+    indices that satisfy the predicate ~pred~;
+  - ~step(direction, point)~ that defines how arrow keys should impact
+    the current /keyboard cursor/ location; and
+  - ~defaultCursor(direction)~ that defines default cursor locations
+    for when no operations have yet been performed.
+
+The library has default definitions for each of the selection
+geometry's functions, and often it suffices to implement only a subset
+of them. For example, in the selection geometry of Figure
+[[fig-selection-concepts-results]], the default definitions for ~m2v~
+(identity function) and ~extendPath~ (add point as the new anchor) can
+be used.  If the example does not support keyboard selection, ~step~
+and ~defaultCursor~ need not be defined.  If it does not support
+selection by a predicate, ~filter~ need not be defined.  The only
+function that must be defined is ~selectionDomain~; it computes the
+set of elements that overlaps with the rectangle indicated by two
+points, the anchor and active end.
+
+#+NAME: fig-simple-selection-geometry
+#+BEGIN_SRC latex :eval no-export :results file raw :imagemagick yes :file simple-selection-geometry.png :headers '("\\usepackage{tikz}") :iminoptions -density 600 :imoutoptions -geometry 800 :fit no
+  \tikzstyle{every path}=[shorten >= 1mm,line width=1pt]
+  \tikzstyle{every node}=[font=\scriptsize\tt]%, text width=2mm]
+
+  \edef\elementsize{1.4cm}
+  \tikzstyle{element}=[anchor=north west,line width=0.8pt,rectangle,draw,minimum width=\elementsize]
+  \tikzstyle{selected}=[anchor=north west,line width=0.8pt,rectangle,draw,minimum width=\elementsize,fill=black!20]
+  \tikzstyle{anchorselected}=[anchor=north west,line width=0.8pt,rectangle,draw=blue!80,dashed,minimum width=\elementsize,fill=black!20]
+  \tikzstyle{cursorselected}=[anchor=north west,line width=0.8pt,rectangle,draw=red!80,dashed,minimum width=\elementsize,fill=black!20]
+  \tikzstyle{anchornode}=[line width=0.8pt,circle,draw=blue!80,
+  inner sep=0pt, minimum size=4pt, fill=blue!40]
+  \tikzstyle{cursornode}=[line width=0.8pt,circle,draw=blue!80,
+  inner sep=0pt, minimum size=4pt]
+  \tikzstyle{pathnode}=[line width=0.8pt,circle,draw=blue!80,
+  inner sep=0pt, minimum size=1pt]
+  \begin{tikzpicture}
+  \begin{scope}[scale=1]
+      \draw 
+      (0, 0) node [element] (1) {Item 1}
+      +(1*1.5, 0) node [anchorselected] (2) {Item 2}
+      +(2*1.5, 0) node [selected] (3) {Item 3}
+      +(3*1.5, 0) node [selected] (4) {Item 4}
+      +(4*1.5, 0) node [cursorselected] (5) {Item 5}
+      +(5*1.5, 0) node [element] (6) {Item 6};
+  \end{scope}
+  \end{tikzpicture}  
+#+END_SRC
+
+#+NAME: fig-simple-selection-geometry-results
+#+CAPTION: The selection path is the sequence 5, 2.
+#+CAPTION: The anchor is 5 and the active end 2.
+#+CAPTION: The selection domain is the set {2, 3, 4, 5}.
+#+RESULTS: fig-simple-selection-geometry
+[[file:simple-selection-geometry.png]]
+
+Figure [[fig-simple-selection-geometry-results]] shows a snapshot from a
+selection context that has a different selection geometry.  In this
+geometry, the selection space coincides with the set of element
+indices: the ~m2v~ function maps all mouse positions that fall within
+an element's extents to the index of that element.  In this context,
+elements are considered to be ordered, so the ~selectionDomain~
+function maps a selection path to the range of indices between
+(inclusive) the path's anchor and active end. The anchor is marked
+with a red dashed frame and the active end with blue.  Here, the user
+has clicked first somewhere on ~Item 5~ and then shift-clicked
+somewhere on ~Item 2~.  As a result, all elements between these two
+items are marked selected.
+
+
+Another aspect that varies from one selection context to another is if
+and how the anchor and the active end, and more generally the
+selection path, are visualized.  {{{msjs}}} leaves these questions to
+the client, but makes the data needed for those visualizations readily
+available (see Section [[#sec-path-visualization]]).
+
+[fn:1] Command-click in Macs correspond to control-click in Windows. Other
+computers or operating systems might use still different modifier keys.
+
+** The meaning of click, command-click, and shift-click
+
+/Click/, /command-click/, and /shift-click/ are the basic selection
+tools that most applications support. Different applications assign
+slightly different meanings to these operations. The key bindings may
+vary as well (e.g., Windows' /ctrl-click/ corresponds to OS X's
+command-click).  These three commands are the basic building blocks of
+{{{msjs}}}, in terms of which most other (keyboard and rubber band
+selection) commands are defined.  In a nutshell, the three selection
+commands work as follows:
+
+- Click commits the current selection as an undoable state, deselects
+  all selected elements, clears the selection path, establishes a new
+  selection path that consists solely of the anchor, and sets the
+  selection function to /select/. It then computes the selection
+  domain that corresponds to the single-element selection path and
+  selects the element(s) in the selection domain, which becomes the
+  new active selection domain.
+
+- Command-click commits the current selection as an undoable state,
+  clears the selection path, and establishes a new selection path that
+  consists solely of the anchor. If the anchor is on an already
+  selected element, the selection function is set to /deselect/,
+  otherwise to /select/. It then computes the selection domain that
+  corresponds to the single element selection path and selects or
+  deselects the element(s) in the selection domain, which becomes the
+  new active selection domain.
+
+- Shift-click extends the current selection path by a new point, and
+  computes a selection domain that corresponds to this new selection
+  path. This selection domain replaces the current active selection
+  domain, so it cancels the effect of the previous one selection
+  operation, and applies the same selection function to a new domain.
+
+{{{msjs}}} does not insist on particular key bindings for any of the
+selection operations, but the naming of the functions in its public
+API reflects our recommendations.
+
+* Example: selecting from an ordered list of non-overlapping elements
+
+The first example is a horizontal list of elements, in which elements
+can be selected using the click, command-click, and shift-click
+commands.  The /Show animals/ button displays a list of currently
+selected elements.
+
+#+NAME: ordered-list-example-html
+#+BEGIN_SRC org :results replace drawer :exports results :noweb yes :post wrap-html(text=*this*)
+<<js-imports>>
+<<ordered-list-css>>
+<script type="text/javascript">
+   <<ordered-list-js-code-before-ready>>
+
+   document.addEventListener("DOMContentLoaded", function() { 
+      <<ordered-list-js-code-after-ready>>
+   });
+</script>
+<<ordered-list-html>>
+#+END_SRC
+
+#+results: ordered-list-example-html
+:RESULTS:
+#+BEGIN_HTML
+<script type="text/javascript" src="../../dist/multiselect.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<style>
+  .selectable { outline:1px solid; padding:10px; cursor:default; }
+  .selected { background-color: khaki; }
+</style>
+<script type="text/javascript">
+   // helper functions to deal with points, rectangles, etc.
+   function pointInRectangle(mp, r) {
+     return mp.x >= r.left && mp.x <= r.right && 
+            mp.y >= r.top && mp.y <= r.bottom;
+   }
+   
+   // determine which modifier keys were held down during event
+   const M_NONE = 1, 
+         M_SHIFT = 2, 
+         M_CMD = 3, 
+         M_SHIFT_CMD = 4, 
+         M_OPT = 5, 
+         M_SHIFT_OPT = 6;
+   
+   function modifierKeys (evt) {
+     
+     if (evt.shiftKey && isCmdKey(evt)) return M_SHIFT_CMD;
+     if (isCmdKey(evt)) return M_CMD;
+     if (evt.shiftKey && evt.altKey) return M_SHIFT_OPT;
+     if (evt.altKey) return M_OPT;
+     if (evt.shiftKey) return M_SHIFT;
+     return M_NONE;
+   
+     function isCmdKey (evt) { return evt.metaKey || evt.ctrlKey; }
+   }
+   
+   // OrderedList selection geometry
+   var OrderedGeometry = function (elements) {
+     this._elements = elements;
+   }
+   OrderedGeometry.prototype = Object.create(multiselect.DefaultGeometry.prototype);
+   OrderedGeometry.prototype.m2v = function(mp) {
+     for (var i=0; i<this._elements.length; ++i) {
+       if (pointInRectangle(mp, this._elements[i].getBoundingClientRect())) return i;
+     }
+   }
+   OrderedGeometry.prototype.selectionDomain = function(path) {
+     var J = multiselect.makeEmptyMap();
+     var a = multiselect.anchor(path);
+     var b = multiselect.activeEnd(path);
+     for (var i=Math.min(a, b); i<=Math.max(a, b); ++i) J.set(i, true);
+     return J;
+   }
+
+   document.addEventListener("DOMContentLoaded", function() { 
+      // selectable elements
+      var selectableArea = document.getElementById("selectable_area");
+      var selectables = selectableArea.getElementsByClassName("selectable");
+      
+      // the refresh function
+      function refresh(s) {
+        for(var i=0; i<selectables.length; ++i) { 
+          selectables[i].classList.toggle('selected', s(i));
+        };
+      }  
+      
+      // create the selection object
+      var geometry = new OrderedGeometry(selectables);
+      var selection = new multiselect.SelectionState(geometry, refresh, false, 10);
+      
+      // register mouse events
+      function mousedownHandler(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+      
+        var vp = selection.geometry().m2v({ x: evt.clientX, y: evt.clientY });
+      
+        switch (modifierKeys(evt)) {
+        case M_NONE: selection.click(vp); break;
+        case M_CMD: selection.cmdClick(vp); break;
+        case M_SHIFT: selection.shiftClick(vp); break;
+        }
+      };
+      
+      selectableArea.addEventListener('mousedown', mousedownHandler, false);
+      
+      // find out which elements are selected
+      function showAnimals() {
+        var s = "";
+        selection.selected().forEach(function(v) { 
+          s = s + selectables[v].textContent + " "; 
+        });
+        document.getElementById("animal_list").textContent = s; 
+      }
+      document.getElementById("show_animals").addEventListener("click", showAnimals);
+   });
+</script>
+<table id="selectable_area">
+  <tr><td class="selectable">pig</td>
+  <td class="selectable">cow</td>             
+  <td class="selectable">goat</td>
+  <td class="selectable">horse</td>
+  <td class="selectable">sheep</td>
+  <td class="selectable">chicken</td>
+  <td class="selectable">duck</td>
+  <td class="selectable">turkey</td>
+  <td class="selectable">ostrich</td>
+  <td class="selectable">mule</td>
+  </tr>
+</table>
+
+<br>
+<button id="show_animals">Show selected animals</button> <span id="animal_list"></span>
+#+END_HTML
+:END:
+
+#+ATTR_HTML: :target _blank
+The [[file:example-1.html][example]] and its [[file:example-1-source.html][complete source code]] can be viewed in separate windows.
+
+#+BEGIN_SRC html :exports none :tangle example-1.html :noweb yes
+  <html>
+    <head>
+      <<js-imports>>
+      <<ordered-list-css>>
+      <script type="text/javascript">
+
+        <<ordered-list-js-code-before-ready>>
+
+        document.addEventListener("DOMContentLoaded", function() { 
+          <<ordered-list-js-code-after-ready>>
+        });
+      </script>
+    </head>
+    <body>
+      <<ordered-list-html>>
+    </body>
+  </html>
+#+END_SRC
+
+** Imports
+
+To use {{{msjs}}} on a page is a matter of importing it as a script. 
+There are no dependencies.
+
+#+NAME: js-imports
+#+BEGIN_SRC html
+<script type="text/javascript" src="../../dist/multiselect.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+#+END_SRC
+
+** Selectable elements
+
+In this example, the selectable elements are HTML table cells.  We
+give the cells the ~selectable~ class attribute so that they are
+easily accessible. The ~animal_list~ span is a placeholder for where
+the selected animal names will be shown when the ~show_animals~ button
+is clicked.
+
+#+NAME: ordered-list-html
+#+BEGIN_SRC html :exports code 
+    <table id="selectable_area">
+      <tr><td class="selectable">pig</td>
+      <td class="selectable">cow</td>             
+      <td class="selectable">goat</td>
+      <td class="selectable">horse</td>
+      <td class="selectable">sheep</td>
+      <td class="selectable">chicken</td>
+      <td class="selectable">duck</td>
+      <td class="selectable">turkey</td>
+      <td class="selectable">ostrich</td>
+      <td class="selectable">mule</td>
+      </tr>
+    </table>
+
+    <br>
+    <button id="show_animals">Show selected animals</button> <span id="animal_list"></span>
+#+END_SRC
+
+Next, we access the above HTML elements from JavaScript code:
+
+#+NAME: ordered-list-selectables
+#+BEGIN_SRC js 
+var selectableArea = document.getElementById("selectable_area");
+var selectables = selectableArea.getElementsByClassName("selectable");
+#+END_SRC
+
+The ~selectableArea~ object is the target of the mouse events.
+The ~selectables~ objects is the collection of the selectable elements;
+it is an "array-like" object, indexed with integers.
+
+
+** Visualizing the selection state
+
+The following CSS code defines the visual appearance of selectable
+elements in both their unselected and selected states.
+The ~.selected~ class is turned on when an element is selected and off
+when deselected.
+
+#+NAME: ordered-list-css
+#+BEGIN_SRC html
+  <style>
+    .selectable { outline:1px solid; padding:10px; cursor:default; }
+    .selected { background-color: khaki; }
+  </style>
+#+END_SRC
+
+To enable displaying the current selection state, {{{msjs}}} invokes a
+callback function after every selection command (unless the library
+recognizes that a command had no effect).  The callback's parameter,
+~s~, is the current selection mapping.  Here, the callback iterates
+over all selectable elements and toggles the ~selected~ class
+attribute according to each element's selection status:
+
+#+NAME: ordered-list-refresh
+#+BEGIN_SRC js 
+  function refresh(s) {
+    for(var i=0; i<selectables.length; ++i) { 
+      selectables[i].classList.toggle('selected', s(i));
+    };
+  }  
+#+END_SRC
+
+The library can also be configured to /track changes/, in which case
+the argument to the callback would be a ~Map~[fn:2] of changed
+elements. This mechanism is explained in Section
+[[#sec-refreshing-and-tracking]].
+
+[fn:2] ~Map~ is part of the draft EcmaScript 6 standard, see
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map.
+It is already supported by all major browsers.
+
+
+** Selection geometry
+
+The ~OrderedGeometry~ class is the selection geometry for our example.
+It stores a reference to the collection of the selectable elements.
+
+#+NAME: ordered-geometry
+#+BEGIN_SRC js 
+var OrderedGeometry = function (elements) {
+  this._elements = elements;
+}
+OrderedGeometry.prototype = Object.create(multiselect.DefaultGeometry.prototype);
+#+END_SRC
+
+~OrderedGeometry~ inherits from ~DefaultGeometry~ to get the default
+implementations of the selection geometry methods.  The superclass'
+constructor is not called since the base class has no
+state. ~OrderedGeometry~ defines two methods: ~m2v~ and
+~selectionDomain~.
+
+The selection space coordinates are the indices of the selectable
+elements, integers between ~0~ and ~this._elements.length - 1~.  
+The ~m2v~ function finds the element on which the
+mouse coordinate ~mp~ falls on and returns the element's index.
+
+#+NAME: ordered-geometry-m2v
+#+BEGIN_SRC js
+  OrderedGeometry.prototype.m2v = function(mp) {
+    for (var i=0; i<this._elements.length; ++i) {
+      if (pointInRectangle(mp, this._elements[i].getBoundingClientRect())) return i;
+    }
+  }
+#+END_SRC
+
+The helper function ~pointInRectangle~ checks whether a point is
+inside a rectangle. 
+
+#+NAME: point-in-rectangle
+#+BEGIN_SRC js
+  function pointInRectangle(mp, r) {
+    return mp.x >= r.left && mp.x <= r.right && 
+           mp.y >= r.top && mp.y <= r.bottom;
+  }
+#+END_SRC
+
+The ~selectionDomain~ function is simple---it constructs a new ~Map~
+object with ~makeEmptyMap~, extracts the anchor and active end
+from the selection path, and sets all indices between them to ~true~:
+
+#+NAME: ordered-geometry-selection-domain
+#+BEGIN_SRC js
+  OrderedGeometry.prototype.selectionDomain = function(path) {
+    var J = multiselect.makeEmptyMap();
+    var a = multiselect.anchor(path);
+    var b = multiselect.activeEnd(path);
+    for (var i=Math.min(a, b); i<=Math.max(a, b); ++i) J.set(i, true);
+    return J;
+  }
+#+END_SRC
+
+** Selection state object
+
+The ~SelectionState~ class maintains all the state of the selection,
+including the current selection mapping, selection path, and undo and
+redo stacks.  It defines methods for the various selection commands
+(~click~, ~cmdClick~, ~shiftClick~ etc.).  The ~SelectionState~
+constructor's parameters are a /selection geometry/, the /refresh callback/, a
+boolean that turns /change tracking/ on or off, and the /maximum number
+of undo states/ to remember. The last two can be omitted if their defaults
+(~false~ and ~10~, respectively) are suitable.
+
+#+NAME: ordered-list-create-selection
+#+BEGIN_SRC js 
+  var geometry = new OrderedGeometry(selectables);
+  var selection = new multiselect.SelectionState(geometry, refresh, false, 10);
+#+END_SRC
+
+#+RESULTS: ordered-list-create-selection
+
+** Setting up mouse events
+
+The event handler for the /mouse down/ event recognizes clicks,
+command-clicks, and shift-clicks, and invokes the corresponding
+library functions. Detecting modifier keys is somewhat messy.  We thus
+define constants that indicate shift, command, and option modifiers,
+and define a function to translate the browser and OS specific event
+data to one of these constants of our own:
+
+#+NAME: modifier-keys
+#+BEGIN_SRC js
+const M_NONE = 1, 
+      M_SHIFT = 2, 
+      M_CMD = 3, 
+      M_SHIFT_CMD = 4, 
+      M_OPT = 5, 
+      M_SHIFT_OPT = 6;
+
+function modifierKeys (evt) {
+  
+  if (evt.shiftKey && isCmdKey(evt)) return M_SHIFT_CMD;
+  if (isCmdKey(evt)) return M_CMD;
+  if (evt.shiftKey && evt.altKey) return M_SHIFT_OPT;
+  if (evt.altKey) return M_OPT;
+  if (evt.shiftKey) return M_SHIFT;
+  return M_NONE;
+
+  function isCmdKey (evt) { return evt.metaKey || evt.ctrlKey; }
+}
+#+END_SRC
+
+The ~isCmdKey~ function defines what keys are interpreted as the
+command modifier; we accept both control and command keys. This is
+because in the context of multiselection the role of the command
+modifier under Mac OS X is the same as that of the control modifier
+under Windows and Linux. In a production application, one might want
+to detect the platform and only accept one of the alternatives,
+according to the platform convention. The option modifier (alt in
+Windows) is also recognized, with and withouth shift.  This modifier
+is used in key bindings of undo and redo commands.
+
+The handler for the mouse down event can now be defined and registered:
+
+#+NAME: setup-mouse-events-simple
+#+BEGIN_SRC js
+  function mousedownHandler(evt) {
+    evt.preventDefault();
+    evt.stopPropagation();
+
+    var vp = selection.geometry().m2v({ x: evt.clientX, y: evt.clientY });
+
+    switch (modifierKeys(evt)) {
+    case M_NONE: selection.click(vp); break;
+    case M_CMD: selection.cmdClick(vp); break;
+    case M_SHIFT: selection.shiftClick(vp); break;
+    }
+  };
+
+  selectableArea.addEventListener('mousedown', mousedownHandler, false);
+#+END_SRC
+
+How selection events are recognized may have to take into account
+other mouse events, in particular those for dragging to copy or move
+already selected elements. This example ignores such concerns.
+Regardless of the precise way of recognizing mouse events, we draw
+attention to the simplicity of invoking {{{msjs}}}'s services: the
+selection geometry's ~m2v~ function transforms the mouse position into
+a selection space coordinate, which is passed to either the ~click~,
+~cmdClick~, or ~shiftClick~ method.
+
+** Accessing selected elements
+   :PROPERTIES:
+   :CUSTOM_ID: sec-show-selected
+   :END:
+
+The first example is complete, except for handling the click event of
+the ``Show selected animals'', which displays a list of the
+selected elements. The ~selection.selected()~ call returns the selected
+elements as a [[https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set][Set]].
+
+#+NAME: ordered-list-show-animals
+#+BEGIN_SRC js
+  function showAnimals() {
+    var s = "";
+    selection.selected().forEach(function(v) { 
+      s = s + selectables[v].textContent + " "; 
+    });
+    document.getElementById("animal_list").textContent = s; 
+  }
+  document.getElementById("show_animals").addEventListener("click", showAnimals);
+#+END_SRC
+
+Another means to inspect the current selection state, not used here,
+is the ~isSelected(i)~ method that returns the selection state of
+element ~i~.
+
+#+NAME: ordered-list-js-code-before-ready
+#+BEGIN_SRC js :exports none :noweb yes
+  // helper functions to deal with points, rectangles, etc.
+  <<point-in-rectangle>>
+
+  // determine which modifier keys were held down during event
+  <<modifier-keys>>
+
+  // OrderedList selection geometry
+  <<ordered-geometry>>
+  <<ordered-geometry-m2v>>
+  <<ordered-geometry-selection-domain>>
+#+END_SRC
+
+#+NAME: ordered-list-js-code-after-ready
+#+BEGIN_SRC js :exports none :noweb yes
+// selectable elements
+<<ordered-list-selectables>>
+
+// the refresh function
+<<ordered-list-refresh>>
+
+// create the selection object
+<<ordered-list-create-selection>>
+
+// register mouse events
+<<setup-mouse-events-simple>>
+
+// find out which elements are selected
+<<ordered-list-show-animals>>
+#+END_SRC
+
+* Example: selection geometry that is both row-wise ordered and rectangular
+
+#+NAME: row-wise-js-code-before-ready
+#+BEGIN_SRC js :exports none :noweb yes
+<<create-canvas>>
+
+<<get-offset-rectangle>>
+
+<<offset-mouse-pos>>
+
+<<mk-refresh>>
+
+// row-wise geometry
+<<row-wise-geometry>>
+
+<<row-wise-geometry-m2v>>
+
+<<row-wise-geometry-extend-path>>
+
+<<row-wise-geometry-selection-domain>>
+
+<<rectangle-intersect>>
+
+<<row-wise-geometry-step>>
+
+<<rectangle-helpers-3>>
+
+<<row-wise-geometry-filter>>
+
+<<row-wise-geometry-default-cursor>>
+
+// Mouse events
+<<setup-mouse-events>>
+
+// Keyboard events
+<<setup-keyboard-events>>
+#+END_SRC
+
+#+NAME: row-wise-js-code-after-ready
+#+BEGIN_SRC js :exports none :noweb yes
+<<row-wise-selectables>>
+
+<<row-wise-refresh>>
+
+<<row-wise-create-selection-state>>
+
+<<row-wise-setup-mouse-events>>
+<<row-wise-setup-keyboard-events>>
+
+<<draw-indicators>>
+#+END_SRC
+
+#+NAME: row-wise-example-html
+#+BEGIN_SRC org :results replace drawer :exports results :noweb yes :post wrap-html(text=*this*)
+<script type="text/javascript">
+  <<row-wise-js-code-before-ready>>
+
+  document.addEventListener("DOMContentLoaded", function() { 
+    <<row-wise-js-code-after-ready>>
+  });
+</script>
+#+END_SRC
+
+#+RESULTS: row-wise-example-html
+:RESULTS:
+#+BEGIN_HTML
+<script type="text/javascript">
+  function topLeftCorner(r) { return { x: r.left, y: r.top }; }
+    
+  function offsetRectangle(p, r) {
+    return {
+      left: r.left - p.x, top: r.top - p.y, 
+      right: r.right - p.x, bottom: r.bottom - p.y 
+    };
+  }
+  
+  function getOffsetRectangle(parent, elem) {
+    return offsetRectangle(topLeftCorner(parent.getBoundingClientRect()),
+                           elem.getBoundingClientRect());
+  }
+  
+  function offseteMousePos(parent, evt) { 
+    var p = topLeftCorner(parent.getClientRects()[0]);
+    return { x: evt.clientX - p.x, y: evt.clientY - p.y }; 
+  }
+  
+  // row-wise geometry
+  var RowwiseGeometry = function (parent, elements) {
+    this._parent = parent;
+    this._elements = elements;
+  }
+  RowwiseGeometry.prototype = Object.create(multiselect.DefaultGeometry.prototype);
+  
+  RowwiseGeometry.prototype.m2v = function(mp) {
+    for (var i=0; i<this._elements.length; ++i) {
+      var r = getOffsetRectangle(this._parent, this._elements[i]);
+      if (pointInRectangle(mp, r)) return { index: i, point: mp };        
+    }
+    return { index: null, point: mp };
+  }
+  
+  RowwiseGeometry.prototype.extendPath = function(path, p) {
+    if (path.length > 0 &&
+        multiselect.anchor(path).index !== null && p.index === null) return null;
+    if (path.length == 2) path.pop();
+    path.push(p); 
+  }
+  
+  RowwiseGeometry.prototype.selectionDomain = function(path) {
+    var J = multiselect.makeEmptyMap();
+    var a = multiselect.anchor(path);
+    var b = multiselect.activeEnd(path);
+  
+    if (a.index !== null) {
+      for (var i=Math.min(a.index, b.index); i<=Math.max(a.index, b.index); ++i) 
+        J.set(i, true);
+    } else {
+      var r1 = { left:   Math.min(a.point.x, b.point.x),
+                 right:  Math.max(a.point.x, b.point.x),
+                 top:    Math.min(a.point.y, b.point.y),
+                 bottom: Math.max(a.point.y, b.point.y) };
+      for (var i = 0; i < this._elements.length; ++i) {
+        var r2 = getOffsetRectangle(this._parent, this._elements[i]);
+        if (rectangleIntersect(r1, r2)) J.set(i, true);
+      }
+    }
+  
+    return J;
+  }
+  
+  RowwiseGeometry.prototype.step = function (dir, p) {
+    if (p.index === null) return p;
+    var ind = null;
+    switch (dir) {
+    case multiselect.LEFT:  ind = Math.max(p.index - 1, 0); break;
+    case multiselect.RIGHT: ind = Math.min(p.index + 1, this._elements.length-1); break;
+    case multiselect.UP: ind = findClosestP.call(this, p.index, isAbove); break;
+    case multiselect.DOWN: ind = findClosestP.call(this, p.index, 
+                                   function (a, b) { return isAbove(b, a); }); break; 
+    default: return p;
+    }
+    return { index: ind, point: centerPoint(getOffsetRectangle(this._parent, this._elements[ind])) };
+  }
+  
+  RowwiseGeometry.prototype.filter = function(p) {   
+    var J = multiselect.makeEmptyMap();
+    for (var i = 0; i < this._elements.length; ++i) if (p(i)) J.set(i, true);
+    return J;
+  }
+  
+  // Mouse events
+  function setupMouseEvents (parent, canvas, selection) {
+  
+    function mousedownHandler(evt) {
+      document.addEventListener('mousemove', mousemoveHandler, false);
+      document.addEventListener('mouseup', mouseupHandler, false);
+      evt.preventDefault();
+      evt.stopPropagation();
+  
+      var mousePos = selection.geometry().m2v(offsetMousePos(parent, evt));
+      switch (modifierKeys(evt)) {
+      case M_NONE: selection.click(mousePos); break;
+      case M_CMD: selection.cmdClick(mousePos); break;
+      case M_SHIFT: selection.shiftClick(mousePos); break;
+      }    
+      selection.geometry().drawIndicators(selection, canvas, true, true, false);
+    };
+  
+    function mousemoveHandler (evt) {
+      evt.preventDefault();
+      evt.stopPropagation();
+      var mousePos = selection.geometry().m2v(offsetMousePos(parent, evt));
+      selection.shiftClick(mousePos);
+      selection.geometry().drawIndicators(selection, canvas, true, true, true);
+    };
+  
+    function mouseupHandler (evt) {
+      document.removeEventListener('mousemove', mousemoveHandler, false);
+      document.removeEventListener('mouseup', mouseupHandler, false);
+      selection.geometry().drawIndicators(selection, canvas, true, true, false);
+    };
+  
+    parent.addEventListener('mousedown', mousedownHandler, false);
+  }
+  
+  // Keyboard events
+  function setupKeyboardEvents(parent, canvas, selection) {
+  
+    parent.addEventListener('keydown', keydownHandler, false);
+    parent.addEventListener('mousedown', function() { parent.focus(); }, false);
+  
+    function keydownHandler(evt) {
+      var handled = false; 
+      var mk = modifierKeys(evt);
+      switch (evt.which) {          
+      case 37: handled = callArrow(mk, multiselect.LEFT); break;
+      case 38: handled = callArrow(mk, multiselect.UP); break;             
+      case 39: handled = callArrow(mk, multiselect.RIGHT); break;
+      case 40: handled = callArrow(mk, multiselect.DOWN); break;
+      case 32: handled = callSpace(mk); break;
+      case 90: handled = callUndoRedo(mk); break;
+      default: return; // exit this handler for unrecognized keys
+      }
+      if (!handled) return;
+  
+      // event is recognized
+      selection.geometry().drawIndicators(selection, canvas, true, true, false);
+      evt.preventDefault(); 
+      evt.stopPropagation();
+    }  
+  
+    function callUndoRedo (mk) {
+      switch (mk) {
+      case M_OPT: selection.undo(); break;
+      case M_SHIFT_OPT: selection.redo(); break;
+      default: return false;
+      }      
+      return true;
+    }
+  
+    function callArrow (mk, dir) {
+      switch (mk) {
+      case M_NONE: selection.arrow(dir); break;
+      case M_CMD: selection.cmdArrow(dir); break;
+      case M_SHIFT: selection.shiftArrow(dir); break;
+      default: return false;
+      }
+      return true;
+    }
+  
+    function callSpace (mk) {
+      switch (mk) {
+      case M_NONE: selection.space(); break;
+      case M_CMD: selection.cmdSpace(); break;
+      case M_SHIFT: selection.shiftSpace(); break;
+      default: return false;      
+      }
+      return true;
+    }
+  }
+
+  $(document).ready(function () {
+    var selectableArea2 = $("#selectable_area2")[0];
+    for (var i = 0; i<400; ++i) {
+      $(selectableArea2).append("<span class='selectable2'>" + i + "</span> ");
+    }
+    var selectables2 = $(".selectable2", selectableArea2);    
+    
+    function refresh2(changed) {
+      changed.forEach(function (value, i) { 
+        $(selectables2[i]).toggleClass('selected2', value); 
+      });
+    }
+    
+    var geometry2 = new RowwiseGeometry(selectableArea2, selectables2);
+    var selection2 = new multiselect.SelectionState(geometry2, refresh2, true);
+    
+    var canvas2 = createCanvas(selectableArea2);
+    setupMouseEvents(selectableArea2, canvas2, selection2);
+    setupKeyboardEvents(selectableArea2, canvas2, selection2);
+    
+    function createCanvas (parent) {
+    
+      var canvas = document.createElement("canvas");
+      canvas.style.position = 'absolute';
+      parent.insertBefore(canvas, parent.firstChild);
+      $(window).resize(resizeCanvas); 
+      resizeCanvas();
+      return canvas;
+    
+      function resizeCanvas() {
+        var rect = parent.getBoundingClientRect();
+        canvas.width = rect.right - rect.left;
+        canvas.height = rect.bottom - rect.top;    
+      }
+    }
+    
+    geometry2.drawIndicators = function (selection, canvas, drawAnchor, drawCursor, drawRubber) {
+      var ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (drawAnchor) { 
+        ctx.strokeStyle = 'DarkRed';
+        var p = multiselect.anchor(selection.selectionPath());
+        if (p !== undefined) {
+          if (p.index === null) {
+            ctx.beginPath();
+            ctx.arc(p.point.x, p.point.y, 4, 0, Math.PI*2, true); 
+            ctx.stroke();
+          } else {
+            var r = getOffsetRectangle(canvas, selection.geometry()._elements[p.index]);
+            ctx.strokeRect(r.left, r.top, r.right-r.left, r.bottom-r.top);
+          }
+        }
+      }
+      if (drawCursor) { 
+        ctx.strokeStyle = 'blue';
+        var p = selection.cursor();
+        if (p !== undefined && p.index !== null) { 
+          var r = getOffsetRectangle(canvas, selection.geometry()._elements[p.index]);
+          ctx.strokeRect(r.left, r.top, r.right-r.left, r.bottom-r.top);
+        }
+      }
+      if (drawRubber) { 
+        ctx.strokeStyle = 'green';
+        var p1 = multiselect.anchor(selection.selectionPath());
+        if (p1 !== undefined && p1.index === null) {
+          var p2 = multiselect.activeEnd(selection.selectionPath());
+          ctx.strokeRect(Math.min(p1.point.x, p2.point.x),
+                         Math.min(p1.point.y, p2.point.y),
+                         Math.abs(p1.point.x-p2.point.x),
+                         Math.abs(p1.point.y-p2.point.y));
+        }
+      }
+    }
+  });
+</script>
+#+END_HTML
+:END:
+
+This section introduces another selection context, with quite a bit
+more complex selection geometry.  The elements are ordered row-wise,
+and the user can select a range of elements in this order with an
+anchor and active end.  Alternatively, the anchor and active end can
+be interpreted as corners of a rectangle, giving the user the means to
+select all elements within a rectangular area.  This kind of a
+dual selection mechanism is offered, for example, in Apple's iPhoto
+application.  
+
+#+ATTR_HTML: :target _blank
+
+This section also shows how to build support for rubber band selection
+and selecting with keyboard, undo and redo operations, and how to
+visualize the anchor, the active end, and the rubber band.  Again, the
+[[file:example-2.html][example]] can be opened in a separate window, and the [[file:example-2-source.html][complete source
+code]] viewed in one piece.
+
+#+BEGIN_SRC html :exports none :tangle example-2.html :noweb yes
+  <html>
+    <head>
+      <<js-imports>>
+      <<row-wise-css>>
+
+      <script type="text/javascript">
+ 
+        // determine which modifier keys were held down during event
+        <<modifier-keys>>
+        
+
+        // helper functions to deal with points, rectangles, etc.
+        <<point-in-rectangle>>
+
+        <<row-wise-js-code-before-ready>>
+  
+        document.addEventListener("DOMContentLoaded", function() { 
+          <<row-wise-js-code-after-ready>>
+        });
+      </script>
+    </head>
+    <body>
+      <<row-wise-html>>
+    </body>
+  </html>
+#+END_SRC
+
+#+NAME: rw-html
+#+BEGIN_SRC org :results replace drawer :exports results :noweb yes :post wrap-html(text=*this*)
+<<row-wise-css>>
+<<row-wise-html>>
+#+END_SRC
+
+#+results: rw-html
+:RESULTS:
+#+BEGIN_HTML
+<style>
+  #selectable_area2 { border:1px solid black; cursor:default; }
+  .selectable2 { outline:1px solid; padding:1px 4px 1px 4px; margin:2px; display:inline-block; }
+  .selected2 { background-color: khaki; }
+</style>
+<div id="selectable_area2"></div>
+#+END_HTML
+:END:
+
+To become familiar with the supported selection features, try
+clicking, command-clicking, and shift clicking the elements, as well
+as dragging the mouse to perform rubber band selection. Try starting a
+rubber band selection both on an element and between elements and
+notice how in the former case elements within a range and in the
+latter within a rectangular area are selected. Try starting a rubber
+band /deselection/ with a command-click on a selected element.  Try
+releasing the mouse in a rubber band selection, and then picking it up
+again with shift-click. Experiment with keyboard selection, using the
+space and arrow keys with and withouth shift and command
+modifiers. Finally, use the undo and redo operations, bound to
+option-Z and shift-option-Z keys, respectively.
+
+** Selectable elements
+
+The selectable area is a ~div~. The ~tabIndex~ attribute is defined so that
+the element can acquire the keyboard focus.
+
+#+NAME: row-wise-html
+#+BEGIN_SRC js :export code :noweb yes
+<div id="selectable_area2" tabIndex="0"></div>
+#+END_SRC
+
+JavaScript code generates the selectable elements:
+
+#+NAME: row-wise-selectables
+#+BEGIN_SRC js :exports code 
+  var selectableArea2 = document.getElementById("selectable_area2");
+  for (var i = 0; i<400; ++i) {
+    var e = document.createElement("span");
+    e.setAttribute("class", "selectable2");
+    e.textContent = i;
+    selectableArea2.appendChild(e);
+  }
+
+  var selectables2 = selectableArea2.getElementsByClassName("selectable2");
+#+END_SRC
+
+In this example, ~selectable2~ class indicates a selectable element, and ~selected2~ class
+is added when the element is selected. The style definitions are as follows:
+
+#+NAME: row-wise-css
+#+BEGIN_SRC html
+  <style>
+    #selectable_area2 { border:1px solid black; cursor:default; }
+    .selectable2 { outline:1px solid; padding:1px 4px 1px 4px; 
+                   margin:2px; display:inline-block; }
+    .selected2 { background-color: khaki; }
+  </style>
+#+END_SRC
+
+
+
+** Refreshing
+   :PROPERTIES:
+   :CUSTOM_ID: sec-refreshing-and-tracking
+   :END:
+
+As discussed above, every method of the ~SelectionState~ class that
+may change the selection state invokes the refresh callback.  This
+example uses /tracking of changes/ so that the refresh callback
+function only needs to iterate over the changed elements instead of
+all selectable elements. We use a refresh function that toggles a class 
+in further examples as well, and thus write a factory function
+that can generate a refresh-callback for any set of DOM elements.
+
+#+NAME: mk-refresh
+#+BEGIN_SRC js
+function mkRefresh (elements, cls) {
+  return (function (changed) {
+    changed.forEach(function (value, i) { 
+      $(elements[i]).toggleClass(cls, value); 
+    });
+  });
+}
+#+END_SRC
+
+The refresh function for this current example is:
+
+#+NAME: row-wise-refresh
+#+BEGIN_SRC js
+var refresh2 = mkRefresh(selectables2, 'selected2');
+#+END_SRC
+
+
+With tracking of changes on, the argument to the refresh callback is a
+~Map~ object. Its keys are the indices of the elements that were
+changed, and its values either ~true~ or ~false~, indicating the
+current selection state.
+
+** Selection geometry
+
+The selection geometry again stores a reference to the collection of
+the selectable elements. It also stores a reference to a DOM object
+surrounding the selectable elements. This ~parent~ object is used
+in definining mouse coordinates that are invariant to the location of
+the parent object on the page.
+
+#+NAME: row-wise-geometry
+#+BEGIN_SRC js 
+var RowwiseGeometry = function (parent, elements) {
+  this._parent = parent;
+  this._elements = elements;
+}
+RowwiseGeometry.prototype = Object.create(multiselect.DefaultGeometry.prototype);
+#+END_SRC
+
+#+NAME: row-wise-geometry-filter
+#+BEGIN_SRC js :exports none
+  RowwiseGeometry.prototype.filter = function(p) {   
+    var J = multiselect.makeEmptyMap();
+    for (var i = 0; i < this._elements.length; ++i) if (p(i)) J.set(i, true);
+    return J;
+  }
+#+END_SRC
+
+Coordinates in the selection space can indicate either an element
+index or a point ``in-between''.  We choose to represent a coordinate
+as an object that has two members, ~index~ an ~point~. The in-between
+coordinate values are recognized by ~index~ that has value ~null~.  
+The ~point~ member is a mouse coordinate.
+The ~m2v~ method constructs a coordinate object:
+
+#+NAME: row-wise-geometry-m2v
+#+BEGIN_SRC js
+  RowwiseGeometry.prototype.m2v = function(mp) {
+    for (var i=0; i<this._elements.length; ++i) {
+      var r = getOffsetRectangle(this._parent, this._elements[i]);
+      if (pointInRectangle(mp, r)) return { index: i, point: mp };        
+    }
+    return { index: null, point: mp };
+  }
+#+END_SRC
+
+The ~getOffsetRectangle(a, b)~ returns the bounding box of ~b~ in
+coordinates relative to the top-left corner of the bounding box of ~a~:
+
+#+NAME: get-offset-rectangle
+#+BEGIN_SRC js
+  function topLeftCorner(r) { return { x: r.left, y: r.top }; }
+    
+  function offsetRectangle(p, r) {
+    return {
+      left: r.left - p.x, top: r.top - p.y, 
+      right: r.right - p.x, bottom: r.bottom - p.y 
+    };
+  }
+
+  function getOffsetRectangle(parent, elem) {
+    return offsetRectangle(topLeftCorner(parent.getBoundingClientRect()),
+                           elem.getBoundingClientRect());
+  }
+#+END_SRC
+
+As mentioned above, the user can select a range or a rectangular area
+of elements. Which mechanism is used depends on from where a selection
+command starts: if the anchor is on an element, row-wise selection is
+used, if not, rectangular selection is used. The ~selectionDomain~
+function thus first inspects the anchor's ~index~ to determine the
+kind of coordinate the anchor is, and then either interprets the
+anchor and the active end as the endpoints of a range or as the
+corners of a rectangle:
+
+#+NAME: row-wise-geometry-selection-domain
+#+BEGIN_SRC js
+  RowwiseGeometry.prototype.selectionDomain = function(path) {
+    var J = multiselect.makeEmptyMap();
+    var a = multiselect.anchor(path);
+    var b = multiselect.activeEnd(path);
+
+    if (a.index !== null) {
+      for (var i=Math.min(a.index, b.index); i<=Math.max(a.index, b.index); ++i) 
+        J.set(i, true);
+    } else {
+      var r1 = { left:   Math.min(a.point.x, b.point.x),
+                 right:  Math.max(a.point.x, b.point.x),
+                 top:    Math.min(a.point.y, b.point.y),
+                 bottom: Math.max(a.point.y, b.point.y) };
+      for (var i = 0; i < this._elements.length; ++i) {
+        var r2 = getOffsetRectangle(this._parent, this._elements[i]);
+        if (rectangleIntersect(r1, r2)) J.set(i, true);
+      }
+    }
+
+    return J;
+  }
+#+END_SRC
+
+The ~rectangeIntersect~ helper function is as follows:
+
+#+NAME: rectangle-intersect
+#+BEGIN_SRC js
+  function rectangleIntersect(r1, r2) {
+    return r1.left <= r2.right && r1.right >= r2.left && 
+           r1.top <= r2.bottom && r1.bottom >= r2.top;
+  }
+#+END_SRC
+
+This selection geometry overrides the ~extendPath(path, p)~ method.  The
+~click~, ~cmdClick~, and ~shiftClick~ methods call ~extendPath~ to add
+a selection space point to the current selection path. Prior to
+pushing the new point to ~path~ array, this ~extendPath~
+implementation performs two tasks.  First, only the first and last
+point of the selection path (anchor and active end) are of importance
+in this geometry. Therefore, if the path already 
+has two elements, the previous active end is discarded.[fn:4] 
+Second, if the anchor is on an element, we insist
+that the active end is also on an element: trying to extend the path
+with an in-between point has no effect in this case.
+
+#+NAME: row-wise-geometry-extend-path
+#+BEGIN_SRC js
+  RowwiseGeometry.prototype.extendPath = function(path, p) {
+    if (path.length > 0 &&
+        multiselect.anchor(path).index !== null && p.index === null) return null;
+    if (path.length == 2) path.pop();
+    path.push(p); 
+  }
+#+END_SRC
+
+The library expects that ~extendPath~ returns ~null~ if
+the selection path is not changed.
+
+[fn:4] Only the anchor and active end matter in the first example too.
+There we rely on the default ~extendPath~, which also discards the
+intermediate points.
+
+** Selection state object
+   :PROPERTIES:
+   :CUSTOM_ID: sec-create-selection-state-2
+   :END:
+
+The ~SelectionState~ object is created as before, but this time 
+tracking is set to ~true~.
+
+#+NAME: row-wise-create-selection-state
+#+BEGIN_SRC js 
+  var geometry2 = new RowwiseGeometry(selectableArea2, selectables2);
+  var selection2 = new multiselect.SelectionState(geometry2, refresh2, true);
+#+END_SRC
+
+** Mouse events
+
+Setting up mouse events for the current example is a bit more involved
+because rubber band selection requires handlers for ~mousemove~ and
+~mouseup~ events. Further, the event handlers make calls to a function
+that visualizes the anchor and active end.
+
+The interplay of handlers of different mouse events can be defined in
+many ways, so the code below should be considered as one possible
+arrangement. The handler for the ~mousedown~ event in the selectable
+area (~parent~) is registered at all times.  As its first task, it
+registers handlers for ~mousemove~ and ~mouseup~ events. These are set
+for the entire document, as the mouse can wander outside of the
+selectable area.  The handler for the ~mouseup~ event removes itself
+and the ~mousemove~ handler. 
+
+
+#+NAME: setup-mouse-events
+#+BEGIN_SRC js
+function setupMouseEvents (parent, canvas, selection) {
+
+  function mousedownHandler(evt) {
+
+    var mousePos = selection.geometry().m2v(offsetMousePos(parent, evt));
+    switch (modifierKeys(evt)) {
+    case M_NONE: selection.click(mousePos); break;
+    case M_CMD: selection.cmdClick(mousePos); break;
+    case M_SHIFT: selection.shiftClick(mousePos); break;
+    default: return;
+    }    
+
+    selection.geometry().drawIndicators(selection, canvas, true, true, false);
+    document.addEventListener('mousemove', mousemoveHandler, false);
+    document.addEventListener('mouseup', mouseupHandler, false);
+    evt.preventDefault();
+    evt.stopPropagation();
+  };
+
+  function mousemoveHandler (evt) {
+    evt.preventDefault();
+    evt.stopPropagation();
+    var mousePos = selection.geometry().m2v(offsetMousePos(parent, evt));
+    selection.shiftClick(mousePos);
+    selection.geometry().drawIndicators(selection, canvas, true, true, true);
+  };
+
+  function mouseupHandler (evt) {
+    document.removeEventListener('mousemove', mousemoveHandler, false);
+    document.removeEventListener('mouseup', mouseupHandler, false);
+    selection.geometry().drawIndicators(selection, canvas, true, true, false);
+  };
+
+  parent.addEventListener('mousedown', mousedownHandler, false);
+}
+#+END_SRC
+
+There are three further noteworthy issues in the code above.  
+
+1. A mouse move during rubber band selection is semantically
+   equivalent to a shift-click. The ~mousemoveHandler~ thus acquires a
+   selection space coordinate and passes it to the ~shiftClick~ method.
+
+2. The calls to ~drawIndicators~ function are what display the anchor,
+   the active end, and the rubber band indicators. These markers are
+   drawn on a HTML5 /canvas/ element that overlaps the selectable
+   area.  The three boolean arguments specify which of the three
+   indicators (in the order anchor, active end, rubber band) should be
+   shown; ~true~ means to show, ~false~ to hide.  In this example we
+   make ~drawIndicators~ a method of the geometry object.  This
+   because we reuse the ~setupMouseEvents~ function in a later example
+   that uses a different selection geometry. A different geometry
+   means a different visualization, so it is convenient to couple the
+   visualization to the geometry.
+
+3. Even though the mouse events are inevitably a bit more complex, the
+   {{{msjs}}} selection services are obtained by the same simple calls
+   to the three different click methods.
+
+We remark that a common feature in multi-selection contexts is
+drag-and-drop of selected elements. The above event handlers do not
+recognize the start of a drag-and-drop event.
+
+A few tasks remain. First, the mouse setup code uses a helper function
+~offsetMousePos~ to translates an event's mouse coordinates to 
+coordinates relative to another DOM element (~parent~). Its implementation
+is as follows:
+
+#+NAME: offset-mouse-pos
+#+BEGIN_SRC js 
+  function offsetMousePos(parent, evt) { 
+    var p = topLeftCorner(parent.getClientRects()[0]);
+    return { x: evt.clientX - p.x, y: evt.clientY - p.y }; 
+  }
+#+END_SRC
+
+Second, the event handlers must be activated:
+
+#+NAME: row-wise-setup-mouse-events
+#+BEGIN_SRC js 
+  var canvas2 = createCanvas(selectableArea2);
+  setupMouseEvents(selectableArea2, canvas2, selection2);
+#+END_SRC
+
+Section [[#sec-path-visualization]] shows the implementations of the
+~createCanvas~ and ~drawIndicators~ functions.
+
+** Keyboard events
+
+Various keyboard commands can accomplish the same selection tasks as
+clicks---the selection space point associated with a keyboard command
+is the value of the /keyboard cursor/.  The keyboard cursor is often
+the same as the active end; a click, command-click, and shift-click
+set the cursor to and the active end to the clicked point.  The cursor
+can, however, deviate from the active end.  For example, the arrow
+keys, unmodified, move the keyboard cursor but do not change the
+selection path. Further, the keyboard cursor can be defined even if
+the selection path is empty, e.g., after an ~undo~ command.
+
+Selection geometry's ~step(dir, point)~ method determines how arrow
+keys move the keyboard cursor. The ~dir~ parameter is one of constants
+~UP~, ~DOWN~, ~LEFT~, ~RIGHT~. In this example, ~step~ only moves the
+cursor if it is on an element. When moving to a new element, the
+~point~ member of the cursor object is set to the center point of the
+moved-to element.
+
+#+NAME: row-wise-geometry-step
+#+BEGIN_SRC js
+  RowwiseGeometry.prototype.step = function (dir, p) {
+    if (p.index === null) return p;
+    var ind = null;
+    switch (dir) {
+    case multiselect.LEFT:  ind = Math.max(p.index - 1, 0); break;
+    case multiselect.RIGHT: ind = Math.min(p.index + 1, this._elements.length-1); break;
+    case multiselect.UP: 
+      ind = findClosestP.call(this, this._parent, this._elements, p.index, isAbove); 
+      break;
+    case multiselect.DOWN: 
+      ind = findClosestP.call(this, this._parent, this._elements, p.index, 
+                                    function (a, b) { return isAbove(b, a); }); 
+      break; 
+    default: return p;
+    }
+    return { index: ind, point: centerPoint(getOffsetRectangle(this._parent, this._elements[ind])) };
+  }
+#+END_SRC
+
+Moving left and right is simple: decrement or increment the cursor's
+index.  Moving up or down is more complex. There are several sensible
+choices for what /next element above/ or /next element
+below/ mean, even for what /above/ and /below/ mean.
+We consider one element above the other if the former's
+center point is above the top edge of the latter. The next element
+above of some element ~i~ is the closest, in distance between center
+points, of all elements that are above ~i~. Next below is defined
+analogously. The ~findClosestP(parent, elements, i, pred)~ helper function 
+performs these determinations, finding the closest element to ~i~ 
+that satisfies ~pred~:
+
+#+NAME: rectangle-helpers-3
+#+BEGIN_SRC js
+  function centerPoint (r) { return { x: (r.left + r.right)/2, 
+                                      y: (r.top + r.bottom)/2 }; }
+
+  function distance (p1, p2) {
+    var dx = p1.x - p2.x;
+    var dy = p1.y - p2.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function isAbove(r1, r2) { return centerPoint(r2).y < r1.top; }
+
+  function findClosestP(parent, elements, j, pred) {
+    var r = getOffsetRectangle(parent, elements[j]);
+    var candidateIndex = null; 
+    var candidateDistance = Number.MAX_VALUE;
+
+    for (var i=0; i<elements.length; ++i) {
+      var rc = getOffsetRectangle(parent, elements[i]);
+      if (pred(r, rc) && distance(centerPoint(r), centerPoint(rc)) < candidateDistance) {
+        candidateIndex = i; 
+        candidateDistance = distance(centerPoint(r), centerPoint(rc));
+      }
+    }
+    if (candidateIndex === null) return j; else return candidateIndex;
+  }
+#+END_SRC
+
+With the ~step~ function defined, setting up the keyboard events is
+straightforward: the event handler for ~keydown~ recognizes the key
+combination of a command, invokes the desired ~SelectionState~'s
+method, and calls a function to draws the indicators.  We bind the
+handler to ~parent~, the DOM element that is the selectable area, to
+avoid conflicts; the bindings are only in effect when ~parent~ has
+focus. The ~mousedown~ handler is defined to give ~parent~ focus when
+it is clicked.
+
+#+NAME: setup-keyboard-events
+#+BEGIN_SRC js
+  function setupKeyboardEvents(parent, canvas, selection) {
+
+    parent.addEventListener('keydown', keydownHandler, false);
+    parent.addEventListener('mousedown', function() { parent.focus(); }, false);
+
+    function keydownHandler(evt) {
+      var handled = false; 
+      var mk = modifierKeys(evt);
+      switch (evt.which) {          
+      case 37: handled = callArrow(mk, multiselect.LEFT); break;
+      case 38: handled = callArrow(mk, multiselect.UP); break;             
+      case 39: handled = callArrow(mk, multiselect.RIGHT); break;
+      case 40: handled = callArrow(mk, multiselect.DOWN); break;
+      case 32: handled = callSpace(mk); break;
+      case 90: handled = callUndoRedo(mk); break;
+      default: return; // exit this handler for unrecognized keys
+      }
+      if (!handled) return;
+
+      // event is recognized
+      selection.geometry().drawIndicators(selection, canvas, true, true, false);
+      evt.preventDefault(); 
+      evt.stopPropagation();
+    }  
+  
+    function callUndoRedo (mk) {
+      switch (mk) {
+      case M_OPT: selection.undo(); break;
+      case M_SHIFT_OPT: selection.redo(); break;
+      default: return false;
+      }      
+      return true;
+    }
+
+    function callArrow (mk, dir) {
+      switch (mk) {
+      case M_NONE: selection.arrow(dir); break;
+      case M_CMD: selection.cmdArrow(dir); break;
+      case M_SHIFT: selection.shiftArrow(dir); break;
+      default: return false;
+      }
+      return true;
+    }
+  
+    function callSpace (mk) {
+      switch (mk) {
+      case M_NONE: selection.space(); break;
+      case M_CMD: selection.cmdSpace(); break;
+      case M_SHIFT: selection.shiftSpace(); break;
+      default: return false;      
+      }
+      return true;
+    }
+  }
+#+END_SRC
+
+The main switch statement recognizes the arrow
+keys, space, and the character ~z~ (for undo and redo), and delegates
+to different helper functions. The helper functions inspect the
+modifers and dispatch to the appropriate ~SelectionState~ method,
+or return ~false~ if the key binding is not recognized.
+
+A call to ~setupKeyboardEvents~ registers the keyboard event handler:
+
+#+NAME: row-wise-setup-keyboard-events
+#+BEGIN_SRC js
+setupKeyboardEvents(selectableArea2, canvas2, selection2);
+#+END_SRC
+
+To complete the keyboard selection functionality, we override the
+~defaultCursor~ method so that keyboard cursor has sensible defaults
+when nothing has yet been selected: the right and down arrow keys
+start from the first element, the left and up arrow keys from the last.
+
+#+NAME: row-wise-geometry-default-cursor
+#+BEGIN_SRC js
+  RowwiseGeometry.prototype.defaultCursor = function (dir) {
+    var ind;
+    switch (dir) {
+    case multiselect.RIGHT: 
+    case multiselect.DOWN: ind = 0; break;
+    case multiselect.LEFT: 
+    case multiselect.UP: ind = this._elements.length - 1; break;
+    default: return undefined;
+    }
+    return { index: ind, point: centerPoint(getOffsetRectangle(this._parent, this._elements[ind])) };
+  }
+#+END_SRC
+
+** Visualizing anchor, cursor, and rubberband
+   :PROPERTIES:
+   :CUSTOM_ID: sec-path-visualization
+   :END:
+
+Sometimes it is useful to show where the anchor and keyboard cursor
+reside. Many expect to see a rectangular rubber band when selecting
+via dragging. In "lasso" selection, it is particularly important to
+have a visual indicator of the selected area.  Displaying these
+indicators can be implemented without help from {{{msjs}}} but to ease
+the task, ~SelectionState~ has methods ~selectionPath~ and ~cursor~
+for querying the current selection path and cursor, respectively.  The
+former returns an array of points and the latter a single point. These
+points are selection space coordinates and thus something akin to an
+inverse of the ~m2v~ transformation is necessary prior to their use in
+visualization. The desired visualization, however, is likely not a
+single point, but insted perhaps a frame over the selected
+element. Since the details of the "inverse" transformation varies from
+one selection context to another, its definition is left completely to
+the client.
+
+In this example the visual indicators are drawn on a canvas placed on
+top of the selectable area. To maintain the overlap, the canvas' size
+and position are recalculated whenever the ~window~ object is resized.
+
+#+NAME: create-canvas
+#+BEGIN_SRC js
+function createCanvas (parent) {
+
+  var canvas = document.createElement("canvas");
+  canvas.style.position = 'absolute';
+  parent.insertBefore(canvas, parent.firstChild);
+
+  $(window).resize(resizeCanvas); 
+  resizeCanvas();
+
+  return canvas;
+
+  function resizeCanvas() {
+    var rect = parent.getBoundingClientRect();
+    canvas.width = rect.right - rect.left;
+    canvas.height = rect.bottom - rect.top;    
+  }
+}
+#+END_SRC
+
+The ~drawIndicators~ function is defined as a method of the
+~geometry2~ object. The function first clears all indicators, then
+draws some or all of anchor, cursor, and rubber band based on the
+~drawAnchor~, ~drawCursor~, and ~drawRubber~ flags.  The tests for
+~undefined~ points are to safeguard for the case where there is no
+anchor (the selection path is empty) or no cursor.
+
+Anchor is drawn as a circle for in-between points (points whose
+~index~ is ~null~) and as a rectangle for points on an element.
+Cursor is not drawn at all for in-between points. 
+
+#+NAME: draw-indicators
+#+BEGIN_SRC js
+  geometry2.drawIndicators = function (selection, canvas, drawAnchor, drawCursor, drawRubber) {
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (drawAnchor) { 
+      ctx.strokeStyle = 'DarkRed';
+      var p = multiselect.anchor(selection.selectionPath());
+      if (p !== undefined) {
+        if (p.index === null) { // in-between point, draw a circle
+          ctx.beginPath();
+          ctx.arc(p.point.x, p.point.y, 4, 0, Math.PI*2, true); 
+          ctx.stroke();
+        } else { // point on an element, draw a frame
+          var r = getOffsetRectangle(canvas, selection.geometry()._elements[p.index]);
+          ctx.strokeRect(r.left, r.top, r.right-r.left, r.bottom-r.top);
+        }
+      }
+    }
+    if (drawCursor) { 
+      ctx.strokeStyle = 'blue';
+      var p = selection.cursor();
+      if (p !== undefined && p.index !== null) { 
+        var r = getOffsetRectangle(canvas, selection.geometry()._elements[p.index]);
+        ctx.strokeRect(r.left, r.top, r.right-r.left, r.bottom-r.top);
+      }
+    }
+    if (drawRubber) { 
+      ctx.strokeStyle = 'green';
+      var p1 = multiselect.anchor(selection.selectionPath());
+      if (p1 !== undefined && p1.index === null) {
+        var p2 = multiselect.activeEnd(selection.selectionPath());
+        ctx.strokeRect(Math.min(p1.point.x, p2.point.x),
+                       Math.min(p1.point.y, p2.point.y),
+                       Math.abs(p1.point.x-p2.point.x),
+                       Math.abs(p1.point.y-p2.point.y));
+      }
+    }
+  }
+#+END_SRC
+
+The second example is complete.
+
+* Example: snake selection geometry
+
+ [[file:example-3.html][this link]]. 
+
+The third example demonstrates a selection geometry where all points
+of the selection path are relevant: the selection domain consists of
+all the elements that the selection path touches.  
+Instead of numbers, the selectable elements in this example are fish. 
+Please experiment with the following selection context to understand
+how this ``snake'' selection works.[fn:6]
+
+#+NAME: snake-html
+#+BEGIN_SRC js :export code :noweb yes
+<div id="selectable_area3" tabIndex="0"></div>
+<br>
+Filter: <input type="text" id="filter3"></input>
+<button id="commit_filter3">Commit</button> 
+#+END_SRC
+
+The selectable elements are again generated by JavaScript under a ~div~ on the page.
+The code that populates the ~fish~ array is in [[file:fish.js]].
+
+#+NAME: snake-selectables
+#+BEGIN_SRC js :exports code 
+  var selectableArea3 = $("#selectable_area3")[0];
+  for (var i = 0; i<fish.length; ++i) {
+    $(selectableArea3).append("<span class='selectable2'>" + fish[i] + "</span> ");
+  }
+  var selectables3 = $(".selectable2", selectableArea3);    
+  var filter3 = $("#filter3")[0];
+  $(filter3).keyup(function () {    
+    var str = $(filter3).val(); 
+    selection3.filter(function(i){ return str !== "" && fish[i].indexOf(str)>-1; });
+  });
+  $("#commit_filter3").click(function(){ selection3.commit(); });  
+
+  selectableArea3.addEventListener('keydown', keydownHandler3, false);
+
+  var geometry2 = new RowwiseGeometry(selectableArea3, selectables3);
+
+  function keydownHandler3(evt) {
+    var draw = true;
+    switch (evt.which) {
+      case 66: var s = selection3.selectionPath(); s.pop(); selection3.setPath(s); break;
+      case 70: var s = selection3.selectionPath(); s.shift(); selection3.setPath(s); break;
+      case 82: selection3.setGeometry(geometry2); draw = false; break;
+      case 83: selection3.setGeometry(geometry3); draw = false; break;
+      default: return;
+    }
+    selection3.geometry().drawIndicators(selection3, canvas3, draw, draw, draw);
+  }
+#+END_SRC
+
+The styles ~selectable2~ and ~selected2~ are reused,
+so we only style the selectable area:
+
+#+NAME: snake-css
+#+BEGIN_SRC html
+<style> 
+  #selectable_area3 { border:1px solid black; cursor:default; } 
+</style>
+#+END_SRC
+
+#+NAME: fish-list
+#+BEGIN_SRC js :exports none :tangle fish.js
+var fish = 
+[ "anchovy"
+, "angelfish"
+, "angelshark"
+, "barb"
+, "barracuda"
+, "basking shark"
+, "bass"
+, "blenny"
+, "blowfish"
+, "bluefin tuna"
+, "blue shark"
+, "bonito"
+, "bony fish"
+, "bull shark"
+, "carp"
+, "catfish"
+, "chub"
+, "clownfish"
+, "cod"
+, "coelacanth"
+, "cookiecutter shark"
+, "crappie"
+, "darter"
+, "devil ray"
+, "dogfish"
+, "dory"
+, "dragonfish"
+, "Dunkleosteus"
+, "eel"
+, "electric eel"
+, "elver"
+, "Emperor angelfish"
+, "fish"
+, "flounder"
+, "flying fish"
+, "Galapagos shark"
+, "gar"
+, "glassfish"
+, "goby"
+, "goldfish"
+, "grayling"
+, "great white shark"
+, "Greenland shark"
+, "grouper"
+, "grunion"
+, "gulper eel"
+, "guppy"
+, "haddock"
+, "hagfish"
+, "hake"
+, "halibut"
+, "hammerhead shark"
+, "hatchetfish"
+, "herring"
+, "humuhumu-nukunuku-apua'a"
+, "icefish"
+, "jackfish"
+, "john dory"
+, "koi"
+, "lake trout"
+, "lamprey"
+, "lanternfish"
+, "lemon shark"
+, "ling cod"
+, "loach"
+, "luminous shark"
+, "lungfish"
+, "mackerel"
+, "mako shark"
+, "manta ray"
+, "marlin"
+, "Megalodon"
+, "megamouth shark"
+, "minnow"
+, "monkfish"
+, "moray eel"
+, "mullet"
+, "needlefish"
+, "nurse shark"
+, "oarfish"
+, "orange roughy"
+, "Orthacanthus"
+, "paddlefish"
+, "parrotfish"
+, "perch"
+, "pike"
+, "pilot fish"
+, "piranha"
+, "pollock"
+, "pompano"
+, "porgy"
+, "Port Jackson shark"
+, "pufferfish"
+, "pupfish"
+, "queen triggerfish"
+, "quillfish"
+, "ray"
+, "remora"
+, "rockfish"
+, "roughy"
+, "sailfish"
+, "salmon"
+, "sardine"
+, "sawfish"
+, "sculpin"
+, "seabass"
+, "seadragon"
+, "seahorse"
+, "shad"
+, "shark"
+, "skate"
+, "smelt"
+, "snapper"
+, "sole"
+, "stingray"
+, "sturgeon"
+, "sunfish"
+, "swordfish"
+, "tarpon"
+, "tetra"
+, "three-spine stickleback"
+, "thresher shark"
+, "tiger shark"
+, "triggerfish"
+, "trout"
+, "tuna"
+, "tunny"
+, "turbot"
+, "upside-down catfish"
+, "velvetfish"
+, "viperfish"
+, "walleye"
+, "whale shark"
+, "whiting"
+, "wrasse"
+, "x-ray tetra"
+, "yellowjack"
+, "yellowtail"
+, "zebra bullhead shark"
+, "zebrafish" ]
+#+END_SRC
+
+#+RESULTS: fish-list
+: undefined
+
+#+NAME: snake-example-html
+#+BEGIN_SRC org :results replace drawer :exports results :noweb yes :post wrap-html(text=*this*)
+<<snake-html>>
+<<snake-css>>
+<script>
+  <<snake-js-code-before-ready>>
+</script>
+<script type="text/javascript">
+  $(document).ready(function () {
+    <<snake-js-code-after-ready>>
+  });
+</script>
+#+END_SRC
+
+#+RESULTS: snake-example-html
+:RESULTS:
+#+BEGIN_HTML
+<div id="selectable_area3" tabIndex="0"></div>
+<script>
+  var fish = 
+  [ "anchovy"
+  , "angelfish"
+  , "angelshark"
+  , "barb"
+  , "barracuda"
+  , "basking shark"
+  , "bass"
+  , "blenny"
+  , "blowfish"
+  , "bluefin tuna"
+  , "blue shark"
+  , "bonito"
+  , "bony fish"
+  , "bull shark"
+  , "carp"
+  , "catfish"
+  , "chub"
+  , "clownfish"
+  , "cod"
+  , "coelacanth"
+  , "cookiecutter shark"
+  , "crappie"
+  , "darter"
+  , "devil ray"
+  , "dogfish"
+  , "dory"
+  , "dragonfish"
+  , "Dunkleosteus"
+  , "eel"
+  , "electric eel"
+  , "elver"
+  , "Emperor angelfish"
+  , "fish"
+  , "flounder"
+  , "flying fish"
+  , "Galapagos shark"
+  , "gar"
+  , "glassfish"
+  , "goby"
+  , "goldfish"
+  , "grayling"
+  , "great white shark"
+  , "Greenland shark"
+  , "grouper"
+  , "grunion"
+  , "gulper eel"
+  , "guppy"
+  , "haddock"
+  , "hagfish"
+  , "hake"
+  , "halibut"
+  , "hammerhead shark"
+  , "hatchetfish"
+  , "herring"
+  , "humuhumu-nukunuku-apua'a"
+  , "icefish"
+  , "jackfish"
+  , "john dory"
+  , "koi"
+  , "lake trout"
+  , "lamprey"
+  , "lanternfish"
+  , "lemon shark"
+  , "ling cod"
+  , "loach"
+  , "luminous shark"
+  , "lungfish"
+  , "mackerel"
+  , "mako shark"
+  , "manta ray"
+  , "marlin"
+  , "Megalodon"
+  , "megamouth shark"
+  , "minnow"
+  , "monkfish"
+  , "moray eel"
+  , "mullet"
+  , "needlefish"
+  , "nurse shark"
+  , "oarfish"
+  , "orange roughy"
+  , "Orthacanthus"
+  , "paddlefish"
+  , "parrotfish"
+  , "perch"
+  , "pike"
+  , "pilot fish"
+  , "piranha"
+  , "pollock"
+  , "pompano"
+  , "porgy"
+  , "Port Jackson shark"
+  , "pufferfish"
+  , "pupfish"
+  , "queen triggerfish"
+  , "quillfish"
+  , "ray"
+  , "remora"
+  , "rockfish"
+  , "roughy"
+  , "sailfish"
+  , "salmon"
+  , "sardine"
+  , "sawfish"
+  , "sculpin"
+  , "seabass"
+  , "seadragon"
+  , "seahorse"
+  , "shad"
+  , "shark"
+  , "skate"
+  , "smelt"
+  , "snapper"
+  , "sole"
+  , "stingray"
+  , "sturgeon"
+  , "sunfish"
+  , "swordfish"
+  , "tarpon"
+  , "tetra"
+  , "three-spine stickleback"
+  , "thresher shark"
+  , "tiger shark"
+  , "triggerfish"
+  , "trout"
+  , "tuna"
+  , "tunny"
+  , "turbot"
+  , "upside-down catfish"
+  , "velvetfish"
+  , "viperfish"
+  , "walleye"
+  , "whale shark"
+  , "whiting"
+  , "wrasse"
+  , "x-ray tetra"
+  , "yellowjack"
+  , "yellowtail"
+  , "zebra bullhead shark"
+  , "zebrafish" ]
+</script>
+<script type="text/javascript">
+  $(document).ready(function () {
+    var selectableArea3 = $("#selectable_area3")[0];
+    for (var i = 0; i<fish.length; ++i) {
+      $(selectableArea3).append("<span class='selectable2'>" + fish[i] + "</span> ");
+    }
+    var selectables3 = $(".selectable2", selectableArea3);    
+  });
+</script>
+#+END_HTML
+:END:
+
+#+BEGIN_SRC html :exports none :tangle example-3.html :noweb yes
+  <html>
+    <head>
+      <<js-imports>>
+      <script type="text/javascript">
+        $(document).ready(function () {
+          <<js-code-common>>
+          <<row-wise-js-code>>
+          <<snake-js-code>>
+          selectableArea2.addEventListener('keydown', keydownHandler2, false);
+          function keydownHandler2(evt) {
+            if (evt.which === 66) {
+               var s = selection2.selectionPath();
+               s.pop();
+               selection2.setPath(s);
+               selection2.geometry().drawIndicators(selection2, canvas2, true, true, true);
+            }
+            if (evt.which === 71) {
+               if (selection2.geometry() === geometry3) selection2.setGeometry(geometry2);
+               else selection2.setGeometry(geometry3);
+               selection2.geometry().drawIndicators(selection2, canvas2, false, false, false);
+            }
+            var chr = String.fromCharCode(evt.which); 
+            if ($.isNumeric(chr)) {
+              var st = true;
+              if (modifierKeys(evt) === M_SHIFT) st = false;
+              if (modifierKeys(evt) === M_OPT) {
+                selection2.shiftSelectP(function(i){ return i.toString().indexOf(chr) >= 0; });
+              } else {
+                selection2.selectP(function(i){ return i.toString().indexOf(chr) >= 0; }, st);
+              }
+              selection2.geometry().drawIndicators(selection2, canvas2, false, false, false);
+            }              
+          }
+        });
+      </script>
+    </head>
+    <body>
+      <<row-wise-css>>
+      <<row-wise-html>>
+    </body>
+  </html>
+#+END_SRC
+
+Most of the "snake" geometry is straightforward.
+
+#+NAME: snake-geometry
+#+BEGIN_SRC js 
+var SnakeGeometry = function (parent, elements) {
+  this._parent = parent;
+  this._elements = elements;
+  this._k = 0;
+}
+SnakeGeometry.prototype = Object.create(multiselect.DefaultGeometry.prototype);
+
+SnakeGeometry.prototype.extendPath = function(path, p) { path.push(p); }
+#+END_SRC
+
+The ~extendPath~ method simply adds new element to the path.
+Selection space coordinates are the same as the mouse coordinates,
+and hence ~m2v~ need not be defined.
+Computing the selection domain, however, requires a bit more effort.
+The function iterates over all line segments defined by two adjacent points
+in the selection path. For each line segment, it finds the elements that
+the line segment intersects with, and adds them to the selection 
+domain. This is quite a bit of work, and thus the ~selectionDomain~
+function implements an optimization. When it is finished
+computing a selection domain, it stores the last index of the selection
+path in ~this._k~. If ~selectionDomain~ is
+called from ~shiftClick~ (this is how it is called when rubber band
+selection is going on), the call includes the previously calculated
+selection domain (~J~) as the third parameter.
+It then suffices to iterate the line segments in the path from index ~_k~ 
+onwards.
+
+#+NAME: snake-selection-domain
+#+BEGIN_SRC js
+  SnakeGeometry.prototype.selectionDomain = function(path, source, J) {  
+    if (J === undefined) J = multiselect.makeEmptyMap(); 
+    switch (source) {
+      case multiselect.C_SHIFT_CLICK: break;
+      case multiselect.C_SET_PATH: 
+      case undefined: 
+        this._k = 0;
+    }
+    var prev = this._k;
+    for (var i = this._k; i < path.length; ++i) {
+      for (var j = 0; j < this._elements.length; ++j) {
+        if (lineRectIntersect(path[i], path[prev],
+                              getOffsetRectangle(this._parent, this._elements[j]))) J.set(j, true);
+      }
+      prev = i;
+    }
+    this._k = path.length - 1;
+
+    return J;
+  }
+#+END_SRC
+
+#+NAME: snake-filter
+#+BEGIN_SRC js :exports none
+  SnakeGeometry.prototype.filter = function(p) {   
+    var J = multiselect.makeEmptyMap();
+    for (var i = 0; i < this._elements.length; ++i) if (p(i)) J.set(i, true);
+    return J;
+  }
+#+END_SRC
+
+
+A few more substantial helper functions are needed. 
+The ~lineRectIntersect~ function determines if a line intersects with a rectangle,
+~mkRectangle~ constructs a rectangle from two points:
+
+#+NAME: line-rect-intersect
+#+BEGIN_SRC js
+function lineRectIntersect(p1, p2, r) {
+  if (!rectangleIntersect(mkRectangle(p1, p2), r)) return false; // if bounding boxes do not overlap, cannot intersect
+  if (pointEquals(p1, p2)) return pointInRectangle(p1, r);
+  var p = {};
+  if (lineIntersect(p1, p2, { x: r.left, y: r.top }, { x: r.left, y: r.bottom }, p) === 1) return true;
+  if (lineIntersect(p1, p2, { x: r.left, y: r.top }, { x: r.right, y: r.top }, p) === 1) return true;
+  if (lineIntersect(p1, p2, { x: r.right, y: r.bottom }, { x: r.right, y: r.top }, p) === 1) return true;
+  if (lineIntersect(p1, p2, { x: r.right, y: r.bottom }, { x: r.left, y: r.bottom }, p) === 1) return true;
+  return pointInRectangle(p1, r) || pointInRectangle(p2, r);
+}
+
+function mkRectangle(p1, p2) {
+  return { 
+    left: Math.min(p1.x, p2.x),
+    top: Math.min(p1.y, p2.y),
+    right: Math.max(p1.x, p2.x),
+    bottom: Math.max(p1.y, p2.y)
+  };        
+}
+
+function pointEquals(p1, p2) { return p1.x === p2.x && p1.y === p2.y; }
+#+END_SRC
+
+The ~lineIntersect~ function is more involved.
+The code is a bit long, so we show it at the very end of this document in Section [[#sec-line-intersection-code]].
+
+
+
+
+
+Constructing the selection state is familiar:
+
+#+NAME: snake-create-selection-state
+#+BEGIN_SRC js 
+var geometry3 = new SnakeGeometry(selectableArea3, selectables3);
+var selection3 = new multiselect.SelectionState(geometry3, mkRefresh(selectables3, 'selected2'), true);
+#+END_SRC
+
+#+NAME: snake-js-code-before-ready
+#+BEGIN_SRC js :exports none :noweb yes
+<<fish-list>>
+<<snake-geometry>>
+<<snake-selection-domain>>
+<<snake-filter>>
+<<line-rect-intersect>>
+<<line-intersect>>
+#+END_SRC
+
+
+#+NAME: snake-js-code-after-ready
+#+BEGIN_SRC js :exports none :noweb yes
+<<snake-selectables>>
+<<snake-create-selection-state>>
+<<snake-draw-indicators>>
+<<draw-indicators>>
+<<snake-setup-mouse-events>>
+#+END_SRC
+
+
+[fn:6] Perhaps ``lasso'' selection where the user draws a path around
+the elements to be selected is a more common freehand selection
+mechanism. Identifying the elements that intersect with an arbitrary
+polygon is, however, quite a bit more complex than identifying
+elements that intersect with a path.  For this tutorial, we choose to
+implement the less complex selection mechanism. For the geometrical
+calculations of lasso selection, a computational geometry library,
+such as ~Raphael.js~, would be useful.
+
+** Draw indicators
+
+#+NAME: snake-draw-indicators
+#+BEGIN_SRC js
+  geometry3.drawIndicators = function (selection, canvas, drawAnchor, drawCursor, drawRubber) {
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (drawAnchor) { 
+      ctx.strokeStyle = 'DarkRed';
+      var p = multiselect.anchor(selection.selectionPath());
+      if (p !== undefined) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4, 0, Math.PI*2, true); 
+        ctx.stroke();
+      }
+    }
+    if (drawCursor) { 
+      ctx.strokeStyle = 'blue';
+      var p = selection.cursor();
+      if (p !== undefined) { 
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4, 0, Math.PI*2, true); 
+        ctx.stroke();
+      }
+    }
+    if (drawRubber) { 
+      ctx.strokeStyle = 'green';
+      var path = selection.selectionPath();
+      if (path.length > 0) {
+        ctx.moveTo(path[0].x, path[0].y);
+        for (var i = 1; i < path.length; ++i) ctx.lineTo(path[i].x, path[i].y);
+        ctx.stroke();
+      }
+    }
+  }
+#+END_SRC
+
+** Setting up mouse events
+
+The setup code from the previous example does what we want:
+
+#+NAME: snake-setup-mouse-events
+#+BEGIN_SRC js 
+  var canvas3 = createCanvas(selectableArea3);
+  setupMouseEvents(selectableArea3, canvas3, selection3);
+  setupKeyboardEvents(selectableArea3, canvas3, selection3);
+
+#+END_SRC
+
+
+** Line intersection code 
+   :PROPERTIES:
+   :CUSTOM_ID: sec-line-intersection-code
+   :END:
+
+This function is adapted from Prasad Mukesh's C-code /Intersection of Line Segments/, 
+ACM Transaction of Graphics' Graphics Gems II, p. 7--9, code: p. 473--476, ~xlines.c~.
+
+#+NAME: line-intersect
+#+BEGIN_SRC js 
+  /* PORTED FROM:
+
+   ,* lines_intersect:  AUTHOR: Mukesh Prasad
+   ,*
+   ,*   This function computes whether two line segments,
+   ,*   respectively joining the input points (x1,y1) -- (x2,y2)
+   ,*   and the input points (x3,y3) -- (x4,y4) intersect.
+   ,*   If the lines intersect, the output variables x, y are
+   ,*   set to coordinates of the point of intersection.
+   ,*
+   ,*   All values are in integers.  The returned value is rounded
+   ,*   to the nearest integer point.
+   ,*
+   ,*   If non-integral grid points are relevant, the function
+   ,*   can easily be transformed by substituting floating point
+   ,*   calculations instead of integer calculations.
+   ,*
+   ,*   Entry
+   ,*        x1, y1,  x2, y2   Coordinates of endpoints of one segment.
+   ,*        x3, y3,  x4, y4   Coordinates of endpoints of other segment.
+   ,*
+   ,*   Exit
+   ,*        x, y              Coordinates of intersection point.
+   ,*
+   ,*   The value returned by the function is one of:
+   ,*
+   ,*        DONT_INTERSECT    0
+   ,*        DO_INTERSECT      1
+   ,*        COLLINEAR         2
+   ,*
+   ,* Error conditions:
+   ,*
+   ,*     Depending upon the possible ranges, and particularly on 16-bit
+   ,*     computers, care should be taken to protect from overflow.
+   ,*
+   ,*     In the following code, 'long' values have been used for this
+   ,*     purpose, instead of 'int'.
+   ,*
+   ,*/
+
+  function sameSigns(a, b) { return a >= 0 && b >= 0 || a < 0 && b < 0; }
+
+  function lineIntersect( p1,   /* First line segment */
+                          p2,
+                          p3,   /* Second line segment */
+                          p4,
+                          p5    /* Output value:
+                                 ,* point of intersection */
+                        )
+  {
+    const DONT_INTERSECT = 0;
+    const DO_INTERSECT = 1;
+    const COLLINEAR = 2;
+
+    var a1, a2, b1, b2, c1, c2; /* Coefficients of line eqns. */
+    var r1, r2, r3, r4;         /* 'Sign' values */
+    var denom, offset, num;     /* Intermediate values */
+
+    /* Compute a1, b1, c1, where line joining points 1 and 2
+     ,* is "a1 x  +  b1 y  +  c1  =  0".
+     ,*/
+
+    a1 = p2.y - p1.y;
+    b1 = p1.x - p2.x;
+    c1 = p2.x * p1.y - p1.x * p2.y;
+
+    /* Compute r3 and r4.
+     ,*/
+    r3 = a1 * p3.x + b1 * p3.y + c1;
+    r4 = a1 * p4.x + b1 * p4.y + c1;
+
+    /* Check signs of r3 and r4.  If both point 3 and point 4 lie on
+     ,* same side of line 1, the line segments do not intersect.
+     ,*/
+    if ( r3 != 0 &&
+         r4 != 0 &&
+         sameSigns( r3, r4 ))
+      return ( DONT_INTERSECT );
+
+    /* Compute a2, b2, c2 */
+    a2 = p4.y - p3.y;
+    b2 = p3.x - p4.x;
+    c2 = p4.x * p3.y - p3.x * p4.y;
+
+    /* Compute r1 and r2 */
+    r1 = a2 * p1.x + b2 * p1.y + c2;
+    r2 = a2 * p2.x + b2 * p2.y + c2;
+
+    /* Check signs of r1 and r2.  If both point 1 and point 2 lie
+     ,* on same side of second line segment, the line segments do
+     ,* not intersect.
+     ,*/
+    if ( r1 !== 0 &&
+         r2 !== 0 &&
+         sameSigns( r1, r2 ))
+      return ( DONT_INTERSECT );
+
+    /* Line segments intersect: compute intersection point. 
+     */
+
+    denom = a1 * b2 - a2 * b1;
+    if ( denom === 0 )
+      return ( COLLINEAR );
+    // offset = denom < 0 ? - denom / 2 : denom / 2;
+
+    // /* The denom/2 is to get rounding instead of truncating.  It
+    //  * is added or subtracted to the numerator, depending upon the
+    //  * sign of the numerator.
+    //  */
+
+    // num = b1 * c2 - b2 * c1;
+    // p5.x = ( num < 0 ? num - offset : num + offset ) / denom;
+
+    // num = a2 * c1 - a1 * c2;
+    // p5.y = ( num < 0 ? num - offset : num + offset ) / denom;
+
+    return DO_INTERSECT;
+  } 
+#+END_SRC
+
+
+* COMMENT About clicks 
+
+*** ~cmdClick(p)~
+
+The
+selection mode is determined by first invoking ~selectionDomain~ with
+the current path, that is either ~[p]~ or ~[]~.  If the selection
+domain contains zero elements or more than one element, selection mode
+is to select. If the selection domain contains exactly one element,
+and that element is currently selected, the selection domain is to
+deselect.
+
+Note that the ~cmdClick~ and ~click~ functions never invoke
+~selectionDomain~ with a path that contains more than one point. If
+selectable elements can overlap, there can be more than one element
+that overlaps with a selection space point.  In such a case, even if
+~selectionDomain~ generally returns the indices of all elements that
+overlap with the selection path, for single-element paths no more than
+one index should be returned.  In other words, even if
+~selectionDomain([p, p])~ would return two or more indices,
+~selectionDomain([p])~ should only return one---the index of the
+/topmost/ element, for whatever the definition of topmost is
+in a particular selection context.  The above is not a strict
+requirement, but not abiding by it would lead to unconventional
+behavior in the sense that a command-click on an element might not
+always toggle.
+
+*** ~shiftClick(p)~
+
+*** ~undo()~ and ~redo()~
+    :PROPERTIES:
+    :CUSTOM_ID: sec-undo-redo
+    :END:
+
+A click or a command-click followed by zero or more shift-clicks is
+one undoable unit. Individual shift-clicks cannot be undone.  Every
+click or a command-click establishes thus a new undoable state, with
+the exception that the library may recognize that two subsequent clicks
+or command-clicks do not alter the selection state, and does not
+record an undoable state in those cases.
+
+* Utilities                                                        :noexport:
+
+#+name: wrap-html
+#+begin_src emacs-lisp :var text="" :results raw
+(concat "#+BEGIN_HTML\n" text "\n#+END_HTML")
+#+end_src
+
+* File local variables                                     :ARCHIVE:noexport:
+  
+# Local Variables:
+# mode: org
+# org-html-postamble: nil
+# org-babel-use-quick-and-dirty-noweb-expansion: t
+# org-confirm-babel-evaluate: nil
+# End:

@@ -1,0 +1,117 @@
+  <html>
+    <head>
+      <script type="text/javascript" src="../../dist/multiselect.min.js"></script>
+      <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+        <style>
+          .selectable { outline:1px solid; padding:10px; cursor:default; }
+          .selected { background-color: khaki; }
+        </style>
+      <script type="text/javascript">
+
+          // helper functions to deal with points, rectangles, etc.
+            function pointInRectangle(mp, r) {
+              return mp.x >= r.left && mp.x <= r.right && 
+                     mp.y >= r.top && mp.y <= r.bottom;
+            }
+        
+          // determine which modifier keys were held down during event
+          const M_NONE = 1, 
+                M_SHIFT = 2, 
+                M_CMD = 3, 
+                M_SHIFT_CMD = 4, 
+                M_OPT = 5, 
+                M_SHIFT_OPT = 6;
+          
+          function modifierKeys (evt) {
+            
+            if (evt.shiftKey && isCmdKey(evt)) return M_SHIFT_CMD;
+            if (isCmdKey(evt)) return M_CMD;
+            if (evt.shiftKey && evt.altKey) return M_SHIFT_OPT;
+            if (evt.altKey) return M_OPT;
+            if (evt.shiftKey) return M_SHIFT;
+            return M_NONE;
+          
+            function isCmdKey (evt) { return evt.metaKey || evt.ctrlKey; }
+          }
+        
+          // OrderedList selection geometry
+          var OrderedGeometry = function (elements) {
+            this._elements = elements;
+          }
+          OrderedGeometry.prototype = Object.create(multiselect.DefaultGeometry.prototype);
+            OrderedGeometry.prototype.m2v = function(mp) {
+              for (var i=0; i<this._elements.length; ++i) {
+                if (pointInRectangle(mp, this._elements[i].getBoundingClientRect())) return i;
+              }
+            }
+            OrderedGeometry.prototype.selectionDomain = function(path) {
+              var J = multiselect.makeEmptyMap();
+              var a = multiselect.anchor(path);
+              var b = multiselect.activeEnd(path);
+              for (var i=Math.min(a, b); i<=Math.max(a, b); ++i) J.set(i, true);
+              return J;
+            }
+
+        document.addEventListener("DOMContentLoaded", function() { 
+          // selectable elements
+          var selectableArea = document.getElementById("selectable_area");
+          var selectables = selectableArea.getElementsByClassName("selectable");
+          
+          // the refresh function
+            function refresh(s) {
+              for(var i=0; i<selectables.length; ++i) { 
+                selectables[i].classList.toggle('selected', s(i));
+              };
+            }  
+          
+          // create the selection object
+            var geometry = new OrderedGeometry(selectables);
+            var selection = new multiselect.SelectionState(geometry, refresh, false, 10);
+          
+          // register mouse events
+            function mousedownHandler(evt) {
+              evt.preventDefault();
+              evt.stopPropagation();
+          
+              var vp = selection.geometry().m2v({ x: evt.clientX, y: evt.clientY });
+          
+              switch (modifierKeys(evt)) {
+              case M_NONE: selection.click(vp); break;
+              case M_CMD: selection.cmdClick(vp); break;
+              case M_SHIFT: selection.shiftClick(vp); break;
+              }
+            };
+          
+            selectableArea.addEventListener('mousedown', mousedownHandler, false);
+          
+          // find out which elements are selected
+            function showAnimals() {
+              var s = "";
+              selection.selected().forEach(function(v) { 
+                s = s + selectables[v].textContent + " "; 
+              });
+              document.getElementById("animal_list").textContent = s; 
+            }
+            document.getElementById("show_animals").addEventListener("click", showAnimals);
+        });
+      </script>
+    </head>
+    <body>
+          <table id="selectable_area">
+            <tr><td class="selectable">pig</td>
+            <td class="selectable">cow</td>             
+            <td class="selectable">goat</td>
+            <td class="selectable">horse</td>
+            <td class="selectable">sheep</td>
+            <td class="selectable">chicken</td>
+            <td class="selectable">duck</td>
+            <td class="selectable">turkey</td>
+            <td class="selectable">ostrich</td>
+            <td class="selectable">mule</td>
+            </tr>
+          </table>
+      
+          <br>
+          <button id="show_animals">Show selected animals</button> <span id="animal_list"></span>
+    </body>
+  </html>

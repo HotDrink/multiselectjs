@@ -69,8 +69,9 @@ make the following observations:
     rectangle---all elements that overlap with this rectangle (shown
     in blue) belong to the active selection domain.
 
+# Add :eval no-export if new generation should not happen every time
 #+NAME: fig-selection-concepts
-#+BEGIN_SRC latex :eval no-export :results raw :imagemagick yes :headers :file selection_concepts.png :headers '("\\usepackage{tikz}") :iminoptions -density 600 :imoutoptions -geometry 400 :fit yes
+#+BEGIN_SRC latex :results raw :imagemagick yes :headers :file selection_concepts.png :headers '("\\usepackage{tikz}") :iminoptions -density 600 :imoutoptions -geometry 400 :fit yes
   \tikzstyle{every path}=[shorten >= 1mm,line width=1pt]
   \tikzstyle{every node}=[font=\scriptsize\tt]%, text width=2mm]
 
@@ -148,8 +149,9 @@ function that must be defined is ~selectionDomain~; it computes the
 set of elements that overlaps with the rectangle indicated by two
 points, the anchor and active end.
 
+# Add :eval no-export if new generation should not happen every time
 #+NAME: fig-simple-selection-geometry
-#+BEGIN_SRC latex :eval no-export :results file raw :imagemagick yes :file simple-selection-geometry.png :headers '("\\usepackage{tikz}") :iminoptions -density 600 :imoutoptions -geometry 800 :fit no
+#+BEGIN_SRC latex :results file raw :imagemagick yes :file simple-selection-geometry.png :headers '("\\usepackage{tikz}") :iminoptions -density 600 :imoutoptions -geometry 800 :fit no
   \tikzstyle{every path}=[shorten >= 1mm,line width=1pt]
   \tikzstyle{every node}=[font=\scriptsize\tt]%, text width=2mm]
 

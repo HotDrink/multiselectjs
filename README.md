@@ -29,7 +29,8 @@ as well.
 
 ## Building
 
-The command `npm run build` builds the scritps in `dist` from sources in `js`
+Install Node dependencies with the command `npm install`.
+Then the command `npm run build` builds the scritps in `dist` from sources in `js`.
 
 There is also a `Makefile` that builds the `js` files from `org` files, builds
 documentation, creates a new version of the library's web-pages (to be committed

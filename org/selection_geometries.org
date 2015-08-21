@@ -248,7 +248,7 @@ IPhotoDomGeometry.prototype.selectionDomain = function (spath) {
 exports.IPhotoDomGeometry = IPhotoDomGeometry;
 #+END_SRC
 
-* Export configuration                                              :ARCHIVE:
+* Export configuration                                     :ARCHIVE:noexport:
   
   #+SETUPFILE: org-settings.org
   #+TITLE:     {{{msjs}}} --- ~selection_geometries.org~
@@ -257,7 +257,7 @@ exports.IPhotoDomGeometry = IPhotoDomGeometry;
   #+DATE:      
   
   
-* File local variables                                              :ARCHIVE:
+* File local variables                                     :ARCHIVE:noexport:
   
 # Local Variables:
 # mode: org

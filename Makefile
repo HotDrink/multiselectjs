@@ -3,7 +3,7 @@ EMACS := emacs
 LIBRARY_ORGS := \
 	org/multiselect_library.org \
 	org/selection_geometries.org \
-	org/extras.org 
+#	org/extras.org  # currently not used
 
 LIBRARY_TANGLED := $(LIBRARY_ORGS:.org=.tangled)
 
@@ -20,15 +20,18 @@ OTHER_DOCS := \
 
 # deployable scripts
 DIST_SCRIPTS := \
-  dist/multiselect.js \
-  dist/multiselect_with_extras.js 
-#  dist/multiselect.min.js \
-#  dist/multiselect_with_extras.min.js \
+	dist/multiselect.js \
+	dist/multiselect.debug.js \
+	dist/multiselect_ordered_geometries.js \
+	dist/multiselect_dom_geometries.js
 
 dist: $(DIST_SCRIPTS)
 
+
 $(DIST_SCRIPTS): $(LIBRARY_TANGLED)
 	npm run build
+	npm run build-ord-geom
+	npm run build-dom-geom
 
 %.tangled: %.org
 	$(EMACS) --batch -l org-publish.el $< --eval "(org-tangle)"
@@ -63,7 +66,6 @@ pages: docs dist
 	mkdir -p ../multiselectjs-pages/examples/demo
 	rsync -v examples/demo/* ../multiselectjs-pages/examples/demo/
 	mkdir -p ../multiselectjs-pages/dist
-#	rsync -v dist/multiselect.min.js ../multiselectjs-pages/dist
 	rsync -v dist/multiselect.js ../multiselectjs-pages/dist
 
 GENERATED_INDEX_FILES := org-docs/index/index.html
@@ -71,32 +73,29 @@ GENERATED_INDEX_FILES := org-docs/index/index.html
 GENERATED_TUTORIAL_FILES := org-docs/tutorial/tutorial.html \
 	org-docs/tutorial/example-1.html \
 	org-docs/tutorial/example-2.html \
+	org-docs/tutorial/example-3.html \
 	org-docs/tutorial/selection_concepts.png \
 	org-docs/tutorial/simple-selection-geometry.png \
-	org-docs/tutorial/fish.js \
+	org-docs/tutorial/fish.js
 
 GENERATED_SOURCES = \
-	js/main.js \
 	js/multiselect.js \
-	js/multiselect_with_extras.js \
-	js/selection_geometries.js \
-	js/drawing.js \
-	js/rectangle.js 
+	js/default_geometry.js \
+	js/ordered_geometries.js \
+	js/dom_geometries.js 
 
 # Anything committed in in the dist-docs directory
 DIST_DOCS := $(shell git ls-files -- dist-docs | tr '\n' ' ')
 
-ech:
-	@echo $(DIST_DOCS)
-
 track-generated-off:
-	git update-index --assume-unchanged $(GENERATED_SOURCES) $(DIST_DOCS) 
+	git update-index --assume-unchanged $(GENERATED_SOURCES) $(GENERATED_TEST_FILES) $(DIST_DOCS) 
 
 track-generated-on:
-	git update-index --assume-changed $(GENERATED_SOURCES) $(DIST_DOCS)
+	git update-index --assume-changed $(GENERATED_SOURCES) $(GENERATED_TEST_FILES) $(DIST_DOCS)
 
 clean:
 	rm -fr *~
 	rm -rf dist/*
+	rm -rf dist-docs/*
 	rm -rf js/*
-	rm -f $(LIBRARY_TANGLED)
+	rm -f $(LIBRARY_TANGLED) $(GENERATED_TEST_FILES)

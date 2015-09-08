@@ -9,7 +9,7 @@
 * Introduction
 
 This file contains definitions that are used in the examples, demos, and tutorials.
-Two files are generated: ~rectangle.js~ and ~drawing.hs~.
+Two files result from tangling this org file: ~rectangle.js~ and ~drawing.hs~.
 The latter depends on the former, and imports it with ~require~.
 
 ** Points, lines, and rectangles

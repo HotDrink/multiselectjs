@@ -2,40 +2,29 @@
   // This file is generated, do not edit //
   /////////////////////////////////////////
 
+    var dg = require("./default_geometry.js");
+  
+    var DefaultGeometry = dg.DefaultGeometry;
+    var anchor = dg.anchor;
+    var activeEnd = dg.activeEnd;
+  
+    var makeEmptyMap = dg.makeEmptyMap;
+    var makeEmptySet = dg.makeEmptySet;
+  
+    var isEmpty = dg.isEmpty;
+    var isSingleton = dg.isSingleton;
+    var firstKey = dg.firstKey;
+    var copySet = dg.copySet;
+    var copyMap = dg.copyMap;
+  
+    var UP = dg.UP;
+    var DOWN = dg.DOWN;
+    var LEFT = dg.LEFT;
+    var RIGHT = dg.RIGHT;
+    var NO_DIRECTION = dg.NO_DIRECTION;
   // -------------------------------------------------------------------
   // utilities
   // -------------------------------------------------------------------
-      function makeEmptySet() { return new Set(); }
-      function makeEmptyMap() { return new Map(); }
-    
-      function isEmpty(collection) { return collection.size === 0; }
-      function isSingleton(collection) { return collection.size === 1; }
-    
-      function firstKey(collection) {  
-        // The body should be:
-        //   return collection.keys().next().value; 
-        // but Safari 8 does not support .next, therefore the workarounds below
-    
-        if (typeof collection.keys().next === 'function') {
-          return collection.keys().next().value;
-        } else {
-          var it = collection.keys();
-          for (var v of it) return v;
-          return undefined;
-        }
-      }
-    
-      function copySet (s) { 
-        var s2 = makeEmptySet();
-        s.forEach(function (key) { s2.add(key); });
-        return s2;
-      }
-    
-      function copyMap (s) { 
-        var s2 = makeEmptyMap();
-        s.forEach(function (value, key) { s2.set(key, value); });
-        return s2;
-      }
       function equalKeys(a, b) { 
         if (a.size !== b.size) return false;
         for (var i of a.keys()) if (!b.has(i)) return false;
@@ -340,7 +329,7 @@
   
         var oldJ = sel._tracking ? copyMap(op.domain) : op.domain;
   
-        var J = sel._callSelectionDomain(sel._spath, cmdType, oldJ);
+        var J = sel._callSelectionDomain(sel._spath, oldJ, cmdType);
   
         if (sel._tracking) {
           mapSymmetricDifference(J, op.domain, true, false).forEach((function(value, i) {
@@ -358,14 +347,14 @@
       cmd.type = cmdType;
       return cmd;
     }
-    SelectionState.prototype._callSelectionDomain = function (path, cmdType, J) {
+    SelectionState.prototype._callSelectionDomain = function (path, J, cmdType) {
       if (cmdType === undefined || cmdType !== this._previousCmdType) {
         this._previousCmdType = cmdType;
         if (path.length === 0) return makeEmptyMap();
         return this._geometry.selectionDomain(path);
       } else {
         if (path.length === 0) return makeEmptyMap();
-        return this._geometry.selectionDomain(path, cmdType, J);
+        return this._geometry.selectionDomain(path, J);
       }
     }
     SelectionState.prototype.setPath = function (path) {
@@ -546,72 +535,33 @@
     }
     SelectionState.prototype._noCursor = function () { return this._cursor === undefined; }
 
-//  
-//  
-//  
-//  
-
-  // -------------------------------------------------------------------
-  // selection geometries
-  // -------------------------------------------------------------------
-
-  var DefaultGeometry = function () {};
-  
-  DefaultGeometry.prototype = {
-    m2v : function (mp) { return mp; },
-    extendPath : function (spath, vp) { 
-      if (vp === null) return null;
-      if (spath.length == 2) spath[1] = vp; else spath.push(vp); 
-    }, 
-    step : function (dir, vp) { return undefined; },
-    selectionDomain : function(spath, source, J) { 
-      var m = makeEmptyMap();
-      for (var i of spath) m.set(i, true); 
-      return m;
-    },
-    defaultCursor : function(dir) { return undefined; },
-    filter : undefined
-  };
-          var UP = 1, DOWN = 2, LEFT = 3, RIGHT = 4, NO_DIRECTION = 0;
-          function anchor(path) { 
-             if (path.length === 0) return undefined; 
-             return path[0]; 
-          };
-          function activeEnd(path) { 
-             if (path.length === 0) return undefined; 
-             return path[path.length - 1]; 
-          };
-
   // -------------------------------------------------------------------
   // exports
   // -------------------------------------------------------------------
     exports.SelectionState = SelectionState;
-    exports.Selection = Selection;
   
-    exports.UP = UP; 
-    exports.DOWN = DOWN; 
-    exports.LEFT = LEFT; 
-    exports.RIGHT = RIGHT;
-  
-    exports.C_SHIFT_CLICK = C_SHIFT_CLICK;
-    exports.C_SET_PATH = C_SET_PATH;
-  
+    // these names are imported from default_geometry.js
+    exports.DefaultGeometry = DefaultGeometry;
     exports.anchor = anchor;
     exports.activeEnd = activeEnd;
   
     exports.makeEmptyMap = makeEmptyMap;
   
-    exports.DefaultGeometry = DefaultGeometry;
+    exports.UP = UP; 
+    exports.DOWN = DOWN; 
+    exports.LEFT = LEFT; 
+    exports.RIGHT = RIGHT;
+    // NO_DIRECTION is not exported
   
-    // The following are helpers for defining event handlers
+    // Helpers for defining event handlers
+    exports.modifierKeys = modifierKeys;
+  
     exports.NONE = M_NONE;
     exports.SHIFT = M_SHIFT;
     exports.CMD = M_CMD;
     exports.SHIFT_CMD = M_SHIFT_CMD;
     exports.OPT = M_OPT;
     exports.SHIFT_OPT = M_SHIFT_OPT;
-  
-    exports.modifierKeys = modifierKeys;
     exports.detail = {};
     exports.detail.tt = tt;
     exports.detail.ff = ff;
@@ -619,8 +569,8 @@
     exports.detail.id = id;
   
     exports.detail.makeOp = makeOp;
-    exports.detail.makeEmptySet = makeEmptySet;
-    exports.detail.makeEmptyMap = makeEmptyMap;
+  
+    // exports.detail.makeEmptySet = makeEmptySet;
   
     exports.detail.makeSelectionMapping = makeSelectionMapping;
     exports.detail.makeOpComposition = makeOpComposition;

@@ -123,10 +123,10 @@ references to objects is a natural indexed family for a set of
 DOM-elements; the order of the indices is their insertion order to the
 map.
 
-We use a few helper functions to deal with sets and maps:
+We use a few helper functions to deal with sets and maps.
 
 #+NAME: set-and-map-functions
-#+BEGIN_SRC js
+#+BEGIN_SRC js 
   function makeEmptySet() { return new Set(); }
   function makeEmptyMap() { return new Map(); }
 
@@ -209,9 +209,46 @@ result are the elements that belong to exactly one of ~left~ and
 
 *** Utilities scrap                                                :noexport:
 
+The ~default_geometry.hs~ has the basic utility functions and
+definitions needed to write the default geometry and perhaps
+other geometries. It exports them, but then we also make them
+directly defined within the ~multiselect.js~ module, because the utilities
+are also used throughout the multiselect library.
+Almost all of the utilities will be re-exported by the multiselect module.
+
+#+NAME: include-default-geometry
+#+BEGIN_SRC js :exports none :noweb yes
+  <<default-geometry>>
+  <<geometry-directions>>
+  <<geometry-utilities>>
+#+END_SRC
+
+#+NAME: import-default-geometry
+#+BEGIN_SRC js :exports none :noweb yes
+  var dg = require("./default_geometry.js");
+
+  var DefaultGeometry = dg.DefaultGeometry;
+  var anchor = dg.anchor;
+  var activeEnd = dg.activeEnd;
+
+  var makeEmptyMap = dg.makeEmptyMap;
+  var makeEmptySet = dg.makeEmptySet;
+
+  var isEmpty = dg.isEmpty;
+  var isSingleton = dg.isSingleton;
+  var firstKey = dg.firstKey;
+  var copySet = dg.copySet;
+  var copyMap = dg.copyMap;
+
+  var UP = dg.UP;
+  var DOWN = dg.DOWN;
+  var LEFT = dg.LEFT;
+  var RIGHT = dg.RIGHT;
+  var NO_DIRECTION = dg.NO_DIRECTION;
+#+END_SRC
+
 #+NAME: utilities
 #+BEGIN_SRC js :exports none :noweb yes
-  <<set-and-map-functions>>
   <<equal-keys>>
   <<set-union>>
   <<map-symmetric-difference>>
@@ -223,7 +260,7 @@ result are the elements that belong to exactly one of ~left~ and
 #+NAME: utilities-tests
 #+BEGIN_SRC js :exports none :noweb yes
   test("Utilities tests", function (t) {
-
+    
     var s = makeEmptySet();
     var m = makeEmptyMap();
 
@@ -236,7 +273,7 @@ result are the elements that belong to exactly one of ~left~ and
     t.equal(firstKey(s), undefined, "firstKey 1");
     t.equal(firstKey(m), undefined, "firstKey 2");
 
-    t.ok(equalKeys(s, m), "equalKeys 1");
+    t.ok(multiselect.detail.equalKeys(s, m), "equalKeys 1");
 
     // add 1st elem to both
     s.add(1); m.set(1, true);
@@ -258,11 +295,11 @@ result are the elements that belong to exactly one of ~left~ and
     t.equal(firstKey(s), 1, "firstKey 5");
     t.equal(firstKey(m), 1, "firstKey 6");
         
-    t.ok(equalKeys(s, m), "equalKeys 2");
+    t.ok(multiselect.detail.equalKeys(s, m), "equalKeys 2");
 
     // add 3rd to s
     s.add(3);
-    t.ok(!equalKeys(s, m), "not equalKeys");
+    t.ok(!multiselect.detail.equalKeys(s, m), "not equalKeys");
   });
 #+END_SRC
 * Selection functions 
@@ -969,7 +1006,7 @@ creating unnecessary undoable states.
 If ~_ops~ grows too big, [[#sec-baking][~_bake~]] reduces the size of ~_ops~
 by one undoable operation (two selection operations).
 
-The ~_opsStatus~ is set to ~ACTIVE_SHIFT_CLICK_OR_SET_APTH~ to
+The ~_opsStatus~ is set to ~ACTIVE_SHIFT_CLICK_OR_SET_PATH~ to
 indicate that shift-click or set path can modify the topmost
 selection operation that is pushed to ~_ops~.
 
@@ -1141,7 +1178,7 @@ and a new command is created with ~mkDelayedCommand~ and scheduled.
 
       var oldJ = sel._tracking ? copyMap(op.domain) : op.domain;
 
-      var J = sel._callSelectionDomain(sel._spath, cmdType, oldJ);
+      var J = sel._callSelectionDomain(sel._spath, oldJ, cmdType);
 
       if (sel._tracking) {
         mapSymmetricDifference(J, op.domain, true, false).forEach((function(value, i) {
@@ -1203,27 +1240,27 @@ corresponding index in ~changed~ to the new value.
 
 #+NAME: selection-state-call-selection-domain
 #+BEGIN_SRC js 
-  SelectionState.prototype._callSelectionDomain = function (path, cmdType, J) {
+  SelectionState.prototype._callSelectionDomain = function (path, J, cmdType) {
     if (cmdType === undefined || cmdType !== this._previousCmdType) {
       this._previousCmdType = cmdType;
       if (path.length === 0) return makeEmptyMap();
       return this._geometry.selectionDomain(path);
     } else {
       if (path.length === 0) return makeEmptyMap();
-      return this._geometry.selectionDomain(path, cmdType, J);
+      return this._geometry.selectionDomain(path, J);
     }
   }
 #+END_SRC
 
 The client should define ~selectionDomain~ function in such a way that
 if it is called with no arguments other than a selection path, it
-correctly computes the selection domain. The other two arguments
-enable taking advantage of the result of the previous call to
+correctly computes the selection domain. The second argument
+enables taking advantage of the result of the previous call to
 ~selectionDomain~, which is beneficial in some selection
 geometries. This possibility exists in two calling contexts, in the
 command objects created either in the ~shiftClick~ or ~setPath~
 methods. The purpose of ~_callSelectionDomain~ is to only pass the
-information about the previous result to ~selectionDomain~ if the source
+previous result to ~selectionDomain~ if the source
 of the call is the same as the source of the previous call.
 
 Note that ~_callSelectionDomain~ takes care of the empty path
@@ -1711,20 +1748,19 @@ the most natural behavior.
 Aspects of selection that vary from one context to another are bundled
 into a /selection geometry/ object.  The library provides the
 ~DefaultGeometry~ class, from which different geometry
-classes can inherit.  
+classes can inherit. 
 
 #+NAME: default-geometry
 #+BEGIN_SRC js
+<<set-and-map-functions>>
+
 var DefaultGeometry = function () {};
 
 DefaultGeometry.prototype = {
   m2v : function (mp) { return mp; },
-  extendPath : function (spath, vp) { 
-    if (vp === null) return null;
-    if (spath.length == 2) spath[1] = vp; else spath.push(vp); 
-  }, 
+  extendPath : function (spath, vp) { spath.push(vp); },
   step : function (dir, vp) { return undefined; },
-  selectionDomain : function(spath, source, J) { 
+  selectionDomain : function(spath, J) { 
     var m = makeEmptyMap();
     for (var i of spath) m.set(i, true); 
     return m;
@@ -1754,8 +1790,8 @@ The functions of a selection geometry are:
     - Extends the selection path with a new point (as a response to a
       shift-click). The function modifies the ~spath~ argument.  The
       return value ~null~ indicates that ~p~ did not affect ~spath~.
-      The default geometry ignores ~null~ values and limits the path
-      size to two---the anchor and the active end.
+#      The default geometry ignores ~null~ values and limits the path
+#      size to two---the anchor and the active end.
 
   - ~step(dir, vp)~
     - Given a direction ~dir~ and a selection space coordinate ~vp~,
@@ -1772,7 +1808,7 @@ The functions of a selection geometry are:
       The default is ~undefined~, which means that no keyboard commands 
       have any effect.
 
-  - ~selectionDomain(spath, source, J)~
+  - ~selectionDomain(spath, J)~
     - Computes the selection domain, a set of indices (represented as
       a ~Map~; only the keys matter, values are insignificant), from
       the ~spath~ array of selection space points.  The first element
@@ -1793,23 +1829,26 @@ The functions of a selection geometry are:
         };
       #+END_SRC
 
-      The ~source~ and ~J~ are defined when
+      The ~J~ argument is defined when
       ~selectionDomain~ is called from ~SelectionState~'s ~shiftClick~
       or ~setPath~ methods and it is a second consecutive call
-      from the same method, otherwise they are both undefined. The
-      ~source~ parameter is either ~C_SHIFT_CLICK~ or ~C_SET_PATH~, identifying
-      the caller. The ~J~ parameter is the current selection domain (computed
+      from the same method, otherwise they are both undefined. 
+      # The
+      # ~source~ parameter is either ~C_SHIFT_CLICK~ or ~C_SET_PATH~, identifying
+      # the caller. 
+      ~J~'s value is then the current selection domain (computed
       by the most recent preceding call to ~selectionDomain~).
-      These two parameters are there so that the selection domain computation
-      can take advantage of the results of the previous computation; in some selection
-      geometries this can lead to notably more efficient implementations.
-
+      The purpose of this parameter is to allow the selection domain computation
+      to take advantage of the results of the previous computation and in this way
+      compute a new selection domain faster.
+   
       Both shift-click and set-path commands schedule the operation
       to a one-element long queue, so that the selection path can be modified
-      several times between calls to ~selectionDomain~. The library
-      guarantees that if ~source~ is ~C_SHIFT_CLICK~,
-      the previous call to ~selectionDomain~ was from the ~shiftClick~ method.
-      The analogous guarantee holds for the ~C_SET_PATH~ value and ~setPath~ method.
+      several times between two consequtive calls to ~selectionDomain~. 
+#      The library
+#      guarantees that if ~source~ is ~C_SHIFT_CLICK~,
+#     the previous call to ~selectionDomain~ was from the ~shiftClick~ method.
+#     The analogous guarantee holds for the ~C_SET_PATH~ value and ~setPath~ method.
 
       A skeleton for how to take advantage of ~J~ and ~source~ 
       is below. Note that it is not necessary to take a copy of ~J~;
@@ -1817,22 +1856,36 @@ The functions of a selection geometry are:
 
       #+NAME: selection-domain-skeleton
       #+BEGIN_SRC js
-      selectionDomain = function(spath, source, J) { 
-        shift (source) {
-          case C_SHIFT_CLICK:                      
-            // modify J based on shift click cache
-            break;
-          case C_SET_PATH:
-            // modify J based on set path cache
-            break;
-          default: 
-            J = makeEmptyMap();           
-            // clear cache for shift-clicks
-            // clear cache for set path
-            // populate J from scratch
+      selectionDomain = function(spath, J) { 
+        if (J !== undefined) {
+          J = makeEmptyMap(); 
+          // clear cache
+          // populate J from scratch, start caching
+        } else {
+          // modify J based on cache
         }
         return J;
       #+END_SRC
+
+
+      # #+NAME: selection-domain-skeleton
+      # #+BEGIN_SRC js
+      # selectionDomain = function(spath, source, J) { 
+      #   shift (source) {
+      #     case C_SHIFT_CLICK:                      
+      #       // modify J based on shift click cache
+      #       break;
+      #     case C_SET_PATH:
+      #       // modify J based on set path cache
+      #       break;
+      #     default: 
+      #       J = makeEmptyMap();           
+      #       // clear cache for shift-clicks
+      #       // clear cache for set path
+      #       // populate J from scratch
+      #   }
+      #   return J;
+      # #+END_SRC
 
    - If ~spath~ has exactly one element, call it $p$, the computed
       selection domain should have at most one element. In selection 
@@ -1881,8 +1934,9 @@ The functions of a selection geometry are:
   test ("Selection state tests click", function (t) {
 
     var M = multiselect; 
+    var G = multiselect_ordered_geometries;
 
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function () {}, false, 10);
+    var s = new M.SelectionState(new G.OrderedGeometry(20), function () {}, false, 10);
     function cur(i) { return s.isSelected(i); }
     s.click(1);
     t.ok(s.isSelected(1), "click 0");
@@ -1896,8 +1950,9 @@ The functions of a selection geometry are:
   test ("Selection state tests shiftClick", function (t) {
 
     var M = multiselect;
+    var G = multiselect_ordered_geometries;
 
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20));
+    var s = new M.SelectionState(new G.OrderedGeometry(20));
     function cur(i) { return s.isSelected(i); }
 
     s.shiftClick(1); s._flush();
@@ -1921,8 +1976,9 @@ The functions of a selection geometry are:
   test ("Selection state tests cmdClick", function (t) {
 
     var M = multiselect;
+    var G = multiselect_ordered_geometries;
 
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20));
+    var s = new M.SelectionState(new G.OrderedGeometry(20));
     function cur(i) { return s.isSelected(i); }
 
     s.cmdClick(1);
@@ -1938,8 +1994,9 @@ The functions of a selection geometry are:
   test ("Repeat click tests", function (t) {
 
     var M = multiselect;
+    var G = multiselect_ordered_geometries;
 
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function(){}, false, 20);
+    var s = new M.SelectionState(new G.OrderedGeometry(20), function(){}, false, 20);
     function cur(i) { return s.isSelected(i); }
 
     t.equal(s._ops.size(), 0, "repeat cmdClick 0"); 
@@ -1967,7 +2024,7 @@ The functions of a selection geometry are:
     t.equal(s._ops.size(), 8, "repeat cmdClick 7");
 
     // reset s
-    s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function(){}, false, 20);
+    s = new M.SelectionState(new G.OrderedGeometry(20), function(){}, false, 20);
     s.cmdClick(1); 
     t.equal(s._ops.size(), 2, "repeat cmdClick 2 1");
     s.cmdClick(1); 
@@ -1976,7 +2033,7 @@ The functions of a selection geometry are:
     t.equal(s._ops.size(), 6, "repeat cmdClick 2 3");
 
     // reset s
-    s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function(){}, false, 20);
+    s = new M.SelectionState(new G.OrderedGeometry(20), function(){}, false, 20);
 
     s.click(1); 
     t.equal(s._ops.size(), 2, "repeat click 1");
@@ -1999,7 +2056,7 @@ The functions of a selection geometry are:
     s.click(-1); 
     t.equal(s._ops.size(), 14, "repeat click 11");
 
-    s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function(){}, false, 20);
+    s = new M.SelectionState(new G.OrderedGeometry(20), function(){}, false, 20);
 
     t.equal(s._ops.size(), 0, "shift-click size 0");
     s.shiftClick([1]); s._flush();
@@ -2012,8 +2069,9 @@ The functions of a selection geometry are:
   test ("Selection state tests onSelected", function (t) {
 
     var M = multiselect;
+    var G = multiselect_ordered_geometries;
 
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function () {}, false, 10);
+    var s = new M.SelectionState(new G.OrderedGeometry(20), function () {}, false, 10);
     function cur(i) { return s.isSelected(i); }
     s.click(1);
     t.ok(s.onSelected(1), "onSelected 1");
@@ -2023,8 +2081,9 @@ The functions of a selection geometry are:
   test ("Undo tests", function (t) {
 
     var M = multiselect;
+    var G = multiselect_ordered_geometries;
 
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20));
+    var s = new M.SelectionState(new G.OrderedGeometry(20));
     function cur(i) { return s.isSelected(i); }
 
     s.cmdClick(1);
@@ -2069,55 +2128,50 @@ The functions of a selection geometry are:
       return a;
     }
     var changed = null;
-    s = new M.SelectionState(new M.Geometries.OrderedGeometry(20),
+    s = new M.SelectionState(new G.OrderedGeometry(20),
                              function (smap) { changed = m2a(smap); }, true);
     s.cmdClick(1);
     t.deepEqual(changed, [false, true, false], "undoable action 1");
-    // s.cmdClick(2);
-    // t.equal(s._ops.size(), 4);
-    // t.deepEqual([0, 1, 2].map(cur), [false, true, true], "undoable action 2");
-    // s.cmdClick(1);
-    // t.equal(s._ops.size(), 6);
-    // t.deepEqual([0, 1, 2].map(cur), [false, false, true], "undoable action 3");
-    // s.cmdClick(0);
-    // t.equal(s._ops.size(), 8);
-    // t.deepEqual([0, 1, 2].map(cur), [true, false, true], "undoable action 2");
-    // s.click(0);
-    // t.equal(s._ops.size(), 10);
-    // t.deepEqual([0, 1, 2].map(cur), [true, false, false], "undo 0");
-    // s.undo();
-    // t.equal(s._ops.size(), 10);
-    // t.equal(s._numberOfOps(), 8);
-    // t.deepEqual([0, 1, 2].map(cur), [true, false, true], "undo 1");
-    // s.undo();
-    // t.equal(s._ops.size(), 8);
-    // t.equal(s._numberOfOps(), 6);
-    // t.deepEqual([0, 1, 2].map(cur), [false, false, true], "undo 2");
-    // s.undo();
-    // t.equal(s._ops.size(),  6);
-    // t.equal(s._numberOfOps(), 4);
-    // t.deepEqual([0, 1, 2].map(cur), [false, true, true], "undo 3");
-    // s.undo();
-    // t.equal(s._ops.size(), 4);
-    // t.equal(s._numberOfOps(), 2);
-    // t.deepEqual([0, 1, 2].map(cur), [false, true, false], "undo 4");
-    // s.undo();
-    // t.equal(s._ops.size(), 2);
-    // t.equal(s._numberOfOps(), 0);
-    // t.deepEqual([0, 1, 2].map(cur), [false, false, false], "undo 5");
-    // s.undo();
-    // t.equal(s._ops.size(), 2);
-    // t.equal(s._numberOfOps(), 0);
-    // t.deepEqual([0, 1, 2].map(cur), [false, false, false], "undo 5 again");
-    // s.undo();
-    // t.equal(s._ops.size(), 2);
+    s.cmdClick(2);
+    t.equal(s._ops.size(), 4);
+    t.deepEqual([0, 1, 2].map(cur), [false, true, true], "undoable action 2");
+    s.cmdClick(1);
+    t.equal(s._ops.size(), 6);
+    t.deepEqual([0, 1, 2].map(cur), [false, false, true], "undoable action 3");
+    s.cmdClick(0);
+    t.equal(s._ops.size(), 8);
+    t.deepEqual([0, 1, 2].map(cur), [true, false, true], "undoable action 2");
+    s.click(0);
+    t.equal(s._ops.size(), 10);
+    t.deepEqual([0, 1, 2].map(cur), [true, false, false], "undo 0");
+    s.undo();
+    t.equal(s._ops.size(), 8);
+    t.deepEqual([0, 1, 2].map(cur), [true, false, true], "undo 1");
+    s.undo();
+    t.equal(s._ops.size(), 6);
+    t.deepEqual([0, 1, 2].map(cur), [false, false, true], "undo 2");
+    s.undo();
+    t.equal(s._ops.size(),  4);
+    t.deepEqual([0, 1, 2].map(cur), [false, true, true], "undo 3");
+    s.undo();
+    t.equal(s._ops.size(), 2);
+    t.deepEqual([0, 1, 2].map(cur), [false, true, false], "undo 4");
+    s.undo();
+    t.equal(s._ops.size(), 0);
+    t.deepEqual([0, 1, 2].map(cur), [false, false, false], "undo 5");
+    s.undo();
+    t.equal(s._ops.size(), 0);
+    t.deepEqual([0, 1, 2].map(cur), [false, false, false], "undo 5 again");
+    s.undo();
+    t.equal(s._ops.size(), 0);
   });
 
   test ("Redo tests", function (t) {
 
     var M = multiselect;
+    var G = multiselect_ordered_geometries;
 
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20));
+    var s = new M.SelectionState(new G.OrderedGeometry(20));
     function cur(i) { return s.isSelected(i); }
 
     s.cmdClick(1);
@@ -2148,7 +2202,7 @@ The functions of a selection geometry are:
     s.redo();
     t.deepEqual([0, 1, 2].map(cur), [true, false, false], "redo 5 again");
 
-    s = new M.SelectionState(new M.Geometries.OrderedGeometry(20));
+    s = new M.SelectionState(new G.OrderedGeometry(20));
     s.shiftClick([1]);
     t.deepEqual([0, 1, 2].map(cur), [false, true, false], "redo A1");
     s.cmdClick(2);
@@ -2162,8 +2216,9 @@ The functions of a selection geometry are:
   test ("Redo stack limit test", function (t) {
 
     var M = multiselect;
+    var G = multiselect_ordered_geometries;
 
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function(){}, false, 1);
+    var s = new M.SelectionState(new G.OrderedGeometry(20), function(){}, false, 1);
     function cur(i) { return s.isSelected(i); }
     s.redo();
     t.equal(s._ops.size(), 0, "");
@@ -2197,7 +2252,7 @@ The functions of a selection geometry are:
     t.equal(s._ops.size(), 2, "min undo 6");
     t.deepEqual([0, 1, 2].map(cur), [false, true, true], "");
 
-    s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function(){}, false, 3);
+    s = new M.SelectionState(new G.OrderedGeometry(20), function(){}, false, 3);
     s.cmdClick(1); 
     t.equal(s._ops.size(), 2, "redostack 1a");
     t.equal(s._redoStack.length, 0, "redostack 1b");
@@ -2238,23 +2293,26 @@ The functions of a selection geometry are:
 
     var changed;
     var M = multiselect;
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), 
+    var G = multiselect_ordered_geometries;
+
+    var D = M.detail;
+    var s = new M.SelectionState(new G.OrderedGeometry(20), 
                                  function(c) { changed = c; }, true);
 
     s.click(1);
-    t.ok(equalKeys(changed, dom(1)), "tracking 1");
+    t.ok(D.equalKeys(changed, dom(1)), "tracking 1");
     t.equal(changed.get(1), true, "tracking 1b");
     changed = null;
     s.click(1); // should be a nop, so refresh not called
     t.equal(changed, null, "tracking 2");
     s.cmdClick(1);
-    t.ok(equalKeys(changed, dom(1)), "tracking 3");
+    t.ok(D.equalKeys(changed, dom(1)), "tracking 3");
     t.equal(changed.get(1), false);
     s.click(2);
-    t.ok(equalKeys(changed, dom(2)), "tracking 4");
+    t.ok(D.equalKeys(changed, dom(2)), "tracking 4");
     t.equal(changed.get(2), true);
     s.shiftClick(4); s._flush();
-    t.ok(equalKeys(changed, dom(3, 4)), "tracking 5");
+    t.ok(D.equalKeys(changed, dom(3, 4)), "tracking 5");
     t.equal(changed.get(3), true);
     t.equal(changed.get(4), true);
   });
@@ -2262,7 +2320,9 @@ The functions of a selection geometry are:
   test ("Predicate selection tests", function (t) {
 
     var M = multiselect, D = M.detail;
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function() {});
+    var G = multiselect_ordered_geometries;
+
+    var s = new M.SelectionState(new G.OrderedGeometry(20), function() {});
     function cur(i) { return s.isSelected(i); }
 
     s.filter(function (i) { return i === 1 || i === 3; });
@@ -2277,7 +2337,7 @@ The functions of a selection geometry are:
     t.deepEqual([0, 1, 2, 3].map(cur), [true, true, true, false], "");
 
     var changed;
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), 
+    var s = new M.SelectionState(new G.OrderedGeometry(20), 
                                  function(c) { changed = c; }, true);
     s.filter(function (i) { return i === 1 || i === 3; }, true); // [1, 3] selected
     t.equal(changed.size, 2, "filter with change tracking 1");
@@ -2391,32 +2451,29 @@ The public names exported from the library are as follows.
 #+NAME: exports
 #+BEGIN_SRC js 
   exports.SelectionState = SelectionState;
-  exports.Selection = Selection;
 
-  exports.UP = UP; 
-  exports.DOWN = DOWN; 
-  exports.LEFT = LEFT; 
-  exports.RIGHT = RIGHT;
-
-  exports.C_SHIFT_CLICK = C_SHIFT_CLICK;
-  exports.C_SET_PATH = C_SET_PATH;
-
+  // these names are imported from default_geometry.js
+  exports.DefaultGeometry = DefaultGeometry;
   exports.anchor = anchor;
   exports.activeEnd = activeEnd;
 
   exports.makeEmptyMap = makeEmptyMap;
 
-  exports.DefaultGeometry = DefaultGeometry;
+  exports.UP = UP; 
+  exports.DOWN = DOWN; 
+  exports.LEFT = LEFT; 
+  exports.RIGHT = RIGHT;
+  // NO_DIRECTION is not exported
 
-  // The following are helpers for defining event handlers
+  // Helpers for defining event handlers
+  exports.modifierKeys = modifierKeys;
+
   exports.NONE = M_NONE;
   exports.SHIFT = M_SHIFT;
   exports.CMD = M_CMD;
   exports.SHIFT_CMD = M_SHIFT_CMD;
   exports.OPT = M_OPT;
   exports.SHIFT_OPT = M_SHIFT_OPT;
-
-  exports.modifierKeys = modifierKeys;
 #+END_SRC
 
 In addition, the following names are exported to be used by tests
@@ -2431,8 +2488,8 @@ under the ~detail~ ``namespace'':
   exports.detail.id = id;
 
   exports.detail.makeOp = makeOp;
-  exports.detail.makeEmptySet = makeEmptySet;
-  exports.detail.makeEmptyMap = makeEmptyMap;
+
+  // exports.detail.makeEmptySet = makeEmptySet;
 
   exports.detail.makeSelectionMapping = makeSelectionMapping;
   exports.detail.makeOpComposition = makeOpComposition;
@@ -2462,7 +2519,8 @@ under the ~detail~ ``namespace'':
   <div id="qunit"></div>
   <div id="qunit-fixture"></div>
   <script type="text/javascript" src="https://code.jquery.com/qunit/qunit-1.18.0.js"></script>
-  <script type="text/javascript" src="../dist/multiselect_with_extras.js"></script>
+  <script type="text/javascript" src="../dist/multiselect.js"></script>
+  <script type="text/javascript" src="../dist/multiselect_ordered_geometries.js"></script>
   <script src="tests.js"></script>
 </body>
 </html>
@@ -2471,7 +2529,10 @@ under the ~detail~ ``namespace'':
 #+BEGIN_SRC js :exports none :tangle ../test/tests.js :noweb yes :padline no 
 var test = QUnit.test;
 
-<<utilities>>
+// we include the contets of default geometry, rather than require it
+// so that testing does not have to go through browserify
+<<include-default-geometry>>
+
 <<test-utilities>>
 
 <<utilities-tests>>
@@ -2485,6 +2546,7 @@ var test = QUnit.test;
 #+BEGIN_SRC js :exports none :tangle ../js/multiselect.js :noweb yes :padline no
   <<generated-banner>>
 
+  <<import-default-geometry>>
   // -------------------------------------------------------------------
   // utilities
   // -------------------------------------------------------------------
@@ -2540,24 +2602,45 @@ var test = QUnit.test;
   <<selection-state-arrow-functions>>
   <<selection-state-acquire-cursor>>
 
-//  <<selection-state-repair-after-remove-elements>>
-//  <<selection-state-repair-after-reposition>>
-//  <<selection-state-repair-after-reorder>>
-//  <<selection-state-repair-after-unspecified-change>>
+  // -------------------------------------------------------------------
+  // exports
+  // -------------------------------------------------------------------
+  <<exports>>
+  <<exports-detail>>
+#+END_SRC
+
+#+NAME: default-geometry-js-contents
+#+BEGIN_SRC js :exports none :tangle ../js/default_geometry.js :noweb yes :padline no
+  <<generated-banner>>
 
   // -------------------------------------------------------------------
   // selection geometries
   // -------------------------------------------------------------------
 
   <<default-geometry>>
+
   <<geometry-directions>>
+
   <<geometry-utilities>>
 
-  // -------------------------------------------------------------------
-  // exports
-  // -------------------------------------------------------------------
-  <<exports>>
-  <<exports-detail>>
+  exports.DefaultGeometry = DefaultGeometry;
+  exports.anchor = anchor;
+  exports.activeEnd = activeEnd;
+
+  exports.makeEmptyMap = makeEmptyMap;
+  exports.makeEmptySet = makeEmptySet;
+
+  exports.isEmpty = isEmpty;
+  exports.isSingleton = isSingleton;
+  exports.firstKey = firstKey;
+  exports.copySet = copySet;
+  exports.copyMap = copyMap;
+
+  exports.UP = UP; 
+  exports.DOWN = DOWN; 
+  exports.LEFT = LEFT; 
+  exports.RIGHT = RIGHT;
+  exports.NO_DIRECTION = NO_DIRECTION;
 #+END_SRC
 
 
@@ -2567,7 +2650,7 @@ var test = QUnit.test;
 #+BEGIN_SRC js :exports none
   // generate a property map that maps the labels given as arguments to true
   function dom(args) {
-    var d = multiselect.detail.makeEmptyMap();
+    var d = multiselect.makeEmptyMap();
     for (var i in arguments) { d.set(arguments[i], true); }
     return d;
   }
@@ -2616,7 +2699,7 @@ var test = QUnit.test;
 #  LocalWords:  cmd onSelectedIndex tmp numberOfOps vps extendPath ss
 #  LocalWords:  onSelected onElement emptyPairOnTop queuedCommand dir
 #  LocalWords:  commandQueue opertationQueue scheduleKeepLast pred
-#  LocalWords:  getters emtpy acquireCursor shiftSpace VerticalCS kbd
+#  LocalWords:  getters acquireCursor shiftSpace VerticalCS kbd
 #  LocalWords:  cmdSpace nop deepEqual DefaultGeometry mpoint
 #  LocalWords:  vpoint pre defaultPath subsequence activeEnd keypress
 #  LocalWords:  defaultCursor upto boundToElement resizing init undos

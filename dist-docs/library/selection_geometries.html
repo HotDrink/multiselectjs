@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>MultiselectJS &#x2014; <code>selection_geometries.org</code></title>
-<!-- 2015-08-21 Fri 22:38 -->
+<!-- 2015-09-07 Mon 23:47 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="Jaakko Järvi" />
@@ -147,10 +147,9 @@ for the JavaScript code in this tag.
 <ul>
 <li><a href="#sec-1">1. Selection geometries</a>
 <ul>
-<li><a href="#sec-1-1">1.1. Imports</a></li>
+<li><a href="#sec-1-1">1.1. Import default geometry</a></li>
 <li><a href="#sec-1-2">1.2. Ordered geometries</a></li>
 <li><a href="#sec-1-3">1.3. Coordinate system for an array of DOM objects</a></li>
-<li><a href="#sec-1-4">1.4. IPhoto Coordinate system for an array of DOM objects</a></li>
 </ul>
 </li>
 </ul>
@@ -159,66 +158,87 @@ for the JavaScript code in this tag.
 <div id="outline-container-sec-1" class="outline-2">
 <h2 id="sec-1"><span class="section-number-2">1</span> Selection geometries</h2>
 <div class="outline-text-2" id="text-1">
-</div><div id="outline-container-sec-1-1" class="outline-3">
-<h3 id="sec-1-1"><span class="section-number-3">1.1</span> Imports</h3>
+<p>
+MultiselectJS provides a handful of common selection geometries.  They
+are not included in the main package, but each can be included
+separately.  Each file is a commonJS module. Each imports the
+<code>default_geometry</code> module with <code>require</code>, and inherits from
+<code>DefaultGeometry</code>.
+</p>
+</div>
+
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1"><span class="section-number-3">1.1</span> Import default geometry</h3>
 <div class="outline-text-3" id="text-1-1">
 <div class="org-src-container">
 
-<pre class="src src-js" id="imports"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">M</span> = require(<span style="color: #008000;">"./multiselect"</span>);
-<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">Rect</span> = require(<span style="color: #008000;">"./rectangle"</span>);
-
-<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">makeEmptyMap</span> = M.detail.makeEmptyMap;
-</pre>
-</div>
-
-<div class="org-src-container">
-
-<pre class="src src-js" id="multiselect_with_extras">  module.exports = require(<span style="color: #008000;">"./multiselect"</span>);
-
-  module.exports.Geometries = require(<span style="color: #008000;">"./selection_geometries"</span>);
-
-  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">module.exports.Rect = require("./rectangle");</span>
-  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">module.exports.Drawing = require("./drawing");</span>
+<pre class="src src-js" id="import-default-geometry"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">dg</span> = require(<span style="color: #008000;">"./default_geometry"</span>);
 </pre>
 </div>
 </div>
 </div>
-
 
 <div id="outline-container-sec-1-2" class="outline-3">
 <h3 id="sec-1-2"><span class="section-number-3">1.2</span> Ordered geometries</h3>
 <div class="outline-text-3" id="text-1-2">
 <p>
-A common geometries for elements that are linearly ordered,
-and indexed by natural numbers up to some preset maximum.
+Ordered geometries are for totally ordered elements.
+We assume that they are indexed by natural numbers up to
+some predefined maximum. We provide both horizontal
+and vertical variations.
+</p>
+
+<p>
+The selection space is the set of indices.
+Only the anchor and the active end matter in these geometries:
+the active set is all the elements within the closed range defined by 
+the anchor and the active end.
+The <code>null</code> coordinate is considered to be a &ldquo;no coordinate&rdquo;; and 
+<code>extendPath</code> will ignore it.
+</p>
+
+<p>
+To use one of the ordered geometries, one inherits from it, 
+and defines the <code>m2v</code> method as appropriate.
 </p>
 
 <div class="org-src-container">
 
-<pre class="src src-js" id="ordered-geometry"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">OrderedGeometry</span> = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">size</span>) {
-  M.DefaultGeometry.call(<span style="color: #8b1a1a;">this</span>);
+<pre class="src src-js" id="ordered-geometry"><span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">size is the number of elements</span>
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">OrderedGeometry</span> = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">size</span>) {
+  dg.DefaultGeometry.call(<span style="color: #8b1a1a;">this</span>);
   <span style="color: #8b1a1a;">this</span>._size = size;
 };
 
-OrderedGeometry.<span style="color: #8b1a1a;">prototype</span> = Object.create(M.DefaultGeometry.<span style="color: #8b1a1a;">prototype</span>);
+OrderedGeometry.<span style="color: #8b1a1a;">prototype</span> = Object.create(dg.DefaultGeometry.<span style="color: #8b1a1a;">prototype</span>);
 OrderedGeometry.<span style="color: #8b1a1a;">prototype</span>.constructor = OrderedGeometry;
 
+OrderedGeometry.<span style="color: #8b1a1a;">prototype</span>.size = <span style="color: #0000FF;">function</span>() { <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._size; }
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">retain only the anchor and the active end, ignore null points</span>
+OrderedGeometry.<span style="color: #8b1a1a;">prototype</span>.extendPath = <span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">spath</span>, <span style="color: #BA36A5;">vpoint</span>) {
+  <span style="color: #0000FF;">if</span> (vpoint === <span style="color: #8b1a1a;">null</span>) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">null</span>;
+  <span style="color: #0000FF;">if</span> (spath.length === 2) spath.pop();
+  spath.push(vpoint);
+};
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">selection domain is the range between anchor and active end </span>
 OrderedGeometry.<span style="color: #8b1a1a;">prototype</span>.selectionDomain = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">spath</span>) {
-  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = makeEmptyMap();
+  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = dg.makeEmptyMap();
   <span style="color: #0000FF;">if</span> (spath.length === 0) <span style="color: #0000FF;">return</span> J;
 
-  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">b</span> = Math.max(0, Math.min(M.anchor(spath), M.activeEnd(spath)));
-  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">e</span> = Math.min(<span style="color: #8b1a1a;">this</span>._size-1, Math.max(M.anchor(spath), M.activeEnd(spath)));
+  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">b</span> = Math.max(0, Math.min(dg.anchor(spath), dg.activeEnd(spath)));
+  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">e</span> = Math.min(<span style="color: #8b1a1a;">this</span>.size()-1, Math.max(dg.anchor(spath), dg.activeEnd(spath)));
   <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> = b; i&lt;=e; ++i) J.set(i, <span style="color: #8b1a1a;">true</span>);
   <span style="color: #0000FF;">return</span> J; 
 };
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">iterate from 0 to size-1</span>
 OrderedGeometry.<span style="color: #8b1a1a;">prototype</span>.filter = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">predicate</span>) {
-  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = makeEmptyMap();
-  <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> = 0; i &lt; <span style="color: #8b1a1a;">this</span>._size; ++i) <span style="color: #0000FF;">if</span> (predicate(i)) J.set(i, <span style="color: #8b1a1a;">true</span>);
+  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = dg.makeEmptyMap();
+  <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> = 0; i &lt; <span style="color: #8b1a1a;">this</span>.size(); ++i) <span style="color: #0000FF;">if</span> (predicate(i)) J.set(i, <span style="color: #8b1a1a;">true</span>);
   <span style="color: #0000FF;">return</span> J;
 };
-
-OrderedGeometry.<span style="color: #8b1a1a;">prototype</span>.size = <span style="color: #0000FF;">function</span> () { <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._size; };
 
 exports.OrderedGeometry = OrderedGeometry;
 </pre>
@@ -241,9 +261,17 @@ VerticalGeometry.<span style="color: #8b1a1a;">prototype</span>.constructor = Ve
 
 VerticalGeometry.<span style="color: #8b1a1a;">prototype</span>.step = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>, <span style="color: #BA36A5;">vpoint</span>) {
   <span style="color: #0000FF;">switch</span> (dir) {
-    <span style="color: #0000FF;">case</span> M.UP: <span style="color: #0000FF;">return</span> Math.max(0, vpoint-1);
-    <span style="color: #0000FF;">case</span> M.DOWN: <span style="color: #0000FF;">return</span> Math.min(<span style="color: #8b1a1a;">this</span>._size-1, vpoint+1);
+    <span style="color: #0000FF;">case</span> dg.UP: <span style="color: #0000FF;">return</span> Math.max(0, vpoint-1);
+    <span style="color: #0000FF;">case</span> dg.DOWN: <span style="color: #0000FF;">return</span> Math.min(<span style="color: #8b1a1a;">this</span>.size()-1, vpoint+1);
     <span style="color: #0000FF;">default</span>: <span style="color: #0000FF;">return</span> vpoint;
+  }
+};
+
+VerticalGeometry.<span style="color: #8b1a1a;">prototype</span>.defaultCursor = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>) {
+  <span style="color: #0000FF;">switch</span> (dir) {
+  <span style="color: #0000FF;">case</span> dg.UP: <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>.size()-1;
+  <span style="color: #0000FF;">case</span> dg.DOWN: <span style="color: #0000FF;">return</span> 0; 
+  <span style="color: #0000FF;">default</span>: <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">undefined</span>;
   }
 };
 
@@ -262,9 +290,17 @@ HorizontalGeometry.<span style="color: #8b1a1a;">prototype</span>.constructor = 
 
 HorizontalGeometry.<span style="color: #8b1a1a;">prototype</span>.step = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>, <span style="color: #BA36A5;">vpoint</span>) {
   <span style="color: #0000FF;">switch</span> (dir) {
-    <span style="color: #0000FF;">case</span> M.LEFT: <span style="color: #0000FF;">return</span> Math.max(0, vpoint-1);
-    <span style="color: #0000FF;">case</span> M.RIGHT: <span style="color: #0000FF;">return</span> Math.min(<span style="color: #8b1a1a;">this</span>._size-1, vpoint+1);
+    <span style="color: #0000FF;">case</span> dg.LEFT: <span style="color: #0000FF;">return</span> Math.max(0, vpoint-1);
+    <span style="color: #0000FF;">case</span> dg.RIGHT: <span style="color: #0000FF;">return</span> Math.min(<span style="color: #8b1a1a;">this</span>.size()-1, vpoint+1);
     <span style="color: #0000FF;">default</span>: <span style="color: #0000FF;">return</span> vpoint;
+  }
+};
+
+HorizontalGeometry.<span style="color: #8b1a1a;">prototype</span>.defaultCursor = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>) {
+  <span style="color: #0000FF;">switch</span> (dir) {
+  <span style="color: #0000FF;">case</span> dg.LEFT: <span style="color: #0000FF;">return</span> 0; 
+  <span style="color: #0000FF;">case</span> dg.RIGHT: <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>.size()-1;
+  <span style="color: #0000FF;">default</span>: <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">undefined</span>;
   }
 };
 
@@ -278,60 +314,13 @@ exports.HorizontalGeometry = HorizontalGeometry;
 <h3 id="sec-1-3"><span class="section-number-3">1.3</span> Coordinate system for an array of DOM objects</h3>
 <div class="outline-text-3" id="text-1-3">
 <p>
-The constructor takes an array of DOM elements. 
-These are considered to be in order.
-Given a mouse coordinate, <code>m2v</code> converts that coordinate to the index
-of the DOM element in this array.
+Similarly to ordered geometries, there are three variations of DOM geometries:
+<code>DomGeometry</code>, <code>VerticalDomGeometry</code>, and <code>HorizontalDomGeometry</code>.
+What they add to those geometries is the <code>m2v</code> function that
+maps a mouse coordinate to the index of the element where it lands.
+If the coordinate falls under no element, <code>m2v</code> returns <code>null</code>.
 </p>
 
-<div class="org-src-container">
-
-<pre class="src src-js" id="dom-cs"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">DomGeometry</span> = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">parent</span>, <span style="color: #BA36A5;">elements</span>) {
-  OrderedGeometry.call(<span style="color: #8b1a1a;">this</span>, elements.length);
-  
-  <span style="color: #8b1a1a;">this</span>._parent = parent;
-  <span style="color: #8b1a1a;">this</span>._elements = elements;
-};
-DomGeometry.<span style="color: #8b1a1a;">prototype</span> = Object.create(OrderedGeometry.<span style="color: #8b1a1a;">prototype</span>);
-DomGeometry.constructor = DomGeometry;
-
-DomGeometry.<span style="color: #8b1a1a;">prototype</span>.m2v = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">mpoint</span>) {
-  <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span>=0; i&lt;<span style="color: #8b1a1a;">this</span>._elements.length; ++i) {
-    <span style="color: #0000FF;">if</span> (Rect.pointInRects(mpoint, 
-                          Rect.getOffsetRects(
-                            <span style="color: #8b1a1a;">this</span>._parent, <span style="color: #8b1a1a;">this</span>._elements[i])))
-      <span style="color: #0000FF;">return</span> i;
-  }
-  <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">null</span>;
-};
-
-DomGeometry.<span style="color: #8b1a1a;">prototype</span>.step = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>, <span style="color: #BA36A5;">vpoint</span>) {
-  <span style="color: #0000FF;">switch</span> (dir) {
-  <span style="color: #0000FF;">case</span> M.LEFT: <span style="color: #0000FF;">return</span> Math.max(0, vpoint - 1);
-  <span style="color: #0000FF;">case</span> M.RIGHT: <span style="color: #0000FF;">return</span> Math.min(<span style="color: #8b1a1a;">this</span>._size - 1, vpoint + 1);
-  <span style="color: #0000FF;">default</span>: <span style="color: #0000FF;">return</span> vpoint;
-  }
-};
-
-DomGeometry.<span style="color: #8b1a1a;">prototype</span>.defaultCursor = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>) {
-  <span style="color: #0000FF;">switch</span> (dir) {
-  <span style="color: #0000FF;">case</span> M.LEFT: <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._size-1;
-  <span style="color: #0000FF;">case</span> M.RIGHT: <span style="color: #0000FF;">return</span> 0; 
-  <span style="color: #0000FF;">case</span> M.NO_DIRECTION: <span style="color: #0000FF;">return</span> 0;
-  <span style="color: #0000FF;">default</span>: <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">null</span>;
-  }
-};
-  
-exports.DomGeometry = DomGeometry;
-</pre>
-</div>
-</div>
-</div>
-
-
-<div id="outline-container-sec-1-4" class="outline-3">
-<h3 id="sec-1-4"><span class="section-number-3">1.4</span> IPhoto Coordinate system for an array of DOM objects</h3>
-<div class="outline-text-3" id="text-1-4">
 <p>
 The constructor takes an array of DOM elements. 
 These are considered to be in order.
@@ -341,82 +330,79 @@ of the DOM element in this array.
 
 <div class="org-src-container">
 
-<pre class="src src-js" id="iphoto-dom-cs"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">IPhotoDomGeometry</span> = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">parent</span>, <span style="color: #BA36A5;">elements</span>) {
-  <span style="color: #0000FF;">return</span> DomGeometry.call(<span style="color: #8b1a1a;">this</span>, parent, elements);
-};
-IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span> = Object.create(DomGeometry.<span style="color: #8b1a1a;">prototype</span>);
-IPhotoDomGeometry.constructor = IPhotoDomGeometry;
-
-IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span>.m2v = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">mpoint</span>) {
-  <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span>=0; i&lt;<span style="color: #8b1a1a;">this</span>._elements.length; ++i) {
-    <span style="color: #0000FF;">if</span> (Rect.pointInRects(mpoint, 
-                            Rect.getOffsetRects(
-                              <span style="color: #8b1a1a;">this</span>._parent, <span style="color: #8b1a1a;">this</span>._elements[i])))
-      <span style="color: #0000FF;">return</span> { index: i, location: mpoint }
-  }
-  <span style="color: #0000FF;">return</span> { index: <span style="color: #8b1a1a;">undefined</span>, location: mpoint };
-};
-IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span>.v2m = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">mpoint</span>) {
-  <span style="color: #0000FF;">if</span> (mpoint === <span style="color: #8b1a1a;">undefined</span>) <span style="color: #0000FF;">return</span> mpoint;
-  <span style="color: #0000FF;">if</span> (mpoint.location !== <span style="color: #8b1a1a;">undefined</span>) <span style="color: #0000FF;">return</span> mpoint.location;
-  <span style="color: #0000FF;">return</span> Rect.midPoint(Rect.getOffsetRects(<span style="color: #8b1a1a;">this</span>._parent, <span style="color: #8b1a1a;">this</span>._elements[mpoint.index])[0]);
-}
-IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span>.vpath2mpath = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">vpath</span>) {
-  <span style="color: #0000FF;">return</span> vpath.map(<span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">mp</span>) { <span style="color: #0000FF;">return</span> mp.location; });
-}
-
-IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span>.defaultCursor = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>) {
-  <span style="color: #0000FF;">switch</span> (dir) {
-    <span style="color: #0000FF;">case</span> M.RIGHT: <span style="color: #0000FF;">return</span> { index: -1 };
-    <span style="color: #0000FF;">case</span> M.LEFT: <span style="color: #0000FF;">return</span> { index: <span style="color: #8b1a1a;">this</span>._size };
-    <span style="color: #0000FF;">default</span>: <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">undefined</span>;
-  }
-};
-IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span>.step = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>, <span style="color: #BA36A5;">vpoint</span>) {
-  <span style="color: #0000FF;">if</span> (vpoint.index === <span style="color: #8b1a1a;">undefined</span>) <span style="color: #0000FF;">return</span> vpoint;
-  <span style="color: #0000FF;">switch</span> (dir) {
-    <span style="color: #0000FF;">case</span> M.LEFT: <span style="color: #0000FF;">return</span> { index: Math.max(0, vpoint.index-1) };
-    <span style="color: #0000FF;">case</span> M.RIGHT: <span style="color: #0000FF;">return</span> { index: Math.min(<span style="color: #8b1a1a;">this</span>._size-1, vpoint.index+1) };
-    <span style="color: #0000FF;">default</span>: <span style="color: #0000FF;">return</span> vpoint;
-  }
-};
-
-IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span>.boundToElement = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">vpoint</span>) {
-  <span style="color: #0000FF;">return</span> vpoint.index !== <span style="color: #8b1a1a;">undefined</span>;
-};
-IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span>.extendPath = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">spath</span>, <span style="color: #BA36A5;">vpoint</span>) {
-  <span style="color: #0000FF;">if</span> (spath.length === 0) <span style="color: #0000FF;">return</span> [];
-  <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>.boundToElement(anchor(spath))) {
-    <span style="color: #0000FF;">if</span> (!<span style="color: #8b1a1a;">this</span>.boundToElement(vpoint)) <span style="color: #0000FF;">return</span> spath;
-  } <span style="color: #0000FF;">else</span> {
-    vpoint.index = <span style="color: #8b1a1a;">undefined</span>; <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">set vpoint not be bound to element</span>
-  }
-  spath.push(vpoint); 
-  <span style="color: #0000FF;">return</span> spath;
-<span style="color: #8D8D84;">//  </span><span style="color: #8D8D84; font-style: italic;">return DomGeometry.prototype.extendPath.call(this, spath, vpoint);</span>
-};
-
-IPhotoDomGeometry.<span style="color: #8b1a1a;">prototype</span>.selectionDomain = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">spath</span>) {
-  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = makeEmptyMap();
-  <span style="color: #0000FF;">if</span> (spath.length === 0) <span style="color: #0000FF;">return</span> J;
-  <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>.boundToElement(anchor(spath))) {
-    <span style="color: #0000FF;">return</span> DomGeometry.<span style="color: #8b1a1a;">prototype</span>.selectionDomain.call(
-      <span style="color: #8b1a1a;">this</span>, spath.map(<span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">v</span>) { <span style="color: #0000FF;">return</span> v.index; }));
-  }
-  <span style="color: #0000FF;">else</span>
-  {
-    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">bbox</span> = Rect.rect(anchor(spath).location, M.activeEnd(spath).location);
-    <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span>=0; i&lt;<span style="color: #8b1a1a;">this</span>._elements.length; ++i) {
-      <span style="color: #0000FF;">if</span> (Rect.intersectWithAny(bbox,
-                                Rect.getOffsetRects(
-                                  <span style="color: #8b1a1a;">this</span>._parent, <span style="color: #8b1a1a;">this</span>._elements[i])))
-        J.set(i, <span style="color: #8b1a1a;">true</span>);
-    }
-  }
-  <span style="color: #0000FF;">return</span> J;
-}; 
+<pre class="src src-js" id="dom-geometries"><span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">DomGeometry</span> = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">parent</span>, <span style="color: #BA36A5;">elements</span>) {
+  OrderedGeometry.call(<span style="color: #8b1a1a;">this</span>, elements.length);
   
-exports.IPhotoDomGeometry = IPhotoDomGeometry;
+  <span style="color: #8b1a1a;">this</span>._parent = parent;
+  <span style="color: #8b1a1a;">this</span>._elements = elements;
+};
+DomGeometry.<span style="color: #8b1a1a;">prototype</span> = Object.create(dg.OrderedGeometry.<span style="color: #8b1a1a;">prototype</span>);
+DomGeometry.constructor = DomGeometry;
+
+DomGeometry.<span style="color: #8b1a1a;">prototype</span>.m2v = m2vCommon;
+
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">VerticalDomGeometry</span> = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">parent</span>, <span style="color: #BA36A5;">elements</span>) {
+  DomGeometry.call(<span style="color: #8b1a1a;">this</span>, parent, elements.length);
+};
+VerticalDomGeometry.<span style="color: #8b1a1a;">prototype</span> = Object.create(DomGeometry.<span style="color: #8b1a1a;">prototype</span>);
+VerticalDomGeometry.constructor = VerticalDomGeometry;
+
+VerticalDomGeometry.<span style="color: #8b1a1a;">prototype</span>.m2v = m2vCommon;
+
+<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">HorizontalDomGeometry</span> = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">parent</span>, <span style="color: #BA36A5;">elements</span>) {
+  DomGeometry.call(<span style="color: #8b1a1a;">this</span>, parent, elements.length);
+};
+HorizontalDomGeometry.<span style="color: #8b1a1a;">prototype</span> = Object.create(DomGeometry.<span style="color: #8b1a1a;">prototype</span>);
+HorizontalDomGeometry.constructor = HorizontalDomGeometry;
+
+HorizontalDomGeometry.<span style="color: #8b1a1a;">prototype</span>.m2v = m2vCommon;
+
+<span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">This helper is used by all dom geometries</span>
+<span style="color: #0000FF;">function</span> <span style="color: #006699;">m2vCommon</span> = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">vpoint</span>) {
+
+  <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span>=0; i&lt;<span style="color: #8b1a1a;">this</span>._elements.length; ++i) {
+    <span style="color: #0000FF;">if</span> (Rect.pointInRects(vpoint, 
+                          Rect.getOffsetRects(
+                            <span style="color: #8b1a1a;">this</span>._parent, <span style="color: #8b1a1a;">this</span>._elements[i])))
+      <span style="color: #0000FF;">return</span> i;
+  }
+  <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">null</span>;
+};
+
+  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">helper functions</span>
+<span style="color: #0000FF;">function</span> <span style="color: #006699;">pointInRect</span> (<span style="color: #BA36A5;">p</span>, <span style="color: #BA36A5;">r</span>) {
+  <span style="color: #0000FF;">return</span> p.x &gt;= r.left &amp;&amp; p.x &lt;= r.right &amp;&amp; p.y &gt;= r.top &amp;&amp; p.y &lt;= r.bottom; 
+}
+
+<span style="color: #0000FF;">function</span> <span style="color: #006699;">pointInRects</span> (<span style="color: #BA36A5;">p</span>, <span style="color: #BA36A5;">rs</span>) {
+  <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> = 0; i &lt; rs.length; ++i)
+    <span style="color: #0000FF;">if</span> (pointInRect(p, rs[i])) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">true</span>;
+  <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">false</span>;
+}
+
+<span style="color: #0000FF;">function</span> <span style="color: #006699;">relativeToParent</span>(<span style="color: #BA36A5;">pRect</span>, <span style="color: #BA36A5;">eRect</span>) {
+  <span style="color: #0000FF;">return</span> {
+    left: eRect.left - pRect.left,
+    top: eRect.top - pRect.top,
+    right: eRect.right - pRect.left,
+    bottom: eRect.bottom - pRect.top
+  }
+}
+
+<span style="color: #0000FF;">function</span> <span style="color: #006699;">getOffsetRects</span>(<span style="color: #BA36A5;">parent</span>, <span style="color: #BA36A5;">elem</span>) {
+  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">parentBox</span> = parent.getBoundingClientRect();
+  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">boxes</span> = elem.getClientRects();
+  <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">res</span> = [];
+  <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> = 0; i &lt; boxes.length; ++i) {
+    res[i] = relativeToParent(parentBox, box);
+  }
+  <span style="color: #0000FF;">return</span> res;
+}
+
+  
+exports.DomGeometry = DomGeometry;
+exports.VerticalDomGeometry = VerticalDomGeometry;
+exports.HorizontalDomGeometry = HorizontalDomGeometry;
 </pre>
 </div>
 </div>

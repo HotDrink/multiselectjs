@@ -2,6 +2,7 @@
     <head>
       <script type="text/javascript" src="../../dist/multiselect.js"></script>
       <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
         <style>
           #selectable_area2 { border:1px solid black; cursor:default; }
           .selectable2 { outline:1px solid; padding:1px 4px 1px 4px; 
@@ -11,50 +12,42 @@
 
       <script type="text/javascript">
  
-        // determine which modifier keys were held down during event
-        const M_NONE = 1, 
-              M_SHIFT = 2, 
-              M_CMD = 3, 
-              M_SHIFT_CMD = 4, 
-              M_OPT = 5, 
-              M_SHIFT_OPT = 6;
-        
-        function modifierKeys (evt) {
-          
-          if (evt.shiftKey && isCmdKey(evt)) return M_SHIFT_CMD;
-          if (isCmdKey(evt)) return M_CMD;
-          if (evt.shiftKey && evt.altKey) return M_SHIFT_OPT;
-          if (evt.altKey) return M_OPT;
-          if (evt.shiftKey) return M_SHIFT;
-          return M_NONE;
-        
-          function isCmdKey (evt) { return evt.metaKey || evt.ctrlKey; }
-        }
-        
-
-        // helper functions to deal with points, rectangles, etc.
+        // helper functions
           function pointInRectangle(mp, r) {
             return mp.x >= r.left && mp.x <= r.right && 
-                   mp.y >= r.top && mp.y <= r.bottom;
+                   mp.y >= r.top  && mp.y <= r.bottom;
           }
 
-        function createCanvas (parent) {
-        
-          var canvas = document.createElement("canvas");
-          canvas.style.position = 'absolute';
-          parent.insertBefore(canvas, parent.firstChild);
-        
-          $(window).resize(resizeCanvas); 
-          resizeCanvas();
-        
-          return canvas;
-        
-          function resizeCanvas() {
-            var rect = parent.getBoundingClientRect();
-            canvas.width = rect.right - rect.left;
-            canvas.height = rect.bottom - rect.top;    
+          function rectangleIntersect(r1, r2) {
+            return r1.left <= r2.right  && r1.right  >= r2.left && 
+                   r1.top  <= r2.bottom && r1.bottom >= r2.top;
           }
-        }
+        
+          function centerPoint (r) { return { x: (r.left + r.right)/2, 
+                                              y: (r.top + r.bottom)/2 }; }
+        
+          function distance (p1, p2) {
+            var dx = p1.x - p2.x;
+            var dy = p1.y - p2.y;
+            return Math.sqrt(dx * dx + dy * dy);
+          }
+        
+          function isAbove(r1, r2) { return centerPoint(r2).y < r1.top; }
+        
+          function findClosestP(parent, elements, j, pred) {
+            var r = getOffsetRectangle(parent, elements[j]);
+            var candidateIndex = null; 
+            var candidateDistance = Number.MAX_VALUE;
+        
+            for (var i=0; i<elements.length; ++i) {
+              var rc = getOffsetRectangle(parent, elements[i]);
+              if (pred(r, rc) && distance(centerPoint(r), centerPoint(rc)) < candidateDistance) {
+                candidateIndex = i; 
+                candidateDistance = distance(centerPoint(r), centerPoint(rc));
+              }
+            }
+            if (candidateIndex === null) return j; else return candidateIndex;
+          }
         
           function topLeftCorner(r) { return { x: r.left, y: r.top }; }
             
@@ -75,6 +68,26 @@
             return { x: evt.clientX - p.x, y: evt.clientY - p.y }; 
           }
         
+        // canvas that tracks the size of parent
+        function createCanvas (parent) {
+        
+          var canvas = document.createElement("canvas");
+          canvas.style.position = 'absolute';
+          parent.insertBefore(canvas, parent.firstChild);
+        
+          $(window).resize(resizeCanvas); 
+          resizeCanvas();
+        
+          return canvas;
+        
+          function resizeCanvas() {
+            var rect = parent.getBoundingClientRect();
+            canvas.width = rect.right - rect.left;
+            canvas.height = rect.bottom - rect.top;    
+          }
+        }
+        
+        // refresh callback
         function mkRefresh (elements, cls) {
           return (function (changed) {
             changed.forEach(function (value, i) { 
@@ -110,10 +123,10 @@
             var a = multiselect.anchor(path);
             var b = multiselect.activeEnd(path);
         
-            if (a.index !== null) {
+            if (a.index !== null) { // path defines a range
               for (var i=Math.min(a.index, b.index); i<=Math.max(a.index, b.index); ++i) 
                 J.set(i, true);
-            } else {
+            } else {                // path defines a rectangle
               var r1 = { left:   Math.min(a.point.x, b.point.x),
                          right:  Math.max(a.point.x, b.point.x),
                          top:    Math.min(a.point.y, b.point.y),
@@ -127,13 +140,8 @@
             return J;
           }
         
-          function rectangleIntersect(r1, r2) {
-            return r1.left <= r2.right && r1.right >= r2.left && 
-                   r1.top <= r2.bottom && r1.bottom >= r2.top;
-          }
-        
           RowwiseGeometry.prototype.step = function (dir, p) {
-            if (p.index === null) return p;
+            if (p.index === null) return p; // p is an "in-between" point, no change
             var ind = null;
             switch (dir) {
             case multiselect.LEFT:  ind = Math.max(p.index - 1, 0); break;
@@ -148,32 +156,6 @@
             default: return p;
             }
             return { index: ind, point: centerPoint(getOffsetRectangle(this._parent, this._elements[ind])) };
-          }
-        
-          function centerPoint (r) { return { x: (r.left + r.right)/2, 
-                                              y: (r.top + r.bottom)/2 }; }
-        
-          function distance (p1, p2) {
-            var dx = p1.x - p2.x;
-            var dy = p1.y - p2.y;
-            return Math.sqrt(dx * dx + dy * dy);
-          }
-        
-          function isAbove(r1, r2) { return centerPoint(r2).y < r1.top; }
-        
-          function findClosestP(parent, elements, j, pred) {
-            var r = getOffsetRectangle(parent, elements[j]);
-            var candidateIndex = null; 
-            var candidateDistance = Number.MAX_VALUE;
-        
-            for (var i=0; i<elements.length; ++i) {
-              var rc = getOffsetRectangle(parent, elements[i]);
-              if (pred(r, rc) && distance(centerPoint(r), centerPoint(rc)) < candidateDistance) {
-                candidateIndex = i; 
-                candidateDistance = distance(centerPoint(r), centerPoint(rc));
-              }
-            }
-            if (candidateIndex === null) return j; else return candidateIndex;
           }
         
           RowwiseGeometry.prototype.filter = function(p) {   
@@ -200,10 +182,10 @@
           function mousedownHandler(evt) {
         
             var mousePos = selection.geometry().m2v(offsetMousePos(parent, evt));
-            switch (modifierKeys(evt)) {
-            case M_NONE: selection.click(mousePos); break;
-            case M_CMD: selection.cmdClick(mousePos); break;
-            case M_SHIFT: selection.shiftClick(mousePos); break;
+            switch (multiselect.modifierKeys(evt)) {
+            case multiselect.NONE: selection.click(mousePos); break;
+            case multiselect.CMD: selection.cmdClick(mousePos); break;
+            case multiselect.SHIFT: selection.shiftClick(mousePos); break;
             default: return;
             }    
         
@@ -239,7 +221,7 @@
         
             function keydownHandler(evt) {
               var handled = false; 
-              var mk = modifierKeys(evt);
+              var mk = multiselect.modifierKeys(evt);
               switch (evt.which) {          
               case 37: handled = callArrow(mk, multiselect.LEFT); break;
               case 38: handled = callArrow(mk, multiselect.UP); break;             
@@ -249,9 +231,8 @@
               case 90: handled = callUndoRedo(mk); break;
               default: return; // exit this handler for unrecognized keys
               }
-              if (!handled) return;
+              if (!handled) return; // they key+modifier combination was not recognized
         
-              // event is recognized
               selection.geometry().drawIndicators(selection, canvas, true, true, false);
               evt.preventDefault(); 
               evt.stopPropagation();
@@ -259,8 +240,8 @@
           
             function callUndoRedo (mk) {
               switch (mk) {
-              case M_OPT: selection.undo(); break;
-              case M_SHIFT_OPT: selection.redo(); break;
+              case multiselect.OPT: selection.undo(); break;
+              case multiselect.SHIFT_OPT: selection.redo(); break;
               default: return false;
               }      
               return true;
@@ -268,9 +249,9 @@
         
             function callArrow (mk, dir) {
               switch (mk) {
-              case M_NONE: selection.arrow(dir); break;
-              case M_CMD: selection.cmdArrow(dir); break;
-              case M_SHIFT: selection.shiftArrow(dir); break;
+              case multiselect.NONE: selection.arrow(dir); break;
+              case multiselect.CMD: selection.cmdArrow(dir); break;
+              case multiselect.SHIFT: selection.shiftArrow(dir); break;
               default: return false;
               }
               return true;
@@ -278,9 +259,9 @@
           
             function callSpace (mk) {
               switch (mk) {
-              case M_NONE: selection.space(); break;
-              case M_CMD: selection.cmdSpace(); break;
-              case M_SHIFT: selection.shiftSpace(); break;
+              case multiselect.NONE: selection.space(); break;
+              case multiselect.CMD: selection.cmdSpace(); break;
+              case multiselect.SHIFT: selection.shiftSpace(); break;
               default: return false;      
               }
               return true;
@@ -288,6 +269,7 @@
           }
   
         document.addEventListener("DOMContentLoaded", function() { 
+
             var selectableArea2 = document.getElementById("selectable_area2");
             for (var i = 0; i<400; ++i) {
               var e = document.createElement("span");
@@ -344,6 +326,7 @@
                 }
               }
             }
+
         });
       </script>
     </head>

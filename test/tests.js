@@ -1,5 +1,7 @@
 var test = QUnit.test;
 
+// we include the contets of default geometry, rather than require it
+// so that testing does not have to go through browserify
     function makeEmptySet() { return new Set(); }
     function makeEmptyMap() { return new Map(); }
   
@@ -31,45 +33,34 @@ var test = QUnit.test;
       s.forEach(function (value, key) { s2.set(key, value); });
       return s2;
     }
-    function equalKeys(a, b) { 
-      if (a.size !== b.size) return false;
-      for (var i of a.keys()) if (!b.has(i)) return false;
-      return true;
-    }
-    function setUnion () {
-      var s = makeEmptySet();
-      for (var i=0; i<arguments.length; ++i) {
-         for (var j of arguments[i].keys()) s.add(j);
-      }
-      return s;
-    }
-    function mapSymmetricDifference (left, right, leftValue, rightValue) {
-      var s = makeEmptyMap();
-      for (var i of left.keys()) if (!right.has(i)) s.set(i, leftValue);
-      for (var i of right.keys()) if (!left.has(i)) s.set(i, rightValue);
-      return s; 
-    }
-  const M_NONE = 1, 
-        M_SHIFT = 2, 
-        M_CMD = 3, 
-        M_SHIFT_CMD = 4, 
-        M_OPT = 5, 
-        M_SHIFT_OPT = 6;
   
-  function modifierKeys (evt) {
-    
-    if (evt.shiftKey && isCmdKey(evt)) return M_SHIFT_CMD;
-    if (isCmdKey(evt)) return M_CMD;
-    if (evt.shiftKey && evt.altKey) return M_SHIFT_OPT;
-    if (evt.altKey) return M_OPT;
-    if (evt.shiftKey) return M_SHIFT;
-    return M_NONE;
-    
-    function isCmdKey (evt) { return evt.metaKey || evt.ctrlKey; }
-  }
+  var DefaultGeometry = function () {};
+  
+  DefaultGeometry.prototype = {
+    m2v : function (mp) { return mp; },
+    extendPath : function (spath, vp) { spath.push(vp); },
+    step : function (dir, vp) { return undefined; },
+    selectionDomain : function(spath, J) { 
+      var m = makeEmptyMap();
+      for (var i of spath) m.set(i, true); 
+      return m;
+    },
+    defaultCursor : function(dir) { return undefined; },
+    filter : undefined
+  };
+          var UP = 1, DOWN = 2, LEFT = 3, RIGHT = 4, NO_DIRECTION = 0;
+          function anchor(path) { 
+             if (path.length === 0) return undefined; 
+             return path[0]; 
+          };
+          function activeEnd(path) { 
+             if (path.length === 0) return undefined; 
+             return path[path.length - 1]; 
+          };
+
   // generate a property map that maps the labels given as arguments to true
   function dom(args) {
-    var d = multiselect.detail.makeEmptyMap();
+    var d = multiselect.makeEmptyMap();
     for (var i in arguments) { d.set(arguments[i], true); }
     return d;
   }
@@ -87,7 +78,7 @@ var test = QUnit.test;
   }
 
   test("Utilities tests", function (t) {
-
+    
     var s = makeEmptySet();
     var m = makeEmptyMap();
 
@@ -100,7 +91,7 @@ var test = QUnit.test;
     t.equal(firstKey(s), undefined, "firstKey 1");
     t.equal(firstKey(m), undefined, "firstKey 2");
 
-    t.ok(equalKeys(s, m), "equalKeys 1");
+    t.ok(multiselect.detail.equalKeys(s, m), "equalKeys 1");
 
     // add 1st elem to both
     s.add(1); m.set(1, true);
@@ -122,11 +113,11 @@ var test = QUnit.test;
     t.equal(firstKey(s), 1, "firstKey 5");
     t.equal(firstKey(m), 1, "firstKey 6");
         
-    t.ok(equalKeys(s, m), "equalKeys 2");
+    t.ok(multiselect.detail.equalKeys(s, m), "equalKeys 2");
 
     // add 3rd to s
     s.add(3);
-    t.ok(!equalKeys(s, m), "not equalKeys");
+    t.ok(!multiselect.detail.equalKeys(s, m), "not equalKeys");
   });
   test("Baking tests", function (t) {
 
@@ -239,8 +230,9 @@ var test = QUnit.test;
   test ("Selection state tests click", function (t) {
 
     var M = multiselect; 
+    var G = multiselect_ordered_geometries;
 
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function () {}, false, 10);
+    var s = new M.SelectionState(new G.OrderedGeometry(20), function () {}, false, 10);
     function cur(i) { return s.isSelected(i); }
     s.click(1);
     t.ok(s.isSelected(1), "click 0");
@@ -254,8 +246,9 @@ var test = QUnit.test;
   test ("Selection state tests shiftClick", function (t) {
 
     var M = multiselect;
+    var G = multiselect_ordered_geometries;
 
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20));
+    var s = new M.SelectionState(new G.OrderedGeometry(20));
     function cur(i) { return s.isSelected(i); }
 
     s.shiftClick(1); s._flush();
@@ -279,8 +272,9 @@ var test = QUnit.test;
   test ("Selection state tests cmdClick", function (t) {
 
     var M = multiselect;
+    var G = multiselect_ordered_geometries;
 
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20));
+    var s = new M.SelectionState(new G.OrderedGeometry(20));
     function cur(i) { return s.isSelected(i); }
 
     s.cmdClick(1);
@@ -296,8 +290,9 @@ var test = QUnit.test;
   test ("Repeat click tests", function (t) {
 
     var M = multiselect;
+    var G = multiselect_ordered_geometries;
 
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function(){}, false, 20);
+    var s = new M.SelectionState(new G.OrderedGeometry(20), function(){}, false, 20);
     function cur(i) { return s.isSelected(i); }
 
     t.equal(s._ops.size(), 0, "repeat cmdClick 0"); 
@@ -325,7 +320,7 @@ var test = QUnit.test;
     t.equal(s._ops.size(), 8, "repeat cmdClick 7");
 
     // reset s
-    s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function(){}, false, 20);
+    s = new M.SelectionState(new G.OrderedGeometry(20), function(){}, false, 20);
     s.cmdClick(1); 
     t.equal(s._ops.size(), 2, "repeat cmdClick 2 1");
     s.cmdClick(1); 
@@ -334,7 +329,7 @@ var test = QUnit.test;
     t.equal(s._ops.size(), 6, "repeat cmdClick 2 3");
 
     // reset s
-    s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function(){}, false, 20);
+    s = new M.SelectionState(new G.OrderedGeometry(20), function(){}, false, 20);
 
     s.click(1); 
     t.equal(s._ops.size(), 2, "repeat click 1");
@@ -357,7 +352,7 @@ var test = QUnit.test;
     s.click(-1); 
     t.equal(s._ops.size(), 14, "repeat click 11");
 
-    s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function(){}, false, 20);
+    s = new M.SelectionState(new G.OrderedGeometry(20), function(){}, false, 20);
 
     t.equal(s._ops.size(), 0, "shift-click size 0");
     s.shiftClick([1]); s._flush();
@@ -370,8 +365,9 @@ var test = QUnit.test;
   test ("Selection state tests onSelected", function (t) {
 
     var M = multiselect;
+    var G = multiselect_ordered_geometries;
 
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function () {}, false, 10);
+    var s = new M.SelectionState(new G.OrderedGeometry(20), function () {}, false, 10);
     function cur(i) { return s.isSelected(i); }
     s.click(1);
     t.ok(s.onSelected(1), "onSelected 1");
@@ -381,8 +377,9 @@ var test = QUnit.test;
   test ("Undo tests", function (t) {
 
     var M = multiselect;
+    var G = multiselect_ordered_geometries;
 
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20));
+    var s = new M.SelectionState(new G.OrderedGeometry(20));
     function cur(i) { return s.isSelected(i); }
 
     s.cmdClick(1);
@@ -427,55 +424,50 @@ var test = QUnit.test;
       return a;
     }
     var changed = null;
-    s = new M.SelectionState(new M.Geometries.OrderedGeometry(20),
+    s = new M.SelectionState(new G.OrderedGeometry(20),
                              function (smap) { changed = m2a(smap); }, true);
     s.cmdClick(1);
     t.deepEqual(changed, [false, true, false], "undoable action 1");
-    // s.cmdClick(2);
-    // t.equal(s._ops.size(), 4);
-    // t.deepEqual([0, 1, 2].map(cur), [false, true, true], "undoable action 2");
-    // s.cmdClick(1);
-    // t.equal(s._ops.size(), 6);
-    // t.deepEqual([0, 1, 2].map(cur), [false, false, true], "undoable action 3");
-    // s.cmdClick(0);
-    // t.equal(s._ops.size(), 8);
-    // t.deepEqual([0, 1, 2].map(cur), [true, false, true], "undoable action 2");
-    // s.click(0);
-    // t.equal(s._ops.size(), 10);
-    // t.deepEqual([0, 1, 2].map(cur), [true, false, false], "undo 0");
-    // s.undo();
-    // t.equal(s._ops.size(), 10);
-    // t.equal(s._numberOfOps(), 8);
-    // t.deepEqual([0, 1, 2].map(cur), [true, false, true], "undo 1");
-    // s.undo();
-    // t.equal(s._ops.size(), 8);
-    // t.equal(s._numberOfOps(), 6);
-    // t.deepEqual([0, 1, 2].map(cur), [false, false, true], "undo 2");
-    // s.undo();
-    // t.equal(s._ops.size(),  6);
-    // t.equal(s._numberOfOps(), 4);
-    // t.deepEqual([0, 1, 2].map(cur), [false, true, true], "undo 3");
-    // s.undo();
-    // t.equal(s._ops.size(), 4);
-    // t.equal(s._numberOfOps(), 2);
-    // t.deepEqual([0, 1, 2].map(cur), [false, true, false], "undo 4");
-    // s.undo();
-    // t.equal(s._ops.size(), 2);
-    // t.equal(s._numberOfOps(), 0);
-    // t.deepEqual([0, 1, 2].map(cur), [false, false, false], "undo 5");
-    // s.undo();
-    // t.equal(s._ops.size(), 2);
-    // t.equal(s._numberOfOps(), 0);
-    // t.deepEqual([0, 1, 2].map(cur), [false, false, false], "undo 5 again");
-    // s.undo();
-    // t.equal(s._ops.size(), 2);
+    s.cmdClick(2);
+    t.equal(s._ops.size(), 4);
+    t.deepEqual([0, 1, 2].map(cur), [false, true, true], "undoable action 2");
+    s.cmdClick(1);
+    t.equal(s._ops.size(), 6);
+    t.deepEqual([0, 1, 2].map(cur), [false, false, true], "undoable action 3");
+    s.cmdClick(0);
+    t.equal(s._ops.size(), 8);
+    t.deepEqual([0, 1, 2].map(cur), [true, false, true], "undoable action 2");
+    s.click(0);
+    t.equal(s._ops.size(), 10);
+    t.deepEqual([0, 1, 2].map(cur), [true, false, false], "undo 0");
+    s.undo();
+    t.equal(s._ops.size(), 8);
+    t.deepEqual([0, 1, 2].map(cur), [true, false, true], "undo 1");
+    s.undo();
+    t.equal(s._ops.size(), 6);
+    t.deepEqual([0, 1, 2].map(cur), [false, false, true], "undo 2");
+    s.undo();
+    t.equal(s._ops.size(),  4);
+    t.deepEqual([0, 1, 2].map(cur), [false, true, true], "undo 3");
+    s.undo();
+    t.equal(s._ops.size(), 2);
+    t.deepEqual([0, 1, 2].map(cur), [false, true, false], "undo 4");
+    s.undo();
+    t.equal(s._ops.size(), 0);
+    t.deepEqual([0, 1, 2].map(cur), [false, false, false], "undo 5");
+    s.undo();
+    t.equal(s._ops.size(), 0);
+    t.deepEqual([0, 1, 2].map(cur), [false, false, false], "undo 5 again");
+    s.undo();
+    t.equal(s._ops.size(), 0);
   });
 
   test ("Redo tests", function (t) {
 
     var M = multiselect;
+    var G = multiselect_ordered_geometries;
 
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20));
+    var s = new M.SelectionState(new G.OrderedGeometry(20));
     function cur(i) { return s.isSelected(i); }
 
     s.cmdClick(1);
@@ -506,7 +498,7 @@ var test = QUnit.test;
     s.redo();
     t.deepEqual([0, 1, 2].map(cur), [true, false, false], "redo 5 again");
 
-    s = new M.SelectionState(new M.Geometries.OrderedGeometry(20));
+    s = new M.SelectionState(new G.OrderedGeometry(20));
     s.shiftClick([1]);
     t.deepEqual([0, 1, 2].map(cur), [false, true, false], "redo A1");
     s.cmdClick(2);
@@ -520,8 +512,9 @@ var test = QUnit.test;
   test ("Redo stack limit test", function (t) {
 
     var M = multiselect;
+    var G = multiselect_ordered_geometries;
 
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function(){}, false, 1);
+    var s = new M.SelectionState(new G.OrderedGeometry(20), function(){}, false, 1);
     function cur(i) { return s.isSelected(i); }
     s.redo();
     t.equal(s._ops.size(), 0, "");
@@ -555,7 +548,7 @@ var test = QUnit.test;
     t.equal(s._ops.size(), 2, "min undo 6");
     t.deepEqual([0, 1, 2].map(cur), [false, true, true], "");
 
-    s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function(){}, false, 3);
+    s = new M.SelectionState(new G.OrderedGeometry(20), function(){}, false, 3);
     s.cmdClick(1); 
     t.equal(s._ops.size(), 2, "redostack 1a");
     t.equal(s._redoStack.length, 0, "redostack 1b");
@@ -596,23 +589,26 @@ var test = QUnit.test;
 
     var changed;
     var M = multiselect;
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), 
+    var G = multiselect_ordered_geometries;
+
+    var D = M.detail;
+    var s = new M.SelectionState(new G.OrderedGeometry(20), 
                                  function(c) { changed = c; }, true);
 
     s.click(1);
-    t.ok(equalKeys(changed, dom(1)), "tracking 1");
+    t.ok(D.equalKeys(changed, dom(1)), "tracking 1");
     t.equal(changed.get(1), true, "tracking 1b");
     changed = null;
     s.click(1); // should be a nop, so refresh not called
     t.equal(changed, null, "tracking 2");
     s.cmdClick(1);
-    t.ok(equalKeys(changed, dom(1)), "tracking 3");
+    t.ok(D.equalKeys(changed, dom(1)), "tracking 3");
     t.equal(changed.get(1), false);
     s.click(2);
-    t.ok(equalKeys(changed, dom(2)), "tracking 4");
+    t.ok(D.equalKeys(changed, dom(2)), "tracking 4");
     t.equal(changed.get(2), true);
     s.shiftClick(4); s._flush();
-    t.ok(equalKeys(changed, dom(3, 4)), "tracking 5");
+    t.ok(D.equalKeys(changed, dom(3, 4)), "tracking 5");
     t.equal(changed.get(3), true);
     t.equal(changed.get(4), true);
   });
@@ -620,7 +616,9 @@ var test = QUnit.test;
   test ("Predicate selection tests", function (t) {
 
     var M = multiselect, D = M.detail;
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), function() {});
+    var G = multiselect_ordered_geometries;
+
+    var s = new M.SelectionState(new G.OrderedGeometry(20), function() {});
     function cur(i) { return s.isSelected(i); }
 
     s.filter(function (i) { return i === 1 || i === 3; });
@@ -635,7 +633,7 @@ var test = QUnit.test;
     t.deepEqual([0, 1, 2, 3].map(cur), [true, true, true, false], "");
 
     var changed;
-    var s = new M.SelectionState(new M.Geometries.OrderedGeometry(20), 
+    var s = new M.SelectionState(new G.OrderedGeometry(20), 
                                  function(c) { changed = c; }, true);
     s.filter(function (i) { return i === 1 || i === 3; }, true); // [1, 3] selected
     t.equal(changed.size, 2, "filter with change tracking 1");

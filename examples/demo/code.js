@@ -169,7 +169,7 @@ SnakeGeometry.prototype.extendPath = function(path, p) {
 
 // Find the elements that intersect with the snake. J may contain the previous
 // selection domain; if it does, computing from the index k onwards suffices
-SnakeGeometry.prototype.selectionDomain = function(path, source, J) {
+SnakeGeometry.prototype.selectionDomain = function(path, J) {
   if (J === undefined || this.k === 0) {
     J = multiselect.makeEmptyMap();
     this.k = 0;
@@ -199,7 +199,7 @@ PointGeometry.prototype = Object.create(HTMLElementsGeometry.prototype);
 PointGeometry.prototype.extendPath = function(path, p) { path.push(p); }
 
 // If J contains the previous selection domain, it suffices to compute from k onwards
-PointGeometry.prototype.selectionDomain = function(path, source, J) {  
+PointGeometry.prototype.selectionDomain = function(path, J) {  
   if (J === undefined) {
     J = multiselect.makeEmptyMap();
     this.k = 0;
@@ -232,7 +232,7 @@ MixedGeometry.prototype = Object.create(HTMLElementsGeometry.prototype);
 
 // If anchor has an index field that is not undefined, row-wise selection
 // is applied, othewrise rectangular
-MixedGeometry.prototype.selectionDomain = function(path, source, J) {
+MixedGeometry.prototype.selectionDomain = function(path, J) {
   var J = multiselect.makeEmptyMap();
   var a = multiselect.anchor(path);
   var b = multiselect.activeEnd(path);
@@ -316,10 +316,10 @@ function setupMouseEvents (parent, canvas, selection) {
   function mousedownHandler(evt) {
     
     var mousePos = selection.geometry().m2v(offsetMousePos(parent, evt));
-    switch (modifierKeys(evt)) {
-    case M_NONE: selection.click(mousePos); break;
-    case M_CMD: selection.cmdClick(mousePos); break;
-    case M_SHIFT: selection.shiftClick(mousePos); break;
+    switch (multiselect.modifierKeys(evt)) {
+    case multiselect.NONE: selection.click(mousePos); break;
+    case multiselect.CMD: selection.cmdClick(mousePos); break;
+    case multiselect.SHIFT: selection.shiftClick(mousePos); break;
     default: return;
     }    
 
@@ -359,7 +359,7 @@ function setupKeyboardEvents(parent, canvas, selection) {
   
   function keydownHandler(evt) {
     var handled = false; 
-    var mk = modifierKeys(evt);
+    var mk = multiselect.modifierKeys(evt);
     switch (evt.which) {          
     case 37: handled = callArrow(mk, multiselect.LEFT); break;
     case 38: handled = callArrow(mk, multiselect.UP); break;             
@@ -379,8 +379,8 @@ function setupKeyboardEvents(parent, canvas, selection) {
   
   function callUndoRedo (mk) {
     switch (mk) {
-    case M_OPT: selection.undo(); break;
-    case M_SHIFT_OPT: selection.redo(); break;
+    case multiselect.OPT: selection.undo(); break;
+    case multiselect.SHIFT_OPT: selection.redo(); break;
     default: return false;
     }      
     return true;
@@ -388,9 +388,9 @@ function setupKeyboardEvents(parent, canvas, selection) {
   
   function callArrow (mk, dir) {
     switch (mk) {
-    case M_NONE: selection.arrow(dir); break;
-    case M_CMD: selection.cmdArrow(dir); break;
-    case M_SHIFT: selection.shiftArrow(dir); break;
+    case multiselect.NONE: selection.arrow(dir); break;
+    case multiselect.CMD: selection.cmdArrow(dir); break;
+    case multiselect.SHIFT: selection.shiftArrow(dir); break;
     default: return false;
     }
     return true;
@@ -398,9 +398,9 @@ function setupKeyboardEvents(parent, canvas, selection) {
   
   function callSpace (mk) {
     switch (mk) {
-    case M_NONE: selection.space(); break;
-    case M_CMD: selection.cmdSpace(); break;
-    case M_SHIFT: selection.shiftSpace(); break;
+    case multiselect.NONE: selection.space(); break;
+    case multiselect.CMD: selection.cmdSpace(); break;
+    case multiselect.SHIFT: selection.shiftSpace(); break;
     default: return false;      
     }
     return true;

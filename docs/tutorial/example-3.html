@@ -1,0 +1,544 @@
+  <html>
+    <head>
+      <script type="text/javascript" src="../../dist/multiselect.js"></script>
+      <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+        <style>
+          #selectable_area2 { border:1px solid black; cursor:default; }
+          .selectable2 { outline:1px solid; padding:1px 4px 1px 4px; 
+                         margin:2px; display:inline-block; }
+          .selected2 { background-color: khaki; }
+        </style>
+      <style> 
+        #selectable_area3 { border:1px solid black; cursor:default; } 
+      </style>
+
+      <script type="text/javascript">
+
+          function pointInRectangle(mp, r) {
+            return mp.x >= r.left && mp.x <= r.right && 
+                   mp.y >= r.top  && mp.y <= r.bottom;
+          }
+        
+          function rectangleIntersect(r1, r2) {
+            return r1.left <= r2.right  && r1.right  >= r2.left && 
+                   r1.top  <= r2.bottom && r1.bottom >= r2.top;
+          }
+        
+          function topLeftCorner(r) { return { x: r.left, y: r.top }; }
+            
+          function offsetRectangle(p, r) {
+            return {
+              left: r.left - p.x, top: r.top - p.y, 
+              right: r.right - p.x, bottom: r.bottom - p.y 
+            };
+          }
+        
+          function getOffsetRectangle(parent, elem) {
+            return offsetRectangle(topLeftCorner(parent.getBoundingClientRect()),
+                                   elem.getBoundingClientRect());
+          }
+        
+          function offsetMousePos(parent, evt) { 
+            var p = topLeftCorner(parent.getClientRects()[0]);
+            return { x: evt.clientX - p.x, y: evt.clientY - p.y }; 
+          }
+        
+        // canvas that tracks the size of parent
+        function createCanvas (parent) {
+        
+          var canvas = document.createElement("canvas");
+          canvas.style.position = 'absolute';
+          parent.insertBefore(canvas, parent.firstChild);
+        
+          $(window).resize(resizeCanvas); 
+          resizeCanvas();
+        
+          return canvas;
+        
+          function resizeCanvas() {
+            var rect = parent.getBoundingClientRect();
+            canvas.width = rect.right - rect.left;
+            canvas.height = rect.bottom - rect.top;    
+          }
+        }
+        
+        // refresh callback
+        function mkRefresh (elements, cls) {
+          return (function (changed) {
+            changed.forEach(function (value, i) { 
+              $(elements[i]).toggleClass(cls, value); 
+            });
+          });
+        }
+        
+        var fish = 
+        [ "anchovy"
+        , "angelfish"
+        , "angelshark"
+        , "barb"
+        , "barracuda"
+        , "basking shark"
+        , "bass"
+        , "blenny"
+        , "blowfish"
+        , "bluefin tuna"
+        , "blue shark"
+        , "bonito"
+        , "bony fish"
+        , "bull shark"
+        , "carp"
+        , "catfish"
+        , "chub"
+        , "clownfish"
+        , "cod"
+        , "coelacanth"
+        , "cookiecutter shark"
+        , "crappie"
+        , "darter"
+        , "devil ray"
+        , "dogfish"
+        , "dory"
+        , "dragonfish"
+        , "Dunkleosteus"
+        , "eel"
+        , "electric eel"
+        , "elver"
+        , "Emperor angelfish"
+        , "fish"
+        , "flounder"
+        , "flying fish"
+        , "Galapagos shark"
+        , "gar"
+        , "glassfish"
+        , "goby"
+        , "goldfish"
+        , "grayling"
+        , "great white shark"
+        , "Greenland shark"
+        , "grouper"
+        , "grunion"
+        , "gulper eel"
+        , "guppy"
+        , "haddock"
+        , "hagfish"
+        , "hake"
+        , "halibut"
+        , "hammerhead shark"
+        , "hatchetfish"
+        , "herring"
+        , "humuhumu-nukunuku-apua'a"
+        , "icefish"
+        , "jackfish"
+        , "john dory"
+        , "koi"
+        , "lake trout"
+        , "lamprey"
+        , "lanternfish"
+        , "lemon shark"
+        , "ling cod"
+        , "loach"
+        , "luminous shark"
+        , "lungfish"
+        , "mackerel"
+        , "mako shark"
+        , "manta ray"
+        , "marlin"
+        , "Megalodon"
+        , "megamouth shark"
+        , "minnow"
+        , "monkfish"
+        , "moray eel"
+        , "mullet"
+        , "needlefish"
+        , "nurse shark"
+        , "oarfish"
+        , "orange roughy"
+        , "Orthacanthus"
+        , "paddlefish"
+        , "parrotfish"
+        , "perch"
+        , "pike"
+        , "pilot fish"
+        , "piranha"
+        , "pollock"
+        , "pompano"
+        , "porgy"
+        , "Port Jackson shark"
+        , "pufferfish"
+        , "pupfish"
+        , "queen triggerfish"
+        , "quillfish"
+        , "ray"
+        , "remora"
+        , "rockfish"
+        , "roughy"
+        , "sailfish"
+        , "salmon"
+        , "sardine"
+        , "sawfish"
+        , "sculpin"
+        , "seabass"
+        , "seadragon"
+        , "seahorse"
+        , "shad"
+        , "shark"
+        , "skate"
+        , "smelt"
+        , "snapper"
+        , "sole"
+        , "stingray"
+        , "sturgeon"
+        , "sunfish"
+        , "swordfish"
+        , "tarpon"
+        , "tetra"
+        , "three-spine stickleback"
+        , "thresher shark"
+        , "tiger shark"
+        , "triggerfish"
+        , "trout"
+        , "tuna"
+        , "tunny"
+        , "turbot"
+        , "upside-down catfish"
+        , "velvetfish"
+        , "viperfish"
+        , "walleye"
+        , "whale shark"
+        , "whiting"
+        , "wrasse"
+        , "x-ray tetra"
+        , "yellowjack"
+        , "yellowtail"
+        , "zebra bullhead shark"
+        , "zebrafish" ]
+        
+        // The snake selection geometry
+        var SnakeGeometry = function (parent, elements) {
+          this._parent = parent;
+          this._elements = elements;
+          this._k = 0;
+        }
+        SnakeGeometry.prototype = Object.create(multiselect.DefaultGeometry.prototype);
+          SnakeGeometry.prototype.selectionDomain = function(path, J) {  
+            if (J === undefined) { J = multiselect.makeEmptyMap(); this._k = 0; } 
+            var prev = this._k;
+            for (var i = this._k; i < path.length; ++i) {
+              for (var j = 0; j < this._elements.length; ++j) {
+                if (lineRectIntersect(path[i], path[prev],
+                                      getOffsetRectangle(this._parent, this._elements[j]))) J.set(j, true);
+              }
+              prev = i;
+            }
+            this._k = path.length - 1;
+        
+            return J;
+          }
+          SnakeGeometry.prototype.filter = function(p) {   
+            var J = multiselect.makeEmptyMap();
+            for (var i = 0; i < this._elements.length; ++i) if (p(i)) J.set(i, true);
+            return J;
+          }
+        
+        // Helper routines for geometrical calculations
+        function lineRectIntersect(p1, p2, r) {
+          if (!rectangleIntersect(mkRectangle(p1, p2), r)) return false; // if bounding boxes do not overlap, cannot intersect
+          if (pointEquals(p1, p2)) return pointInRectangle(p1, r);
+          var p = {};
+          if (lineIntersect(p1, p2, { x: r.left, y: r.top }, { x: r.left, y: r.bottom }, p) === 1) return true;
+          if (lineIntersect(p1, p2, { x: r.left, y: r.top }, { x: r.right, y: r.top }, p) === 1) return true;
+          if (lineIntersect(p1, p2, { x: r.right, y: r.bottom }, { x: r.right, y: r.top }, p) === 1) return true;
+          if (lineIntersect(p1, p2, { x: r.right, y: r.bottom }, { x: r.left, y: r.bottom }, p) === 1) return true;
+          return pointInRectangle(p1, r) || pointInRectangle(p2, r);
+        }
+        
+        function mkRectangle(p1, p2) {
+          return { 
+            left: Math.min(p1.x, p2.x),
+            top: Math.min(p1.y, p2.y),
+            right: Math.max(p1.x, p2.x),
+            bottom: Math.max(p1.y, p2.y)
+          };        
+        }
+        
+        function pointEquals(p1, p2) { return p1.x === p2.x && p1.y === p2.y; }
+          /* PORTED FROM:
+        
+           * lines_intersect:  AUTHOR: Mukesh Prasad
+           *
+           *   This function computes whether two line segments,
+           *   respectively joining the input points (x1,y1) -- (x2,y2)
+           *   and the input points (x3,y3) -- (x4,y4) intersect.
+           *   If the lines intersect, the output variables x, y are
+           *   set to coordinates of the point of intersection.
+           *
+           *   All values are in integers.  The returned value is rounded
+           *   to the nearest integer point.
+           *
+           *   If non-integral grid points are relevant, the function
+           *   can easily be transformed by substituting floating point
+           *   calculations instead of integer calculations.
+           *
+           *   Entry
+           *        x1, y1,  x2, y2   Coordinates of endpoints of one segment.
+           *        x3, y3,  x4, y4   Coordinates of endpoints of other segment.
+           *
+           *   Exit
+           *        x, y              Coordinates of intersection point.
+           *
+           *   The value returned by the function is one of:
+           *
+           *        DONT_INTERSECT    0
+           *        DO_INTERSECT      1
+           *        COLLINEAR         2
+           *
+           * Error conditions:
+           *
+           *     Depending upon the possible ranges, and particularly on 16-bit
+           *     computers, care should be taken to protect from overflow.
+           *
+           *     In the following code, 'long' values have been used for this
+           *     purpose, instead of 'int'.
+           *
+           */
+        
+          function sameSigns(a, b) { return a >= 0 && b >= 0 || a < 0 && b < 0; }
+        
+          function lineIntersect( p1,   /* First line segment */
+                                  p2,
+                                  p3,   /* Second line segment */
+                                  p4,
+                                  p5    /* Output value:
+                                         * point of intersection */
+                                )
+          {
+            const DONT_INTERSECT = 0;
+            const DO_INTERSECT = 1;
+            const COLLINEAR = 2;
+        
+            var a1, a2, b1, b2, c1, c2; /* Coefficients of line eqns. */
+            var r1, r2, r3, r4;         /* 'Sign' values */
+            var denom, offset, num;     /* Intermediate values */
+        
+            /* Compute a1, b1, c1, where line joining points 1 and 2
+             * is "a1 x  +  b1 y  +  c1  =  0".
+             */
+        
+            a1 = p2.y - p1.y;
+            b1 = p1.x - p2.x;
+            c1 = p2.x * p1.y - p1.x * p2.y;
+        
+            /* Compute r3 and r4.
+             */
+            r3 = a1 * p3.x + b1 * p3.y + c1;
+            r4 = a1 * p4.x + b1 * p4.y + c1;
+        
+            /* Check signs of r3 and r4.  If both point 3 and point 4 lie on
+             * same side of line 1, the line segments do not intersect.
+             */
+            if ( r3 != 0 &&
+                 r4 != 0 &&
+                 sameSigns( r3, r4 ))
+              return ( DONT_INTERSECT );
+        
+            /* Compute a2, b2, c2 */
+            a2 = p4.y - p3.y;
+            b2 = p3.x - p4.x;
+            c2 = p4.x * p3.y - p3.x * p4.y;
+        
+            /* Compute r1 and r2 */
+            r1 = a2 * p1.x + b2 * p1.y + c2;
+            r2 = a2 * p2.x + b2 * p2.y + c2;
+        
+            /* Check signs of r1 and r2.  If both point 1 and point 2 lie
+             * on same side of second line segment, the line segments do
+             * not intersect.
+             */
+            if ( r1 !== 0 &&
+                 r2 !== 0 &&
+                 sameSigns( r1, r2 ))
+              return ( DONT_INTERSECT );
+        
+            /* Line segments intersect: compute intersection point. 
+             */
+        
+            denom = a1 * b2 - a2 * b1;
+            if ( denom === 0 )
+              return ( COLLINEAR );
+            // offset = denom < 0 ? - denom / 2 : denom / 2;
+        
+            // /* The denom/2 is to get rounding instead of truncating.  It
+            //  * is added or subtracted to the numerator, depending upon the
+            //  * sign of the numerator.
+            //  */
+        
+            // The calculations for p5 are commented out; 
+            // we just need to know if lines intersect or not
+        
+            // num = b1 * c2 - b2 * c1;
+            // p5.x = ( num < 0 ? num - offset : num + offset ) / denom;
+        
+            // num = a2 * c1 - a1 * c2;
+            // p5.y = ( num < 0 ? num - offset : num + offset ) / denom;
+        
+            return DO_INTERSECT;
+          } 
+        
+        // Mouse events
+        function setupMouseEvents (parent, canvas, selection) {
+        
+          function mousedownHandler(evt) {
+        
+            var mousePos = selection.geometry().m2v(offsetMousePos(parent, evt));
+            switch (multiselect.modifierKeys(evt)) {
+            case multiselect.NONE: selection.click(mousePos); break;
+            case multiselect.CMD: selection.cmdClick(mousePos); break;
+            case multiselect.SHIFT: selection.shiftClick(mousePos); break;
+            default: return;
+            }    
+        
+            selection.geometry().drawIndicators(selection, canvas, true, true, false);
+            document.addEventListener('mousemove', mousemoveHandler, false);
+            document.addEventListener('mouseup', mouseupHandler, false);
+            evt.preventDefault();
+            evt.stopPropagation();
+          };
+        
+          function mousemoveHandler (evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            var mousePos = selection.geometry().m2v(offsetMousePos(parent, evt));
+            selection.shiftClick(mousePos);
+            selection.geometry().drawIndicators(selection, canvas, true, true, true);
+          };
+        
+          function mouseupHandler (evt) {
+            document.removeEventListener('mousemove', mousemoveHandler, false);
+            document.removeEventListener('mouseup', mouseupHandler, false);
+            selection.geometry().drawIndicators(selection, canvas, true, true, false);
+          };
+        
+          parent.addEventListener('mousedown', mousedownHandler, false);
+        }
+        
+        // Keyboard events
+          function setupKeyboardEvents(parent, canvas, selection) {
+        
+            parent.addEventListener('keydown', keydownHandler, false);
+            parent.addEventListener('mousedown', function() { parent.focus(); }, false);
+        
+            function keydownHandler(evt) {
+              var handled = false; 
+              var mk = multiselect.modifierKeys(evt);
+              switch (evt.which) {          
+              case 37: handled = callArrow(mk, multiselect.LEFT); break;
+              case 38: handled = callArrow(mk, multiselect.UP); break;             
+              case 39: handled = callArrow(mk, multiselect.RIGHT); break;
+              case 40: handled = callArrow(mk, multiselect.DOWN); break;
+              case 32: handled = callSpace(mk); break;
+              case 90: handled = callUndoRedo(mk); break;
+              default: return; // exit this handler for unrecognized keys
+              }
+              if (!handled) return; // they key+modifier combination was not recognized
+        
+              selection.geometry().drawIndicators(selection, canvas, true, true, false);
+              evt.preventDefault(); 
+              evt.stopPropagation();
+            }  
+          
+            function callUndoRedo (mk) {
+              switch (mk) {
+              case multiselect.OPT: selection.undo(); break;
+              case multiselect.SHIFT_OPT: selection.redo(); break;
+              default: return false;
+              }      
+              return true;
+            }
+        
+            function callArrow (mk, dir) {
+              switch (mk) {
+              case multiselect.NONE: selection.arrow(dir); break;
+              case multiselect.CMD: selection.cmdArrow(dir); break;
+              case multiselect.SHIFT: selection.shiftArrow(dir); break;
+              default: return false;
+              }
+              return true;
+            }
+          
+            function callSpace (mk) {
+              switch (mk) {
+              case multiselect.NONE: selection.space(); break;
+              case multiselect.CMD: selection.cmdSpace(); break;
+              case multiselect.SHIFT: selection.shiftSpace(); break;
+              default: return false;      
+              }
+              return true;
+            }
+          }
+        document.addEventListener("DOMContentLoaded", function() { 
+
+          // Construct the snake geometry and the selection state object
+            var selectableArea3 = $("#selectable_area3")[0];
+            for (var i = 0; i<fish.length; ++i) {
+              $(selectableArea3).append("<span class='selectable2'>" + fish[i] + "</span> ");
+            }
+            var selectables3 = $(".selectable2", selectableArea3);    
+          var geometry3 = new SnakeGeometry(selectableArea3, selectables3);
+          var selection3 = new multiselect.SelectionState(geometry3, mkRefresh(selectables3, 'selected2'), true);
+          
+          // Add the indicator-drawing function to the geometry
+            geometry3.drawIndicators = function (selection, canvas, drawAnchor, drawCursor, drawRubber) {
+              var ctx = canvas.getContext('2d');
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              if (drawAnchor) { 
+                ctx.strokeStyle = 'DarkRed';
+                var p = multiselect.anchor(selection.selectionPath());
+                if (p !== undefined) {
+                  ctx.beginPath();
+                  ctx.arc(p.x, p.y, 4, 0, Math.PI*2, true); 
+                  ctx.stroke();
+                }
+              }
+              if (drawCursor) { 
+                ctx.strokeStyle = 'blue';
+                var p = selection.cursor();
+                if (p !== undefined) { 
+                  ctx.beginPath();
+                  ctx.arc(p.x, p.y, 4, 0, Math.PI*2, true); 
+                  ctx.stroke();
+                }
+              }
+              if (drawRubber) { 
+                ctx.strokeStyle = 'green';
+                var path = selection.selectionPath();
+                if (path.length > 0) {
+                  ctx.moveTo(path[0].x, path[0].y);
+                  for (var i = 1; i < path.length; ++i) ctx.lineTo(path[i].x, path[i].y);
+                  ctx.stroke();
+                }
+              }
+            }
+          
+          // setup mouse and keyboard events
+            var canvas3 = createCanvas(selectableArea3);
+            setupMouseEvents(selectableArea3, canvas3, selection3);
+            setupKeyboardEvents(selectableArea3, canvas3, selection3);
+          
+          // setup the filtering and commit events
+            var filter3 = $("#filter3")[0];
+          
+            $(filter3).keyup(function () {    
+              var str = $(filter3).val(); 
+              selection3.filter(function(i){ return str !== "" && fish[i].indexOf(str)>-1; });
+            });
+            $("#commit_filter3").click(function(){ selection3.commit(); });  
+
+        });
+      </script>
+    </head>
+    <body>
+      <div id="selectable_area3" tabIndex="0"></div><br>
+      Filter: <input type="text" id="filter3"></input><button id="commit_filter3">Commit</button> 
+    </body>
+  </html>

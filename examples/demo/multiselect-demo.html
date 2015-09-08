@@ -37,7 +37,7 @@
     <div>
       <div id="div1">
         <fieldset>
-          <legend>Geometry selection</legend>
+          <legend>Selection Geometries</legend>
           <table>
             <tr>
               <td><input type="radio" name="geometry" value="rectangular" checked></td>
@@ -60,7 +60,8 @@
               <td><input type="radio" name="geometry" value="snake"></td>
               <td><b>Snake:</b>
                 A drag or shift-click adds a new point to the path; all elements that touch the path are selected.
-                Dragging backwards removes elements from the path. No keyboard commands.
+                Dragging backwards along the path removes points from the path. A sharp change of direction (close to 180
+                degrees) initiates erasing. No keyboard commands.
                 <hr></hr>
               </td>
             </tr>

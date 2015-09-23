@@ -43,6 +43,7 @@ RectangularGeometry.prototype = Object.create(HTMLElementsGeometry.prototype);
 // corners are the anchor and active end (the first and last elements of the path).
 RectangularGeometry.prototype.selectionDomain = function(path) {
   var J = multiselect.makeEmptyMap();
+  if (path.length === 0) return J;
   var r1 = mkRectangle(multiselect.anchor(path),
                        multiselect.activeEnd(path));
   for (var i=0; i<this.elements.length; ++i) {
@@ -68,6 +69,7 @@ RowGeometry.prototype = Object.create(HTMLElementsGeometry.prototype);
 // Selection domain is the range of elements between the anchor and active end.
 RowGeometry.prototype.selectionDomain = function(path) {
   var J = multiselect.makeEmptyMap();
+  if (path.length === 0) return J;
   var a = multiselect.anchor(path);
   var b = multiselect.activeEnd(path);
   for (var i=Math.min(a, b); i<=Math.max(a, b); ++i) J.set(i, true);
@@ -144,8 +146,9 @@ SnakeGeometry.prototype = Object.create(HTMLElementsGeometry.prototype);
 // removes nearby points (within 20 pixels), and remains in removing-mode until a new point
 // again moves further away from the current last point. This is a crude heuristic, but it
 // works sufficiently well for this demo, to show the flexibility of parameterization
-// via selection geometries.
+// via selection geometries. 
 SnakeGeometry.prototype.extendPath = function(path, p) {
+
   var last = path.length - 1;
   if (path.length <= 1) { this.removing = false; this.k = 0; this.prevp = p; path.push(p); return; }
   if (this.removing) { 
@@ -182,7 +185,7 @@ SnakeGeometry.prototype.selectionDomain = function(path, J) {
     }
     prev = i;
   }
-  this.k = path.length - 1;  
+  this.k = Math.max(0, path.length - 1);
   return J;
 }
 
@@ -234,6 +237,7 @@ MixedGeometry.prototype = Object.create(HTMLElementsGeometry.prototype);
 // is applied, othewrise rectangular
 MixedGeometry.prototype.selectionDomain = function(path, J) {
   var J = multiselect.makeEmptyMap();
+  if (path.length === 0) return J;
   var a = multiselect.anchor(path);
   var b = multiselect.activeEnd(path);
   if (a.index !== undefined) {
@@ -558,4 +562,5 @@ document.addEventListener("DOMContentLoaded", function() {
   $("#commit_filter").click(function(){ selection.commit(); });
   $("#select_all").click(function(){ selection.filter( function(i) { return true; }); });
   $("#deselect_all").click(function(){ selection.filter( function(i) { return true; }, false); });
+  
 });

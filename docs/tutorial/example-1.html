@@ -28,6 +28,7 @@
             }
             OrderedGeometry.prototype.selectionDomain = function(path) {
               var J = multiselect.makeEmptyMap();
+              if (path.length === 0) return J;
               var a = multiselect.anchor(path);
               var b = multiselect.activeEnd(path);
               for (var i=Math.min(a, b); i<=Math.max(a, b); ++i) J.set(i, true);

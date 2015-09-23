@@ -1,0 +1,995 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>MultiselectJS API</title>
+<!-- 2015-09-22 Tue 22:41 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="Jaakko Järvi" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<style>body { font-family: Arial, Verdana, Helvetica, sans-serif; }</style>
+<style>.org-src-name { font-weight: normal; text-decoration: overline underline;  font-family: monospace; margin-top: 1cm; }</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">MultiselectJS API</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1. Introduction</a></li>
+<li><a href="#sec-2">2. <code>multiselect.js</code></a>
+<ul>
+<li><a href="#sec:selectionstate">2.1. The <code>SelectionState</code> class</a>
+<ul>
+<li><a href="#sec-2-1-1">2.1.1. Construction</a></li>
+<li><a href="#sec-2-1-2">2.1.2. Reset</a></li>
+<li><a href="#sec-2-1-3">2.1.3. Accessing the selection state of elements</a></li>
+<li><a href="#sec-2-1-4">2.1.4. Accessing selection geometry</a></li>
+<li><a href="#sec-2-1-5">2.1.5. Accessing selection path and cursor</a></li>
+<li><a href="#sec-2-1-6">2.1.6. Click functions</a></li>
+<li><a href="#sec-2-1-7">2.1.7. Undo and redo</a></li>
+<li><a href="#sec-2-1-8">2.1.8. Filtering</a></li>
+<li><a href="#sec-2-1-9">2.1.9. Functions for keyboard commands</a></li>
+</ul>
+</li>
+<li><a href="#sec:selection-geometry-objects">2.2. Selection geometry objects</a>
+<ul>
+<li><a href="#sec:defaultgeometry">2.2.1. <code>DefaultGeometry</code></a></li>
+</ul>
+</li>
+<li><a href="#sec-2-3">2.3. Helper definitions</a>
+<ul>
+<li><a href="#sec:path-and-selection-domain-helpers">2.3.1. Helpers for selection paths and selection domains</a></li>
+<li><a href="#sec:direction-constants">2.3.2. Constants for arrow key directions</a></li>
+<li><a href="#sec:event-helpers">2.3.3. Helpers for event handlers</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Introduction</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+This document describes the API of the MultiselectJS library.  The
+document assumes understanding of the following concepts: <i>selection
+geometry</i>, <i>selection mapping</i>, <i>selection domain</i>, <i>active set</i>,
+<i>selection path</i>, <i>anchor</i>, <i>active end</i>, and <i>keyboard
+cursor</i>. Please read the MultiselectJS tutorial or/and the paper <i>One Way
+to Select Many</i> if these concepts are not familiar to you.
+</p>
+
+<p>
+The library components are defined as CommonJS modules.  They are
+<code>multiselect.js</code>, <code>default_geometry.js</code>, <code>dom_geometries.js</code>, and
+<code>ordered_geometries.js</code>. The main module is <code>multiselect.js</code>. The
+other modules define <i>selection geometry</i> classes, intended to be used
+as base classes for client-defined selection geometries. The main
+module depends on (<i>requires</i>) <code>default_geometry.js</code>, but the latter
+is still defined as separate module. This is so that modules that
+define selection geometries do not need to require <code>multiselect.js</code>;
+requiring <code>default_geometry.js</code> suffices.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> <code>multiselect.js</code></h2>
+<div class="outline-text-2" id="text-2">
+<p>
+The names exported by <code>multiselect.js</code> are:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="left" />
+
+<col  class="left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="left"><code>SelectionState</code></td>
+<td class="left"><a href="#sec:selectionstate">2.1</a></td>
+</tr>
+
+<tr>
+<td class="left"><code>DefaultGeometry</code></td>
+<td class="left"><a href="#sec:defaultgeometry">2.2.1</a></td>
+</tr>
+
+<tr>
+<td class="left"><code>anchor</code>, <code>activeEnd</code></td>
+<td class="left"><a href="#sec:path-and-selection-domain-helpers">2.3.1</a></td>
+</tr>
+
+<tr>
+<td class="left"><code>makeEmptyMap</code></td>
+<td class="left"><a href="#sec:path-and-selection-domain-helpers">2.3.1</a></td>
+</tr>
+
+<tr>
+<td class="left"><code>UP</code>, <code>DOWN</code>, <code>LEFT</code>, <code>RIGHT</code>, <code>NO_DIRECTION</code></td>
+<td class="left"><a href="#sec:direction-constants">2.3.2</a></td>
+</tr>
+
+<tr>
+<td class="left"><code>modifierKeys</code></td>
+<td class="left"><a href="#sec:event-helpers">2.3.3</a></td>
+</tr>
+
+<tr>
+<td class="left"><code>NONE</code>, <code>SHIFT</code>, <code>CMD</code>, <code>SHIFT_CMD</code>, <code>OPT</code>, <code>SHIFT_OPT</code></td>
+<td class="left"><a href="#sec:event-helpers">2.3.3</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div id="outline-container-sec:selectionstate" class="outline-3">
+<h3 id="sec:selectionstate"><a id="sec-2-1"></a><span class="section-number-3">2.1</span> The <code>SelectionState</code> class</h3>
+<div class="outline-text-3" id="text-sec:selectionstate">
+<p>
+The <code>SelectionState</code> class maintains all of the state of the
+selection, which includes the selection status of each element, the
+current selection path, undo and redo stacks, and keyboard cursor.
+</p>
+</div>
+
+<div id="outline-container-sec-2-1-1" class="outline-4">
+<h4 id="sec-2-1-1"><span class="section-number-4">2.1.1</span> Construction</h4>
+<div class="outline-text-4" id="text-2-1-1">
+<p>
+The <code>SelectionState</code> class has one constructor:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState(geometry, refresh, tracking, maxundo)
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><code>geometry</code> is the selection geometry. 
+This object must satisfy the requirements laid out in Section <a href="#sec:selection-geometry-objects">2.2</a>.</li>
+<li><code>refresh(s)</code> is a callback function that visualizes the current
+selection state of the elements. With what kind of argument the
+library invokes the callback depends on the value of <code>tracking</code>:
+
+<ul class="org-ul">
+<li><p>
+if <code>tracking === false</code>, <code>s</code> is a <i>selection mapping</i>: a function
+from element indices to booleans. For all element indices <code>i</code>,
+<code>s(i)</code> is <code>true</code> if <code>i</code> is selected in <code>s</code>, otherwise <code>false</code>.
+</p>
+
+<p>
+Assuming the element indices are indices to an array named <code>elements</code> and
+that the function <code>visualize(e, b)</code> shows the element <code>e</code> as selected or not,
+depending on whether <code>b</code> is <code>true</code> or <code>false</code>. A simple <code>refresh</code> implementation
+could then be:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span style="color: #0000FF;">function</span> <span style="color: #006699;">refresh</span>(<span style="color: #BA36A5;">s</span>) {
+  <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span>=0; i&lt;elements.length; ++i) visualize(elements[i], s(i));
+}
+</pre>
+</div></li>
+
+<li><p>
+if <code>tracking === true</code>, <code>s</code> is a built-in <code>Map</code> (ECMAScript 6)
+whose keys are the selectable elements&rsquo; indices and values are
+booleans. The map has entries for exactly those elements that were
+changed since the previous time any of the <code>SelectionState</code>
+object&rsquo;s methods called <code>refresh</code> (or since the object&rsquo;s
+construction).
+</p>
+
+<p>
+With the same assumptions as above, a simple <code>refresh</code> implementation
+could be:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span style="color: #0000FF;">function</span> <span style="color: #006699;">refresh</span>(<span style="color: #BA36A5;">s</span>) {
+  s.forEach(<span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">value</span>, <span style="color: #BA36A5;">i</span>) { visualize(elements[i], value); });
+}
+</pre>
+</div></li>
+</ul></li>
+
+<li><code>tracking</code> controls whether <i>change tracking</i> 
+   should be used or not (the default is <code>false</code>: no tracking)</li>
+
+<li><code>maxundo</code> is the maximum number of undo operations. The default
+is 10, the minimum is 1 (smaller values are ignored).</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-2-1-2" class="outline-4">
+<h4 id="sec-2-1-2"><span class="section-number-4">2.1.2</span> Reset</h4>
+<div class="outline-text-4" id="text-2-1-2">
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState.reset();
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Resets the <code>SelectionState</code> object to the same state in which it was immediately after construction.</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-2-1-3" class="outline-4">
+<h4 id="sec-2-1-3"><span class="section-number-4">2.1.3</span> Accessing the selection state of elements</h4>
+<div class="outline-text-4" id="text-2-1-3">
+<p>
+Access to elements&rsquo; selection state is provided by three functions: <code>isSelected</code>,
+<code>selected</code>, and <code>onSelected</code>.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState.isSelected(i);
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>The parameter <code>i</code> is an index to an element.
+Returns <code>true</code> if the element is selected, <code>false</code> if not.</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState.selected();
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Returns the indices of the selected elements as a <code>Set</code> (ECMAScript 6).</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState.onSelected(vpoint);
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Returns <code>true</code> if <code>vpoint</code> is on exactly one element and that
+element is selected. Concretely, the result is computed as
+follows. A variable <code>path</code> is set to <code>[]</code>,
+<code>geometry().extendPath(path, vpoint)</code> is invoked for its effect on
+<code>path</code>, and then the result of <code>geometry().selectionDomain(path)</code> is
+observed. If that result has exactly one element and that element is
+selected, then <code>onSelected(vpoint)</code> returns <code>true</code>, otherwise
+<code>false</code>.</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-2-1-4" class="outline-4">
+<h4 id="sec-2-1-4"><span class="section-number-4">2.1.4</span> Accessing selection geometry</h4>
+<div class="outline-text-4" id="text-2-1-4">
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState.geometry();
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Returns a reference to the current selection geometry.</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState.setGeometry(geometry);
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Replaces the current selection geometry with <code>geometry</code>.
+Prior to setting the new geometry, the current active set or filter is committed.</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-2-1-5" class="outline-4">
+<h4 id="sec-2-1-5"><span class="section-number-4">2.1.5</span> Accessing selection path and cursor</h4>
+<div class="outline-text-4" id="text-2-1-5">
+<p>
+The selection path and cursor can be queried:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState.selectionPath();
+SelectionState.cursor();
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>These functions return a reference to the current, respectively, 
+selection path and keyboard cursor.</li>
+</ul>
+
+<p>
+The current selection path can be reset to the empty path.
+This function needs to be called if the locations of elements
+change and thus impact the result of the <code>selectionDomain</code> method.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState.resetPath();
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Commits the current active set (whether it was constructed by one of the clicks or by 
+a filter). Resets the current selection path to <code>[]</code> and keyboard cursor to <code>undefined</code>.</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-2-1-6" class="outline-4">
+<h4 id="sec-2-1-6"><span class="section-number-4">2.1.6</span> Click functions</h4>
+<div class="outline-text-4" id="text-2-1-6">
+<p>
+All <code>click</code> functions take a <code>vpoint</code> parameter, which is
+a selection space coordinate. The <code>click</code> and <code>cmdClick</code> are quite similar:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState.click(vpoint);
+SelectionState.cmdClick(vpoint, selmode);
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>The current active set is committed.</li>
+<li><code>click</code> unselects all currently selected elements; <code>cmdClick</code> does not.</li>
+<li>The current selection path <code>_spath</code> is set to <code>[]</code></li>
+<li><code>geometry().extendPath(_spath, vpoint)</code> is called.</li>
+<li>If <code>extendPath</code> returns anything other than <code>null</code>, 
+the keyboard cursor is set to <code>vpoint</code>.</li>
+<li>The new selection domain is computed with the call
+<code>selectionPath(_spath, undefined)</code>.</li>
+<li>The <code>refresh</code> callback is called (if there are no
+elements whose selection state changes, the call might
+not be made).</li>
+<li>The <code>selmode</code> parameter is a boolean and it determines
+whether <code>cmdClick</code> should select or deselect elements. Typically
+it is <code>undefined</code>, in which case <code>cmdClick</code> function selects if
+<code>vpoint</code> is on a selected element, and deselects if not.</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState.shiftClick(vpoint);
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><code>geometry().extendPath(_spath, vpoint)</code> is called.</li>
+<li>If <code>extendPath</code> returns <code>null</code>, there is no 
+effect (other than the possible modifying of <code>_spath</code>).</li>
+<li>Otherwise,
+the keyboard cursor is set to the last element of 
+(the modified) <code>_spath</code>.</li>
+<li>The new selection domain is computed with the call
+<code>selectionDomain(_spath, J)</code>, where <code>J</code> is the
+current selection path.</li>
+<li>The <code>refresh</code> callback is called (if there are no
+elements whose selection state changes, the call might
+not be made).</li>
+</ul>
+
+<p>
+The <code>shiftClick</code> function does not execute atomically.
+After it has has modified the selection
+path, it schedules the rest of its tasks as a separate function
+to be executed later (at timeout 0)&#x2014;unless 
+such a function has already been scheduled. 
+The selection path can thus be extended (or otherwise
+modified) by <code>extendPath</code> calls several times in between two calls to 
+<code>selectionDomain()</code>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-1-7" class="outline-4">
+<h4 id="sec-2-1-7"><span class="section-number-4">2.1.7</span> Undo and redo</h4>
+<div class="outline-text-4" id="text-2-1-7">
+<p>
+The undo and redo functionality is provided by <code>undo</code> and <code>redo</code> methods.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState.undo();
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>The effect of the most recent click, keyboard
+command, or committed filter operation is undone.</li>
+<li>The selection path is set to <code>[]</code>.</li>
+<li>The <code>refresh</code> function is invoked.</li>
+</ul>
+
+<p>
+The <code>undo</code> method does not modify the keyboard cursor.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState.undo();
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>The effect of the most recent call to <code>undo</code> is undone.</li>
+<li>The selection path is set to <code>[]</code>.</li>
+<li>The <code>refresh</code> function is invoked.</li>
+</ul>
+
+<p>
+The <code>redo</code> method does not modify the keyboard cursor.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2-1-8" class="outline-4">
+<h4 id="sec-2-1-8"><span class="section-number-4">2.1.8</span> Filtering</h4>
+<div class="outline-text-4" id="text-2-1-8">
+<p>
+The <code>filter</code> function computes a selection domain based on a predicate
+over the element indices.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState.filter(predicate, state);
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>The selection path is set to <code>[]</code>.</li>
+<li>If <code>state</code> is defined and <code>false</code>, then the filter
+is set to deselect, otherwise to select.</li>
+<li>A new active set is computed with <code>geometry().filter(predicate)</code>.</li>
+<li>If another filter is already active, and the
+new filter and the current filter are both set to <code>select</code>
+or both to <code>deselect</code>, then the 
+current active set is replaced with the new one. Otherwise the 
+current active set is committed before setting the new active set.</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState.commit();
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>The current active set is committed, which creates an
+undoable state.</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-2-1-9" class="outline-4">
+<h4 id="sec-2-1-9"><span class="section-number-4">2.1.9</span> Functions for keyboard commands</h4>
+<div class="outline-text-4" id="text-2-1-9">
+<p>
+The library provides three functions that select elements based on the
+current keyboard cursor position (<code>space</code>, <code>cmdSpace</code>, and <code>shiftSpace</code>),
+and three functions that alter the cursor position, and/or select
+elements (<code>arrow</code>, <code>shiftArrow</code>, and <code>cmdArrow</code>).
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState.space();
+SelectionState.cmdSpace();
+SelectionState.shiftSpace();
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>If the cursor is not defined, these functions attempt to establish a cursor from
+the geometry&rsquo;s default, using the call
+<code>geometry().defaultCursor(NO_DIRECTION)</code>.</li>
+<li>If the cursor is or becomes defined, the corresponding 
+<code>click(cursor)</code>, <code>cmdClick(cursor)</code>, or
+<code>shiftClick(cursor)</code> function is called; otherwise there is no effect.</li>
+<li>The <code>cmdSpace</code> and <code>shiftSpace</code> functions take a parameter (direction)
+that is used internally by the library; client calls to these functions
+should have no arguments.</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-js">SelectionState.arrow(dir);
+SelectionState.shiftArrow(dir);
+SelectionState.cmdArrow(dir);
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>The <code>dir</code> parameter must be one of the library&rsquo;s constants <code>UP</code>,
+<code>DOWN</code>, <code>LEFT</code>, or <code>RIGHT</code>.</li>
+<li>If the cursor is defined, a new cursor is computed by
+<code>geometry().step(dir, c)</code>, where <code>c</code> is the current cursor.  The
+<code>shiftArrow</code> function invokes <code>cmdSpace</code> prior to updating the
+cursor whereas the <code>cmdArrow</code> function invokes <code>cmdSpace</code> after updating
+the cursor.</li>
+<li>If the cursor is not defined, these functions try to establish a
+cursor with the call <code>geometry().defaultCursor(dir)</code>. If a cursor
+can be established (<code>defaultCursor(dir)</code> returns something other
+than <code>undefined</code>), then <code>shiftArrow</code> calls <code>shiftSpace(dir)</code> and
+<code>cmdArrow</code> calls <code>cmdSpace(dir)</code>. If a cursor cannot be established,
+there is no effect.</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec:selection-geometry-objects" class="outline-3">
+<h3 id="sec:selection-geometry-objects"><a id="sec-2-2"></a><span class="section-number-3">2.2</span> Selection geometry objects</h3>
+<div class="outline-text-3" id="text-sec:selection-geometry-objects">
+<p>
+Typically classes that define selection geometries inherit from 
+the <code>defaultGeometry</code> class discussed in Section <a href="#sec:defaultgeometry">2.2.1</a>.
+</p>
+
+<p>
+A selection geometry object must define the following methods, 
+conforming to the requirements listed below. 
+All of the methods, except <code>m2v</code>, are callbacks for the library and not
+intended to be called by the client.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">m2v(mpoint)
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Transforms <code>mpoint</code>, a point in <i>mouse coordinates</i>, to a point in
+selection space.</li>
+<li>This function is never called by any of the
+<code>SelectionState</code>&rsquo;s methods, rather it should be called 
+by the client in the event handlers of the various click events, 
+prior to invoking <code>click</code>, <code>cmdClick</code>, of <code>shiftClick</code> functions. 
+We make <code>m2v</code> a method of the selection geometry and insist
+that <code>m2v</code> function is used to perform the coordinate transformation
+so that event handling code could be reused across selection 
+geometries.</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-js">extendPath(spath, vpoint)
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Extends the selection path <code>spath</code> with the selection space point <code>vpoint</code>.</li>
+<li>To communicate results to the caller, <code>extendPath(spath, vp)</code> modifies the <code>spath</code> parameter.
+If <code>spath</code> is not modified at all, <code>extendPath(spath, vp)</code> should return <code>null</code>.</li>
+<li>The <code>spath</code> parameter is an array of selection state
+points. Typically <code>vpoint</code> is added at the end of <code>spath</code>, but
+this is not a requirement: <code>extendPath</code> is allowed to modify
+<code>spath</code> array in arbitrary ways.  For example, certain values of
+<code>vpoint</code> could be interpreted as commands that remove or move
+points in <code>spath</code>.</li>
+<li>Hint: <code>spath</code> can be non-empty only when invoked from
+<code>shiftClick</code>.  Two consecutive calls to <code>extendPath</code> where <code>spath</code>
+is non-empty can only come from two consecutive calls to
+<code>shiftClick</code>.</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-js">selectionDomain(spath, J)
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>This function should compute the selection domain that <code>spath</code>
+    gives rise to.</li>
+<li>If <code>J</code> is not <code>undefined</code>, it is the current selection domain
+(computed by the previous call to <code>selectionDomain</code>). The object
+referenced to by <code>J</code> can be used as such, and modified and
+returned as the result.  The purpose of making the previous
+selection domain available is so that the selection geometry can
+compute the new selection domain faster. For example, in a &ldquo;snake&rdquo;
+geometry, the selection geometry could cache the index of the last
+element of the selection path, so that on the next call to
+<code>selectionDomain</code> it suffices to inspect points from that index
+forward.</li>
+<li>The <code>selectionDomain</code> function is called from <code>click</code>, <code>cmdClick</code>,
+<code>shiftClick</code>, and <code>onSelected</code> functions. The <code>J</code> parameter is
+defined only when called from <code>shiftClick</code>.</li>
+<li>Two consecutive calls to <code>selectionDomain</code> where <code>J</code> is defined
+can only come from two consecutive calls to <code>shiftClick</code> that
+operate on the same active set. If <code>J</code> is not defined, cached
+values should be cleared.</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-js">step(dir, vpoint)
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>The function should compute a new point that is one &ldquo;step&rdquo; to the
+given direction from <code>vpoint</code>. The function defines the effect of each arrow key
+on the cursor position.</li>
+<li>The <code>dir</code> parameter&rsquo;s value is one of the
+library&rsquo;s constants <code>UP</code>, <code>DOWN</code>, <code>LEFT</code>, or <code>RIGHT</code>. 
+If movement to some direction is not supported, 
+<code>step</code> should return <code>vpoint</code>.</li>
+<li>The library never calls <code>step</code> with <code>undefined</code> value for <code>vpoint</code>.</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-js">defaultCursor(dir)
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>This function should return the default location of the keyboard cursor
+for each <code>dir</code> value. If there is no default for some direction,
+the return value must be <code>undefined</code>.</li>
+<li><code>dir</code> is one of <code>UP</code>, <code>DOWN</code>, <code>LEFT</code>, or <code>RIGHT</code>, <code>NO_DIRECTION</code>.
+The <code>NO_DIRECTION</code> value indicates that <code>defaultCursor</code> was called
+from one of <code>space</code>, <code>shiftSpace</code>, or <code>cmdSpace</code> functions.
+The other four values indicate that it was called from one of the arrow functions.</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-js">filter(pred)
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>This function should return a <code>Map</code> whose keys are the indices <code>i</code> for which <code>pred(i)</code> is true.
+The value for each such index in the map should be <code>true</code>.</li>
+</ul>
+</div>
+
+<div id="outline-container-sec:defaultgeometry" class="outline-4">
+<h4 id="sec:defaultgeometry"><a id="sec-2-2-1"></a><span class="section-number-4">2.2.1</span> <code>DefaultGeometry</code></h4>
+<div class="outline-text-4" id="text-sec:defaultgeometry">
+<p>
+To help the client in defining selection geometries, MultiselectJS defines
+the <code>DefaultGeometry</code> class as follows:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span style="color: #6434A3;">DefaultGeometry</span>.<span style="color: #8b1a1a;">prototype</span> = {
+  <span style="color: #006699;">m2v</span> : <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">mp</span>) { <span style="color: #0000FF;">return</span> mp; },
+  <span style="color: #006699;">extendPath</span> : <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">spath</span>, <span style="color: #BA36A5;">vp</span>) { spath.push(vp); },
+  <span style="color: #006699;">step</span> : <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>, <span style="color: #BA36A5;">vp</span>) { <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">undefined</span>; },
+  <span style="color: #006699;">selectionDomain</span> : <span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">spath</span>, <span style="color: #BA36A5;">J</span>) { 
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">m</span> = makeEmptyMap();
+    <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of spath) m.set(i, <span style="color: #8b1a1a;">true</span>); 
+    <span style="color: #0000FF;">return</span> m;
+  },
+  <span style="color: #006699;">defaultCursor</span> : <span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">dir</span>) { <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">undefined</span>; },
+  filter : <span style="color: #8b1a1a;">undefined</span>
+};
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-sec-2-3" class="outline-3">
+<h3 id="sec-2-3"><span class="section-number-3">2.3</span> Helper definitions</h3>
+<div class="outline-text-3" id="text-2-3">
+</div><div id="outline-container-sec:path-and-selection-domain-helpers" class="outline-4">
+<h4 id="sec:path-and-selection-domain-helpers"><a id="sec-2-3-1"></a><span class="section-number-4">2.3.1</span> Helpers for selection paths and selection domains</h4>
+<div class="outline-text-4" id="text-sec:path-and-selection-domain-helpers">
+<div class="org-src-container">
+
+<pre class="src src-js"><span style="color: #0000FF;">function</span> <span style="color: #006699;">anchor</span>(<span style="color: #BA36A5;">path</span>)
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>The <code>anchor</code> function returns the first element of the <code>path</code> array,
+or <code>undefined</code> if <code>path</code> is empty.</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span style="color: #0000FF;">function</span> <span style="color: #006699;">activeEnd</span>(<span style="color: #BA36A5;">path</span>)
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>The <code>activeEnd</code> function returns the last element
+of the <code>path</code> array, or <code>undefined</code> if <code>path</code> is empty.</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-js"><span style="color: #0000FF;">function</span> <span style="color: #006699;">makeEmptyMap</span>()
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>The <code>selectionDomain(path, J)</code> method in the selection geometry 
+classes may need to construct a new selection domain.
+The <code>makeEmptyMap</code> function constructs the kind of 
+object (a built-in <code>Map</code>) that the library expects.</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec:direction-constants" class="outline-4">
+<h4 id="sec:direction-constants"><a id="sec-2-3-2"></a><span class="section-number-4">2.3.2</span> Constants for arrow key directions</h4>
+<div class="outline-text-4" id="text-sec:direction-constants">
+<p>
+The constants that specify the directions of the four arrow keys are
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">UP;
+DOWN;
+LEFT;
+RIGHT;
+NO_DIRECTION;
+</pre>
+</div>
+
+<p>
+The first four should be used in implementing the selection geometry&rsquo;s
+<code>step</code> function and used as parameters to <code>SelectionState</code>&rsquo;s <code>arrow</code>,
+<code>shiftArrow</code>, and <code>cmdArrow</code> functions when they are called from
+client&rsquo;s event handlers.  The fifth value <code>NO_DIRECTION</code> can be
+recognized in the <code>defaultCursor</code> function to give a default cursor
+position when the <code>space</code> functions are invoked with an undefined
+cursor.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec:event-helpers" class="outline-4">
+<h4 id="sec:event-helpers"><a id="sec-2-3-3"></a><span class="section-number-4">2.3.3</span> Helpers for event handlers</h4>
+<div class="outline-text-4" id="text-sec:event-helpers">
+<p>
+To figure out which modifier keys were pressed
+during a shift-click or a keypress is a little tricky. 
+MultiselectJS implements the logic in the <code>modifierKeys(event)</code> function. 
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-js">modifierKeys(event)
+</pre>
+</div>
+
+<p>
+The <code>event</code> is assumed to be JavaScript&rsquo;s 
+<code>KeyboardEvent</code> or <code>MouseEvent</code>.
+The table below shows how different key combinations 
+are mapped to the result. The first matching combination
+is selected (so that, e.g., <i>shift+cmd+opt</i> is interpreted
+as <i>shift+cmd</i>). 
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="left" />
+
+<col  class="left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left">Modifiers</th>
+<th scope="col" class="left">Return value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="left"><i>shift+cmd</i></td>
+<td class="left"><code>SHIFT_CMD</code></td>
+</tr>
+
+<tr>
+<td class="left"><i>cmd</i></td>
+<td class="left"><code>CMD</code></td>
+</tr>
+
+<tr>
+<td class="left"><i>shift+opt</i></td>
+<td class="left"><code>SHIFT_OPT</code></td>
+</tr>
+
+<tr>
+<td class="left"><i>opt</i></td>
+<td class="left"><code>OPT</code></td>
+</tr>
+
+<tr>
+<td class="left"><i>shift</i></td>
+<td class="left"><code>SHIFT</code></td>
+</tr>
+
+<tr>
+<td class="left">anything else</td>
+<td class="left"><code>NONE</code></td>
+</tr>
+</tbody>
+</table>
+
+<p>
+The <i>cmd</i> modifier in OSX corresponds to the <i>ctrl</i> modifier
+in Windows/Linux, and the <i>opt</i> modifier corresponds to 
+<i>alt</i>.
+</p>
+
+<p>
+The constants <code>NONE</code>, <code>SHIFT</code>, <code>CMD</code>, <code>SHIFT_CMD</code>, <code>OPT</code>, and
+<code>SHIFT_OPT</code> are part of the public API of the library.
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

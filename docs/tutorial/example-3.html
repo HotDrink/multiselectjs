@@ -231,7 +231,7 @@
               }
               prev = i;
             }
-            this._k = path.length - 1;
+            this._k = Math.max(0, path.length - 1);
         
             return J;
           }

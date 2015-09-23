@@ -44,7 +44,7 @@
   DefaultGeometry.prototype = {
     m2v : function (mp) { return mp; },
     extendPath : function (spath, vp) { spath.push(vp); },
-    step : function (dir, vp) { return undefined; },
+    step : function (dir, vp) { return vp; },
     selectionDomain : function(spath, J) { 
       var m = makeEmptyMap();
       for (var i of spath) m.set(i, true); 
@@ -54,16 +54,16 @@
     filter : undefined
   };
 
-          var UP = 1, DOWN = 2, LEFT = 3, RIGHT = 4, NO_DIRECTION = 0;
+        var UP = 1, DOWN = 2, LEFT = 3, RIGHT = 4, NO_DIRECTION = 0;
 
-          function anchor(path) { 
-             if (path.length === 0) return undefined; 
-             return path[0]; 
-          };
-          function activeEnd(path) { 
-             if (path.length === 0) return undefined; 
-             return path[path.length - 1]; 
-          };
+        function anchor(path) { 
+           if (path.length === 0) return undefined; 
+           return path[0]; 
+        };
+        function activeEnd(path) { 
+           if (path.length === 0) return undefined; 
+           return path[path.length - 1]; 
+        };
 
   exports.DefaultGeometry = DefaultGeometry;
   exports.anchor = anchor;
@@ -298,6 +298,12 @@
       this._maxOps = Math.max(2, 2 * maxUndo);
       this.reset();
     }
+    SelectionState.prototype.resetPath = function () {
+      this._flush(); 
+      this._spath = []; this._cursor = undefined;
+      this.commit();
+      return this;
+    }
     SelectionState.prototype.reset = function () {
   
       this._s = makeSelectionMapping();
@@ -305,15 +311,16 @@
       this._spath = [];
       this._cursor = undefined;
   
-      this._redoStack = [];
       this._current = this._ops(this._s); // current selection
-      
+  
       this._opsStatus = ACTIVE_NONE;        
+  
+      this._redoStack = [];
+      
       this._queuedCommand = function () {};
     };
   
-    const ACTIVE_NONE = 0, ACTIVE_FILTER = 1, ACTIVE_SHIFT_CLICK_OR_SET_PATH = 2;
-    const C_SHIFT_CLICK = 0, C_SET_PATH = 1;
+    const ACTIVE_NONE = 0, ACTIVE_FILTER = 1, ACTIVE_SHIFT_CLICK = 2;
     SelectionState.prototype.isSelected = function (i) { 
       this._flush();
       return this._current(i); 
@@ -325,13 +332,14 @@
       for (var i of this._ops.domain.keys()) if (this._current(i)) J.add(i);
       return J;
     }
-  
     SelectionState.prototype.click = function(vp) {
       this._flush();
       this._spath = []; 
       if (this._geometry.extendPath(this._spath, vp) !== null) this._cursor = vp;
   
-      var J1 = this._callSelectionDomain(this._spath);
+      var J1 = this._geometry.selectionDomain(this._spath);
+  
+      this._opsStatus = ACTIVE_SHIFT_CLICK;
   
       if (clickIsNop.call(this, J1)) return this;
   
@@ -342,8 +350,6 @@
       this._ops.push(makeOp(ff, J0));
       this._ops.push(makeOp(tt, J1));
       this._bake();
-  
-      this._opsStatus = ACTIVE_SHIFT_CLICK_OR_SET_PATH;
   
       if (this._tracking) this._refresh(mapSymmetricDifference(J0, J1, false, true));
       else this._refresh(this._current);
@@ -359,10 +365,12 @@
       this._spath = []; 
       if (this._geometry.extendPath(this._spath, vp) !== null) this._cursor = vp;
   
-      var J = this._callSelectionDomain(this._spath);
+      var J = this._geometry.selectionDomain(this._spath);
       var mode;
       if (selmode === undefined) mode = this._onSelectedIndex(J) ? ff : tt;
       else mode = selmode ? tt : ff;
+  
+      this._opsStatus = ACTIVE_SHIFT_CLICK;
   
       if (cmdClickIsNop.call(this, J, mode)) return this;
   
@@ -377,8 +385,6 @@
       this._ops.push(makeOp(mode, J));
       this._bake();
   
-      this._opsStatus = ACTIVE_SHIFT_CLICK_OR_SET_PATH;
-  
       this._refresh(this._tracking ? changed : this._current);
       return this;
     }
@@ -390,24 +396,27 @@
     SelectionState.prototype.shiftClick = function (vp) {
   
       if (this._geometry.extendPath(this._spath, vp) === null) return this;
-      this._cursor = this._spath[this._spath.length-1];
+      this._cursor = activeEnd(this._spath);
   
-      if (this._queuedCommand.pending && 
-          this._queuedCommand.type === C_SHIFT_CLICK) return this;
-      else this._flush();
+      if (this._queuedCommand.pending) return this;
   
-      this._queuedCommand = mkDelayedCommand(this, C_SHIFT_CLICK);
+      // pending is either false or not defined at all
+      this._queuedCommand = mkDelayedShiftClickCommand(this);
       setTimeout(this._queuedCommand, 0);
       return this;
     }
-    function mkDelayedCommand(sel, cmdType) {
+    function mkDelayedShiftClickCommand(sel) {
       var cmd = function () {
-        if (cmd.pending === false) return null;
+        if (cmd.pending === false) return null; // the command has already been run
         cmd.pending = false;
   
-        if (sel._opsStatus !== ACTIVE_SHIFT_CLICK_OR_SET_PATH) { 
-          sel._opsStatus = ACTIVE_SHIFT_CLICK_OR_SET_PATH; 
+        if (sel._opsStatus !== ACTIVE_SHIFT_CLICK) { 
+          sel._opsStatus = ACTIVE_SHIFT_CLICK; 
           sel._addEmptyPair(); 
+          
+          // call selectionGeometry once with an empty path and J undefined so
+          // that cache is cleared
+          sel._geometry.selectionDomain([]);
         }
   
         var changed = makeEmptyMap();
@@ -416,7 +425,7 @@
   
         var oldJ = sel._tracking ? copyMap(op.domain) : op.domain;
   
-        var J = sel._callSelectionDomain(sel._spath, oldJ, cmdType);
+        var J = sel._geometry.selectionDomain(sel._spath, oldJ);
   
         if (sel._tracking) {
           mapSymmetricDifference(J, op.domain, true, false).forEach((function(value, i) {
@@ -431,31 +440,10 @@
       };
   
       cmd.pending = true;
-      cmd.type = cmdType;
       return cmd;
     }
-    SelectionState.prototype._callSelectionDomain = function (path, J, cmdType) {
-      if (cmdType === undefined || cmdType !== this._previousCmdType) {
-        this._previousCmdType = cmdType;
-        if (path.length === 0) return makeEmptyMap();
-        return this._geometry.selectionDomain(path);
-      } else {
-        if (path.length === 0) return makeEmptyMap();
-        return this._geometry.selectionDomain(path, J);
-      }
-    }
-    SelectionState.prototype.setPath = function (path) {
-      this._spath = path;
-      this._cursor = activeEnd(path);
   
-      if (this._queuedCommand.pending &&
-          this._queuedCommand.type === C_SET_PATH) return this;
-      else this._flush();
   
-      this._queuedCommand = mkDelayedCommand(this, C_SET_PATH); 
-      setTimeout(this._queuedCommand, 0);
-      return this;
-    }
     SelectionState.prototype._flush = function () { 
       this._queuedCommand();
     }
@@ -463,7 +451,7 @@
       this._flush();
       var path = [];
       if (this._geometry.extendPath(path, vp) === null) return false;
-      var J = this._callSelectionDomain(path);
+      var J = this._geometry.selectionDomain(path);
       return this._onSelectedIndex(J);
     };
   
@@ -501,7 +489,7 @@
       }
   
       // redoStack is not cleared ever,
-      // so we limit its size (to same as undo stack's)
+      // so we limit its size (to the same as that of undo stack)
       if (this._redoStack.length > this._maxOps) {
         this._redoStack.shift();
         this._redoStack.shift();
@@ -534,18 +522,7 @@
       this._refresh(this._tracking ? changed : this._current);
       return this;
     }
-    SelectionState.prototype.setPath = function (path) {
-      this._spath = path;
-      this._cursor = activeEnd(path);
   
-      if (this._queuedCommand.pending &&
-          this._queuedCommand.type === C_SET_PATH) return this;
-      else this._flush();
-  
-      this._queuedCommand = mkDelayedCommand(this, C_SET_PATH); 
-      setTimeout(this._queuedCommand, 0);
-      return this;
-    }
   SelectionState.prototype.filter = function (predicate, state) {
     if (state !== false) mode = tt; else mode = ff;
   
@@ -580,9 +557,7 @@
     this._opsStatus = ACTIVE_NONE;
   }
     SelectionState.prototype.setGeometry = function (geometry) {
-      this._flush(); 
-      this._spath = []; this._cursor = undefined;
-      this.commit();
+      this.resetPath();
       this._geometry = geometry;
       return this;
     }
@@ -638,7 +613,7 @@
     exports.DOWN = DOWN; 
     exports.LEFT = LEFT; 
     exports.RIGHT = RIGHT;
-    // NO_DIRECTION is not exported
+    exports.NO_DIRECTION = NO_DIRECTION;
   
     // Helpers for defining event handlers
     exports.modifierKeys = modifierKeys;

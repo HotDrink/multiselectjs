@@ -6,9 +6,9 @@ A library for implementing selection of multiple elements from visual collection
 
 Installation means to include the `dist/multiselect.js` script.
 Alternatively one can use the library as a CommonJS module,
-importing it as ~var multiselect = require('multiselectjs');~.
+importing it as `var multiselect = require('multiselectjs');`.
 Additional functionality (selection geometries) can be required
-as ~'multiselectjs/js/filename'~.
+as `'multiselectjs/js/filename'`.
 
 The library is meant to be run on the browser, so tools like Browserify
 could/should be applied to use the library as a module.

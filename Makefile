@@ -13,10 +13,11 @@ LIBRARY_DOCS := $(LIBRARY_ORGS:.org=.html)
 # other documentation
 OTHER_DOCS := \
 	org-docs/index/index.html \
-	org-docs/tutorial/tutorial.html
+	org-docs/tutorial/tutorial.html \
+	org-docs/api_reference/api_reference.html
 
 
-.PHONY: dist tangle docs tutorial pages test
+.PHONY: dist tangle docs pages test
 
 # deployable scripts
 DIST_SCRIPTS := \
@@ -54,6 +55,8 @@ docs: $(OTHER_DOCS) $(LIBRARY_DOCS)
 	cp $(LIBRARY_DOCS) dist-docs/library
 	mkdir -p dist-docs/tutorial
 	cp $(GENERATED_TUTORIAL_FILES) dist-docs/tutorial
+	mkdir -p dist-docs/api_reference
+	cp $(GENERATED_API_REFERENCE_FILES) dist-docs/api_reference
 	mkdir -p dist-docs/index
 	cp $(GENERATED_INDEX_FILES) dist-docs/index
 
@@ -62,6 +65,8 @@ pages: docs dist
 	mkdir -p ../multiselectjs-pages/docs
 	mkdir -p ../multiselectjs-pages/docs/tutorial
 	rsync -v dist-docs/tutorial/* ../multiselectjs-pages/docs/tutorial/
+	mkdir -p ../multiselectjs-pages/docs/api_reference
+	rsync -v dist-docs/api_reference/* ../multiselectjs-pages/docs/api_reference/
 	mkdir -p ../multiselectjs-pages/examples
 	mkdir -p ../multiselectjs-pages/examples/demo
 	rsync -v examples/demo/* ../multiselectjs-pages/examples/demo/
@@ -77,6 +82,8 @@ GENERATED_TUTORIAL_FILES := org-docs/tutorial/tutorial.html \
 	org-docs/tutorial/selection_concepts.png \
 	org-docs/tutorial/simple-selection-geometry.png \
 	org-docs/tutorial/fish.js
+
+GENERATED_API_REFERENCE_FILES := org-docs/api_reference/api_reference.html 
 
 GENERATED_SOURCES = \
 	js/multiselect.js \

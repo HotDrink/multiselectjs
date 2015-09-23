@@ -125,9 +125,9 @@ object that defines the functions:
 
   - ~m2v(point)~ that converts mouse coordinates to selection space
     coordinates;
-  - ~selectionDomain(path, cmdType, J)~ that maps a selection ~path~
-    to a selection domain (the ~cmdType~ and ~J~ parameters are to
-    enable optimizations, and they are explained later);
+  - ~selectionDomain(path, J)~ that maps a selection ~path~
+    to a selection domain (the ~J~ parameter is to
+    enable optimizations to be explained later);
   - ~extendPath(path, point)~ that defines how a new point is added to
     the selection path;
   - ~filter(pred)~ that computes a selection domain as the set of
@@ -569,12 +569,15 @@ inside a rectangle.
 
 The ~selectionDomain~ function is simple---it constructs a new ~Map~
 object with ~makeEmptyMap~, extracts the anchor and active end
-from the selection path, and sets all indices between them to ~true~:
+from the selection path, and sets all indices between them to ~true~.
+The ~selectionDomain~ function may be called with an empty path, 
+which is handled by checking whether ~path.length === 0~.
 
 #+NAME: ordered-geometry-selection-domain
 #+BEGIN_SRC js
   OrderedGeometry.prototype.selectionDomain = function(path) {
     var J = multiselect.makeEmptyMap();
+    if (path.length === 0) return J;
     var a = multiselect.anchor(path);
     var b = multiselect.activeEnd(path);
     for (var i=Math.min(a, b); i<=Math.max(a, b); ++i) J.set(i, true);
@@ -617,43 +620,6 @@ The client can certainly define its own functions to distinguish
 between different mouse events if the one provided is not
 adequate.
  
-#  We thus
-# define constants that indicate shift, command, and option modifiers,
-# and define a function to translate the browser and OS specific event
-# data to one of these constants of our own:
-
-# #+NAME: modifier-keys
-# #+BEGIN_SRC js
-# const M_NONE = 1, 
-#       M_SHIFT = 2, 
-#       M_CMD = 3, 
-#       M_SHIFT_CMD = 4, 
-#       M_OPT = 5, 
-#       M_SHIFT_OPT = 6;
-
-# function modifierKeys (evt) {
-  
-#   if (evt.shiftKey && isCmdKey(evt)) return M_SHIFT_CMD;
-#   if (isCmdKey(evt)) return M_CMD;
-#   if (evt.shiftKey && evt.altKey) return M_SHIFT_OPT;
-#   if (evt.altKey) return M_OPT;
-#   if (evt.shiftKey) return M_SHIFT;
-#   return M_NONE;
-
-#   function isCmdKey (evt) { return evt.metaKey || evt.ctrlKey; }
-# }
-# #+END_SRC
-
-# The ~isCmdKey~ function defines what keys are interpreted as the
-# command modifier; we accept both control and command keys. This is
-# because in the context of multi-selection the role of the command
-# modifier under Mac OS X is the same as that of the control modifier
-# under Windows and Linux. In a production application, one might want
-# to detect the platform and only accept one of the alternatives,
-# according to the platform convention. The option modifier (alt in
-# Windows) is also recognized, with and without shift.  This modifier
-# is used in key bindings of undo and redo commands.
-
 In this simple example, it suffices to 
 define and register a handler for the /mousedown/ event:
 
@@ -1339,12 +1305,15 @@ The ~selectionDomain~
 function thus first inspects the anchor's ~index~ to determine the
 kind of coordinate the anchor is, and then interprets the
 anchor and the active end either as the endpoints of a range or as the
-corners of a rectangle:
+corners of a rectangle. Again, the case that ~path~ is 
+empty must be handled.
 
 #+NAME: row-wise-geometry-selection-domain
 #+BEGIN_SRC js
   RowwiseGeometry.prototype.selectionDomain = function(path) {
     var J = multiselect.makeEmptyMap();
+    if (path.length === 0) return J;
+
     var a = multiselect.anchor(path);
     var b = multiselect.activeEnd(path);
 
@@ -2592,9 +2561,11 @@ function implements an optimization. When it is finished
 computing a selection domain, it stores the last index of the selection
 path in ~this._k~. When ~shiftClick~ (which is called repeatedly during rubber band
 selection) makes a call to ~selectionDomain~, the call includes the previously calculated
-selection domain (~J~) as the third parameter.
+selection domain (~J~) as the second parameter.
 It then suffices to iterate the line segments on the path from the index ~k~ 
-onward.
+onward. That ~J~ is ~undefined~ acts as a signal that 
+a new active set has been created and that any cached values 
+(here ~_k~) should be reset.
 
 #+NAME: snake-selection-domain
 #+BEGIN_SRC js
@@ -2608,7 +2579,7 @@ onward.
       }
       prev = i;
     }
-    this._k = path.length - 1;
+    this._k = Math.max(0, path.length - 1);
 
     return J;
   }

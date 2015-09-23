@@ -39,7 +39,7 @@ var test = QUnit.test;
   DefaultGeometry.prototype = {
     m2v : function (mp) { return mp; },
     extendPath : function (spath, vp) { spath.push(vp); },
-    step : function (dir, vp) { return undefined; },
+    step : function (dir, vp) { return vp; },
     selectionDomain : function(spath, J) { 
       var m = makeEmptyMap();
       for (var i of spath) m.set(i, true); 
@@ -48,15 +48,15 @@ var test = QUnit.test;
     defaultCursor : function(dir) { return undefined; },
     filter : undefined
   };
-          var UP = 1, DOWN = 2, LEFT = 3, RIGHT = 4, NO_DIRECTION = 0;
-          function anchor(path) { 
-             if (path.length === 0) return undefined; 
-             return path[0]; 
-          };
-          function activeEnd(path) { 
-             if (path.length === 0) return undefined; 
-             return path[path.length - 1]; 
-          };
+        var UP = 1, DOWN = 2, LEFT = 3, RIGHT = 4, NO_DIRECTION = 0;
+        function anchor(path) { 
+           if (path.length === 0) return undefined; 
+           return path[0]; 
+        };
+        function activeEnd(path) { 
+           if (path.length === 0) return undefined; 
+           return path[path.length - 1]; 
+        };
 
   // generate a property map that maps the labels given as arguments to true
   function dom(args) {

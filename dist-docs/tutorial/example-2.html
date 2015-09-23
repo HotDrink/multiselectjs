@@ -120,6 +120,8 @@
         
           RowwiseGeometry.prototype.selectionDomain = function(path) {
             var J = multiselect.makeEmptyMap();
+            if (path.length === 0) return J;
+        
             var a = multiselect.anchor(path);
             var b = multiselect.activeEnd(path);
         

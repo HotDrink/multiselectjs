@@ -1,7 +1,8 @@
 #+SETUPFILE: ../../org/org-settings.org
 #+TITLE: {{{msjs}}}
 
-{{{msjs}}} is a library for implementing selection of multiple elements from visual collections with a mouse and keyboard.
+{{{msjs}}} is a library for implementing selection of multiple
+elements from visual collections with a mouse and keyboard.
 
 The library's multiselection abstraction is not bound to a widget or
 control; it can be applied to any context.  To implement
@@ -16,11 +17,14 @@ multiselection, the application programmers main tasks are to:
 The library provides a rich multiselection feature, including mouse
 and keyboard selection so that they are compatible with each other,
 undoing and redoing selections, selecting based on a predicate, and
-changing selection geometries on the fly.  The different aspecs of
+changing selection geometries on the fly.  The different aspects of
 multiselection are showcased in [[file:examples/demo/multiselect-demo.html][a demo application]].
 
 Our [[file:docs/tutorial/tutorial.html][tutorial]] describes the basic concepts of multiselection and shows
 step-by-step how to apply the library in a few example situations.
+
+The [[file:docs/api_reference/api_reference.html][programming API reference]] describes the library's public interface
+in detail.
 
 The manuscript /One Way to Select Many/, by Jaakko Järvi and Sean
 Parent, is a full account of the motivations behind {{{msjs}}} and the

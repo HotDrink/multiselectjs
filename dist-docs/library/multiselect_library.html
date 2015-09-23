@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>MultiselectJS &#x2014; <code>multiselect_library.org</code></title>
-<!-- 2015-09-08 Tue 00:06 -->
+<!-- 2015-09-22 Tue 22:41 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="Jaakko Järvi" />
@@ -208,9 +208,9 @@ for the JavaScript code in this tag.
 <li><a href="#sec-6-2">6.2. Click functions</a>
 <ul>
 <li><a href="#sec-6-2-1">6.2.1. Click</a></li>
-<li><a href="#sec-6-2-2">6.2.2. Command-click</a></li>
-<li><a href="#sec-6-2-3">6.2.3. Shift-click</a></li>
-<li><a href="#sec-6-2-4">6.2.4. Call selection domain</a></li>
+<li><a href="#sec-6-2-2">6.2.2. Detecting a click or command-click that would have no effect</a></li>
+<li><a href="#sec-6-2-3">6.2.3. Command-click</a></li>
+<li><a href="#sec-6-2-4">6.2.4. Shift-click</a></li>
 <li><a href="#sec-6-2-5">6.2.5. Flush</a></li>
 </ul>
 </li>
@@ -370,15 +370,15 @@ should not refer to such members.
 <div class="outline-text-4" id="text-sec-maps-and-sets">
 <p>
 Selection mappings and selection domains are represented using
-JavaScript&rsquo;s built-in <code>Set</code> and <code>Map</code> types. These are features that
-are planned for EcmaScript 6 (known as &ldquo;ES6 Harmony&rdquo;), and supported
-by modern browsers.  The benefit of using <code>Set</code> and <code>Map</code> over
-JavaScript&rsquo;s built-in property maps is that <code>Set</code> and <code>Map</code> accept any
-types as keys, whereas property maps&rsquo; keys are strings.  Object
-references as keys are convenient. For example, a <code>Map</code> from object
-references to objects is a natural indexed family for a set of
-DOM-elements; the order of the indices is their insertion order to the
-map.
+JavaScript&rsquo;s built-in <code>Set</code> and <code>Map</code> types. These are features of
+ECMAScript 6 and they are already supported by modern browsers.  The benefit of
+using <code>Set</code> and <code>Map</code> over JavaScript&rsquo;s built-in property maps is that
+<code>Set</code> and <code>Map</code> accept any types as keys, whereas property maps&rsquo; keys
+are strings.  Object references as keys are convenient. For example, a
+<code>Map</code> from object references to objects is a natural indexed family
+for a set of DOM-elements. The order of iteration of the elements
+in <code>Map</code> and <code>Set</code> is predefined to be the order in which the elements
+are inserted to the collection.
 </p>
 
 <p>
@@ -444,7 +444,7 @@ and set equality of keys between two <code>Map</code> objects.
 </div>
 
 <p>
-The <code>setUnion</code> takes zero or more collections as argments, 
+The <code>setUnion</code> takes zero or more collections as arguments, 
 and returns the union of their keys as a <code>Set</code>:
 </p>
 
@@ -741,7 +741,7 @@ selection mapping <code>s</code>.</li>
 
 <p>
 The implementation of <code>func</code>&rsquo;s function call operator takes advantage
-of the avove encodings. First, if an element <code>i</code> is not in the
+of the above encodings. First, if an element <code>i</code> is not in the
 selection domain of some selection operation, the selection
 function of that operation is never evaluated when determining the
 selection status of <code>i</code>. Second, if an element <code>i</code> is in the 
@@ -987,7 +987,7 @@ keys are the indices of the changed elements, and values their current
 selection status (<code>true</code> or <code>false</code>).  If <code>tracking</code> is false,
 <code>refresh</code> will be called with the current selection mapping.  Tracking
 can simplify visualizing the selection, but it requires additional
-computation and memory, so it is left optional.
+computation and memory, so its use is optional.
 </p>
 
 <p>
@@ -1015,15 +1015,16 @@ to respond to the indexed family \(I\) being changed).
     <span style="color: #8b1a1a;">this</span>._spath = [];
     <span style="color: #8b1a1a;">this</span>._cursor = <span style="color: #8b1a1a;">undefined</span>;
 
-    <span style="color: #8b1a1a;">this</span>._redoStack = [];
     <span style="color: #8b1a1a;">this</span>._current = <span style="color: #8b1a1a;">this</span>._ops(<span style="color: #8b1a1a;">this</span>._s); <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">current selection</span>
-    
+
     <span style="color: #8b1a1a;">this</span>._opsStatus = ACTIVE_NONE;        
+
+    <span style="color: #8b1a1a;">this</span>._redoStack = [];
+    
     <span style="color: #8b1a1a;">this</span>._queuedCommand = <span style="color: #0000FF;">function</span> () {};
   };
 
-  <span style="color: #0000FF;">const</span> <span style="color: #BA36A5;">ACTIVE_NONE</span> = 0, <span style="color: #BA36A5;">ACTIVE_FILTER</span> = 1, <span style="color: #BA36A5;">ACTIVE_SHIFT_CLICK_OR_SET_PATH</span> = 2;
-  <span style="color: #0000FF;">const</span> <span style="color: #BA36A5;">C_SHIFT_CLICK</span> = 0, <span style="color: #BA36A5;">C_SET_PATH</span> = 1;
+  <span style="color: #0000FF;">const</span> <span style="color: #BA36A5;">ACTIVE_NONE</span> = 0, <span style="color: #BA36A5;">ACTIVE_FILTER</span> = 1, <span style="color: #BA36A5;">ACTIVE_SHIFT_CLICK</span> = 2;
 </pre>
 </div>
 
@@ -1039,27 +1040,51 @@ variables:
 is an invariant that <code>_ops</code> always has an even number of
 selection operations),</li>
 <li><code>_spath</code> is the selection path,</li>
-<li><code>_cursor</code> is the keyboard cursor, and</li>
-<li><code>_opsStatus</code> is an indicator of whether the topmost selection
-operation is <i>active</i> (open for modification) and for which command. It can
-take values <code>ACTIVE_NONE</code>, <code>ACTIVE_SHIFT_CLICK_OR_SET_PAHT</code>, or <code>ACTIVE_FILTER</code>.
-If the status is <code>ACTIVE_NONE</code>, then both shift-click/set path and filter
-methods will first add a new empty pair of selection operators to
-<code>_ops</code>.  If it is <code>ACTIVE_SHIFT_CLICK</code>, then shift-click or set path will not
-add a new pair, but filter will. The roles are reversed with
-<code>ACTIVE_FILTER</code>.</li>
+<li><code>_cursor</code> is the keyboard cursor.</li>
 </ol>
 
+<p>
+Some additional state is maintained:
+</p>
+
+<ol class="org-ol">
+<li><p>
+<code>_opsStatus</code> is an indicator of whether the topmost selection
+operation is <i>active</i> (open for modification) and for which command. It can
+take values <code>ACTIVE_NONE</code>, <code>ACTIVE_SHIFT_CLICK</code>, or <code>ACTIVE_FILTER</code>.
+If the status is <code>ACTIVE_NONE</code>, then both shift-click and filter
+methods will first add a new empty pair of selection operators to
+<code>_ops</code>.  If it is <code>ACTIVE_SHIFT_CLICK</code>, then shift-click will not
+add a new pair, but filter will. The roles are reversed with
+<code>ACTIVE_FILTER</code>.
+</p>
 
 <p>
-The <code>_redoStack</code> variable contains the redoable commands (selection
-operations).  The <code>_current</code> variable is bound to the value
-<code>_ops(_s)</code>, and it is thus the selection mapping that reflects the
-current selection status of the elements. Finally, <code>_queuedCommand</code> is
-a one-element command queue, which is used in combining several
-consecutive shift-click operations, or several consequtive set path
-operations, to one.
-</p>
+The <code>_opsStatus</code> member is not part of the selection state tuple
+described in the formal model in the manuscript. There the same
+effect is achieved with the selection path: an undefined path
+(the \(\bot\) value) corresponds to the <code>ACTIVE_NONE</code> status; a
+path that matches \(P\) corresponds to the <code>ACTIVE_SHIFT_CLICK</code>
+status; and a path that matches \(Q\) (a predicate), corresponds to
+the <code>ACTIVE_FILTER</code> status.
+Note that a predicate is not stored at all; it need not be as every
+call to <code>filter</code> defines a new predicate, not a modification to the
+existing one. Compare this to <code>shiftClick</code>, where each call modifies
+the current selection path rather than replaces it.
+</p></li>
+
+<li><code>_redoStack</code> contains the redoable commands
+(selection operations).</li>
+
+<li><code>_current</code> is bound to the value <code>_ops(_s)</code>, and it
+is thus the selection mapping that reflects the current selection
+status of the elements.</li>
+
+<li><code>_queuedCommand</code> is a one-element command queue, which is
+used in combining several consecutive shift-click operations to
+one. This optimization reduces the number of calls made to 
+<code>selectionDomain</code> during a rubber-band selection.</li>
+</ol>
 </div>
 
 <div id="outline-container-sec-6-1" class="outline-3">
@@ -1081,7 +1106,7 @@ The selection state of the element at index <code>i</code> is given by the
 
 <p>
 The <code>_flush</code> method is described with the shift-click command; its purpose is
-to complete a possibly pending selection operation stored in <code>_queuedCommand</code>.
+to complete a possibly pending shift-click command, stored in <code>_queuedCommand</code>.
 The flush is called at the beginning of many of the methods of <code>SelectionState</code>.
 </p>
 
@@ -1111,8 +1136,8 @@ iteration order of the resulting <code>Set</code> offers no useful guarantees.
 <h3 id="sec-6-2"><span class="section-number-3">6.2</span> Click functions</h3>
 <div class="outline-text-3" id="text-6-2">
 <p>
-The three basic selection commands are <code>click(p)</code>, <code>cmdClick(p)</code>, and
-<code>shiftClick(p)</code>.  They follow the specification in the manuscript,
+The three basic selection commands are <code>click(vp)</code>, <code>cmdClick(vp)</code>, and
+<code>shiftClick(vp)</code>.  They follow the specification in the manuscript,
 with a couple additional details. 
 </p>
 </div>
@@ -1139,7 +1164,9 @@ undefined and the keyboard cursor remains unchanged.
     <span style="color: #8b1a1a;">this</span>._spath = []; 
     <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._geometry.extendPath(<span style="color: #8b1a1a;">this</span>._spath, vp) !== <span style="color: #8b1a1a;">null</span>) <span style="color: #8b1a1a;">this</span>._cursor = vp;
 
-    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J1</span> = <span style="color: #8b1a1a;">this</span>._callSelectionDomain(<span style="color: #8b1a1a;">this</span>._spath);
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J1</span> = <span style="color: #8b1a1a;">this</span>._geometry.selectionDomain(<span style="color: #8b1a1a;">this</span>._spath);
+
+    <span style="color: #8b1a1a;">this</span>._opsStatus = ACTIVE_SHIFT_CLICK;
 
     <span style="color: #0000FF;">if</span> (clickIsNop.call(<span style="color: #8b1a1a;">this</span>, J1)) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
 
@@ -1151,8 +1178,6 @@ undefined and the keyboard cursor remains unchanged.
     <span style="color: #8b1a1a;">this</span>._ops.push(makeOp(tt, J1));
     <span style="color: #8b1a1a;">this</span>._bake();
 
-    <span style="color: #8b1a1a;">this</span>._opsStatus = ACTIVE_SHIFT_CLICK_OR_SET_PATH;
-
     <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._tracking) <span style="color: #8b1a1a;">this</span>._refresh(mapSymmetricDifference(J0, J1, <span style="color: #8b1a1a;">false</span>, <span style="color: #8b1a1a;">true</span>));
     <span style="color: #0000FF;">else</span> <span style="color: #8b1a1a;">this</span>._refresh(<span style="color: #8b1a1a;">this</span>._current);
     <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
@@ -1161,32 +1186,28 @@ undefined and the keyboard cursor remains unchanged.
 </div>
 
 <p>
-A click command clears the current selection, then adds the
+The <code>click</code> function clears the current selection, then adds the
 elements of the selection domain to the selection.  This effect is
 achieved by pushing two selection operations: first <code>ff</code>
 over all selected elements, then <code>tt</code> over the new selection domain.
 </p>
 
 <p>
-The <code>callSelectionDomain</code> method wraps a call to <code>selectionMode</code>;
-its details are explained below.
+The <code>_opsStatus</code> is set to <code>ACTIVE_SHIFT_CLICK</code> to
+indicate that if the next operation is shift-click, it should modify the topmost
+selection operation that is pushed to <code>_ops</code>.
 </p>
 
 <p>
 The helper function <code>clickIsNop(J)</code> detects clicks that would not have
-any effect on the selection state. Such clicks are ignored to avoid
-creating unnecessary undoable states. 
+any effect on the selection state. Such clicks do not push any new
+selection operations, so that we avoid creating unnecessary undoable
+states. The <code>refresh</code> function is not called either.
 </p>
 
 <p>
 If <code>_ops</code> grows too big, <i><code>_bake</code></i> reduces the size of <code>_ops</code>
 by one undoable operation (two selection operations).
-</p>
-
-<p>
-The <code>_opsStatus</code> is set to <code>ACTIVE_SHIFT_CLICK_OR_SET_PATH</code> to
-indicate that shift-click or set path can modify the topmost
-selection operation that is pushed to <code>_ops</code>.
 </p>
 
 <p>
@@ -1197,20 +1218,20 @@ current state (<code>true</code> selected, <code>false</code> not selected).  If
 off, the argument is the current selection mapping.
 </p>
 </div>
+</div>
 
-<ol class="org-ol"><li><a id="sec-6-2-1-1"></a>Detecting a nop<br  /><div class="outline-text-5" id="text-6-2-1-1">
+<div id="outline-container-sec-6-2-2" class="outline-4">
+<h4 id="sec-6-2-2"><span class="section-number-4">6.2.2</span> Detecting a click or command-click that would have no effect</h4>
+<div class="outline-text-4" id="text-6-2-2">
 <p>
-Assume <code>op1</code> and <code>op2</code> are the two tompost selection operations of the <code>_ops</code> composition.
-</p>
-
-<p>
+Assume <code>op1</code> and <code>op2</code> are the two topmost selection operations of the <code>_ops</code> composition.
 Then, if the most recent command was
 </p>
 
 <ul class="org-ul">
 <li>click, <code>op1.f</code> is <code>tt</code> and <code>op2.f</code> is <code>ff</code>;</li>
 <li>command-click, <code>op1.f</code> is either <code>tt</code> or <code>ff</code> and <code>op2.f</code> is <code>id</code>;</li>
-<li>any other command, either the conditions of click or command-click hold.</li>
+<li>shift-click, filter, undo, or redo, either the conditions of click or command-click hold.</li>
 </ul>
 
 <p>
@@ -1231,7 +1252,7 @@ if the new selection domain is equal to the previous one:
 <p>
 A command-click operation toggles, so for it to have no effect, <code>J</code> must
 be empty. Though this guarantees no change to elements&rsquo; selection
-status, it is not yet a suffcient condition for a nop, since the
+status, it is not yet a sufficient condition for a nop, since the
 selection mode may have to change. (This case results to indistinguishable
 undo states.)
 </p>
@@ -1247,22 +1268,22 @@ undo states.)
 </div>
 
 <p>
-The above rules can let equivalent undo states through in rare cases.
+The above rules can in rare cases let equivalent undo states through.
 It would be possible to add additional checking to the undo operation, 
 but it is perhaps not worth the complication.
 </p>
-</div></li></ol>
+</div>
 </div>
 
-<div id="outline-container-sec-6-2-2" class="outline-4">
-<h4 id="sec-6-2-2"><span class="section-number-4">6.2.2</span> Command-click</h4>
-<div class="outline-text-4" id="text-6-2-2">
+<div id="outline-container-sec-6-2-3" class="outline-4">
+<h4 id="sec-6-2-3"><span class="section-number-4">6.2.3</span> Command-click</h4>
+<div class="outline-text-4" id="text-6-2-3">
 <p>
-The implementation differs from <code>click</code> on five counts: First, the
+The implementation differs from <code>click</code> on several counts: first, the
 selection mode depends on whether the clicked point <code>vp</code> is on a
-selected element or not. Second, command-clicking does not clear the
-current selection. Third, the conditions for detecting a nop differ.
-Fourth, computing which elements were changed is different.
+selected element or not; second, command-clicking does not clear the
+current selection; third, the conditions for detecting a nop differ; and
+fourth, computing which elements were changed is different.
 The second parameter, <code>selmode</code>, is an additional variation point that is
 not used in typical selection geometries.
 </p>
@@ -1274,10 +1295,12 @@ not used in typical selection geometries.
     <span style="color: #8b1a1a;">this</span>._spath = []; 
     <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._geometry.extendPath(<span style="color: #8b1a1a;">this</span>._spath, vp) !== <span style="color: #8b1a1a;">null</span>) <span style="color: #8b1a1a;">this</span>._cursor = vp;
 
-    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = <span style="color: #8b1a1a;">this</span>._callSelectionDomain(<span style="color: #8b1a1a;">this</span>._spath);
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = <span style="color: #8b1a1a;">this</span>._geometry.selectionDomain(<span style="color: #8b1a1a;">this</span>._spath);
     <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">mode</span>;
     <span style="color: #0000FF;">if</span> (selmode === <span style="color: #8b1a1a;">undefined</span>) mode = <span style="color: #8b1a1a;">this</span>._onSelectedIndex(J) ? ff : tt;
     <span style="color: #0000FF;">else</span> mode = selmode ? tt : ff;
+
+    <span style="color: #8b1a1a;">this</span>._opsStatus = ACTIVE_SHIFT_CLICK;
 
     <span style="color: #0000FF;">if</span> (cmdClickIsNop.call(<span style="color: #8b1a1a;">this</span>, J, mode)) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
 
@@ -1291,8 +1314,6 @@ not used in typical selection geometries.
     <span style="color: #8b1a1a;">this</span>._ops.push(makeOp(id, makeEmptyMap()));
     <span style="color: #8b1a1a;">this</span>._ops.push(makeOp(mode, J));
     <span style="color: #8b1a1a;">this</span>._bake();
-
-    <span style="color: #8b1a1a;">this</span>._opsStatus = ACTIVE_SHIFT_CLICK_OR_SET_PATH;
 
     <span style="color: #8b1a1a;">this</span>._refresh(<span style="color: #8b1a1a;">this</span>._tracking ? changed : <span style="color: #8b1a1a;">this</span>._current);
     <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
@@ -1326,9 +1347,9 @@ to <code>changed</code>.
 </div>
 </div>
 
-<div id="outline-container-sec-6-2-3" class="outline-4">
-<h4 id="sec-6-2-3"><span class="section-number-4">6.2.3</span> Shift-click</h4>
-<div class="outline-text-4" id="text-6-2-3">
+<div id="outline-container-sec-6-2-4" class="outline-4">
+<h4 id="sec-6-2-4"><span class="section-number-4">6.2.4</span> Shift-click</h4>
+<div class="outline-text-4" id="text-6-2-4">
 <p>
 The semantics of shift-clicking guarantees that that the effect of two
 consecutive shift-clicks, say, at points \(p_1\) and \(p_2\), is the same
@@ -1344,13 +1365,12 @@ a time.
 <pre class="src src-js" id="selection-state-shift-click">  SelectionState.<span style="color: #8b1a1a;">prototype</span>.shiftClick = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">vp</span>) {
 
     <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._geometry.extendPath(<span style="color: #8b1a1a;">this</span>._spath, vp) === <span style="color: #8b1a1a;">null</span>) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
-    <span style="color: #8b1a1a;">this</span>._cursor = <span style="color: #8b1a1a;">this</span>._spath[<span style="color: #8b1a1a;">this</span>._spath.length-1];
+    <span style="color: #8b1a1a;">this</span>._cursor = activeEnd(<span style="color: #8b1a1a;">this</span>._spath);
 
-    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._queuedCommand.pending &amp;&amp; 
-        <span style="color: #8b1a1a;">this</span>._queuedCommand.type === C_SHIFT_CLICK) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
-    <span style="color: #0000FF;">else</span> <span style="color: #8b1a1a;">this</span>._flush();
+    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._queuedCommand.pending) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
 
-    <span style="color: #8b1a1a;">this</span>._queuedCommand = mkDelayedCommand(<span style="color: #8b1a1a;">this</span>, C_SHIFT_CLICK);
+    <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">pending is either false or not defined at all</span>
+    <span style="color: #8b1a1a;">this</span>._queuedCommand = mkDelayedShiftClickCommand(<span style="color: #8b1a1a;">this</span>);
     setTimeout(<span style="color: #8b1a1a;">this</span>._queuedCommand, 0);
     <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
   }
@@ -1366,27 +1386,33 @@ and some mouse locations (such as those outside the extents of any
 element) map to, say, <code>null</code>.  In such a (likely common) setting,
 dragging the mouse past an element to a <code>null</code> location during a
 rubber band selection would cause the cursor location to be lost.
+Note that it is possible that <code>_spath</code> is empty after the <code>extendPath</code>
+call, since <code>extendPath</code> can modify <code>_spath</code> in any way. This will
+make the cursor undefined, since <code>activeEnd([])</code> returns <code>undefined</code>.
 </p>
 
 <p>
 If a shift-click command is currently pending, nothing more needs to
 be done. Eventually that pending command will get to execute, with the
-selection path that was just extended with <code>vp</code>.  In the case where
-either no commands are pending or another kind of command (there is
-only one possibility: <i>set path</i>) is pending, the queue is flushed,
-and a new command is created with <code>mkDelayedCommand</code> and scheduled.
+selection path that was just extended with <code>vp</code>.  In the case where no
+command is pending a new command is created with
+<code>mkDelayedShiftClickCommand</code> and scheduled.
 </p>
 
 <div class="org-src-container">
 
-<pre class="src src-js" id="mk-delayed-command">  <span style="color: #0000FF;">function</span> <span style="color: #006699;">mkDelayedCommand</span>(<span style="color: #BA36A5;">sel</span>, <span style="color: #BA36A5;">cmdType</span>) {
+<pre class="src src-js" id="mk-delayed-shift-click-command">  <span style="color: #0000FF;">function</span> <span style="color: #006699;">mkDelayedShiftClickCommand</span>(<span style="color: #BA36A5;">sel</span>) {
     <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">cmd</span> = <span style="color: #0000FF;">function</span> () {
-      <span style="color: #0000FF;">if</span> (cmd.pending === <span style="color: #8b1a1a;">false</span>) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">null</span>;
+      <span style="color: #0000FF;">if</span> (cmd.pending === <span style="color: #8b1a1a;">false</span>) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">null</span>; <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">the command has already been run</span>
       cmd.pending = <span style="color: #8b1a1a;">false</span>;
 
-      <span style="color: #0000FF;">if</span> (sel._opsStatus !== ACTIVE_SHIFT_CLICK_OR_SET_PATH) { 
-        sel._opsStatus = ACTIVE_SHIFT_CLICK_OR_SET_PATH; 
+      <span style="color: #0000FF;">if</span> (sel._opsStatus !== ACTIVE_SHIFT_CLICK) { 
+        sel._opsStatus = ACTIVE_SHIFT_CLICK; 
         sel._addEmptyPair(); 
+        
+        <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">call selectionGeometry once with an empty path and J undefined so</span>
+        <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">that cache is cleared</span>
+        sel._geometry.selectionDomain([]);
       }
 
       <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">changed</span> = makeEmptyMap();
@@ -1395,7 +1421,7 @@ and a new command is created with <code>mkDelayedCommand</code> and scheduled.
 
       <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">oldJ</span> = sel._tracking ? copyMap(op.domain) : op.domain;
 
-      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = sel._callSelectionDomain(sel._spath, oldJ, cmdType);
+      <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = sel._geometry.selectionDomain(sel._spath, oldJ);
 
       <span style="color: #0000FF;">if</span> (sel._tracking) {
         mapSymmetricDifference(J, op.domain, <span style="color: #8b1a1a;">true</span>, <span style="color: #8b1a1a;">false</span>).forEach((<span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">value</span>, <span style="color: #BA36A5;">i</span>) {
@@ -1410,17 +1436,14 @@ and a new command is created with <code>mkDelayedCommand</code> and scheduled.
     };
 
     cmd.pending = <span style="color: #8b1a1a;">true</span>;
-    cmd.type = cmdType;
     <span style="color: #0000FF;">return</span> cmd;
   }
 </pre>
 </div>
 
 <p>
-The parameters to <code>mkDelayedcommand</code> are the selection state <code>sel</code> and
-the a command type (<code>C_SHIFT_CLICK</code> or <code>C_SET_PATH</code>). 
-The function constructs a command, marks it as pending, remembers the
-method that created the command, and returns the constructed command.
+The parameter to <code>mkDelayedShiftClickCommand</code> is the selection state <code>sel</code>. 
+The function constructs a command, marks it as pending, and returns it.
 </p>
 
 <p>
@@ -1429,20 +1452,21 @@ than once.  Therefore the command tests first if it is still pending
 or not, and returns immediately if it has already been executed.  When
 the command gets to be executed, it must check whether to add a new
 empty pair of selection operations. This is necessary, for example,
-after <code>undo</code>, <code>redo</code>, and <code>reset</code>, but must not be done after a click,
+after <code>undo</code>, <code>redo</code>, <code>filter</code>, and <code>reset</code>, but must not be done after a click,
 command-click or another shift-click.  This mechanism is to prevent
-shift-click from overwriting a selection domain that is in an already
-&ldquo;committed&rdquo; state.
+shift-click from overwriting a selection domain that is already in a
+&ldquo;committed&rdquo; state. We make an extra call to <code>selectionDomain</code>, so that
+there will always be a call with undefined <code>J</code> if an active set has
+been committed.
 </p>
 
 <p>
 After popping the topmost <code>_ops</code> element, the selection domain is
-calculated; the old selection domain is passed as a hint to the
+computed; the old selection domain is passed as a hint to the
 selection domain calculations. The <code>selectionDomain</code> function is
 allowed to modify the hint parameter <code>oldJ</code>. If tracking is on, such
-modifications would cause errors, and we first thus take a copy of
-<code>oldJ</code>. The details of calling <code>selectionDomain</code> are in
-the <code>_callSelectionDomain</code> function, explained below.
+modifications would cause errors. Therefore <code>oldJ</code> is a copy of the
+current selection domain if tracking is on.
 </p>
 
 <p>
@@ -1466,45 +1490,6 @@ corresponding index in <code>changed</code> to the new value.
 </div>
 </div>
 
-<div id="outline-container-sec-6-2-4" class="outline-4">
-<h4 id="sec-6-2-4"><span class="section-number-4">6.2.4</span> Call selection domain</h4>
-<div class="outline-text-4" id="text-6-2-4">
-<div class="org-src-container">
-
-<pre class="src src-js" id="selection-state-call-selection-domain">  SelectionState.<span style="color: #8b1a1a;">prototype</span>._callSelectionDomain = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">path</span>, <span style="color: #BA36A5;">J</span>, <span style="color: #BA36A5;">cmdType</span>) {
-    <span style="color: #0000FF;">if</span> (cmdType === <span style="color: #8b1a1a;">undefined</span> || cmdType !== <span style="color: #8b1a1a;">this</span>._previousCmdType) {
-      <span style="color: #8b1a1a;">this</span>._previousCmdType = cmdType;
-      <span style="color: #0000FF;">if</span> (path.length === 0) <span style="color: #0000FF;">return</span> makeEmptyMap();
-      <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._geometry.selectionDomain(path);
-    } <span style="color: #0000FF;">else</span> {
-      <span style="color: #0000FF;">if</span> (path.length === 0) <span style="color: #0000FF;">return</span> makeEmptyMap();
-      <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._geometry.selectionDomain(path, J);
-    }
-  }
-</pre>
-</div>
-
-<p>
-The client should define <code>selectionDomain</code> function in such a way that
-if it is called with no arguments other than a selection path, it
-correctly computes the selection domain. The second argument
-enables taking advantage of the result of the previous call to
-<code>selectionDomain</code>, which is beneficial in some selection
-geometries. This possibility exists in two calling contexts, in the
-command objects created either in the <code>shiftClick</code> or <code>setPath</code>
-methods. The purpose of <code>_callSelectionDomain</code> is to only pass the
-previous result to <code>selectionDomain</code> if the source
-of the call is the same as the source of the previous call.
-</p>
-
-<p>
-Note that <code>_callSelectionDomain</code> takes care of the empty path
-case, so that <code>selectionDomain</code> functions can assume they
-are never called with an empty path.
-</p>
-</div>
-</div>
-
 <div id="outline-container-sec-6-2-5" class="outline-4">
 <h4 id="sec-6-2-5"><span class="section-number-4">6.2.5</span> Flush</h4>
 <div class="outline-text-4" id="text-6-2-5">
@@ -1513,7 +1498,7 @@ The <code>_flush</code> method is simply a call to the queued command. Flushing
 does not remove the queued command object; it may still be executed
 later by the main event loop or another call to <code>_flush</code>. Hence, each
 command must know how to behave if executed more than once (they
-should be no-ops). Only <code>shiftClick</code> and <code>setPath</code> methods schedule
+should be no-ops after the first invocation). Only <code>shiftClick</code> method schedules
 commands.
 </p>
 
@@ -1532,38 +1517,25 @@ commands.
 <h3 id="sec-6-3"><span class="section-number-3">6.3</span> Manipulating the selection path</h3>
 <div class="outline-text-3" id="text-6-3">
 <p>
-The purpose of the <code>setPath</code> function is to make it possible to
-implement geometry-specific means to modify the current selection path
-directly.  For example, the visualization of a lasso selection could
-make the corners of the lasso-polygon visible and draggable, so that
-the user could directly manipulate the selection path.  This would
-require modifying an aribtrary point of the selection path, not just
-adding a point at the end.
+Some selection contexts call for additional ways of manipulating the
+selection path. For example, the visualization of a lasso selection
+could make the corners of the lasso-polygon visible and draggable, so
+that the user could directly manipulate the selection path.  This
+would require modifying an arbitrary point of the selection path, not
+just adding a point at the end. Such operations can be implemented via
+shift-click.
 </p>
 
 <p>
-This function is very similar to shift-click, except that instead of
-extending the selection path with a new point, it replaces the entire
-path.  Calls to <code>setPath</code> are queued the same way as those to <code>shiftClick</code>,
-so that consequtive calls can be combined.
+The parameter <code>vp</code> in <code>shiftClick(vp)</code> does not have to be a selection
+space coordinate.  In particular, it can be an instruction on how the path should be
+modified (the <code>vp</code> object could even contain the entire new path as
+one of its fields).  The selection geometry&rsquo;s <code>extendPath(spath, vp)</code> method
+interprets the <code>vp</code> argument and decides how <code>spath</code> should be modified.  
+The client can implement arbitrary modification operations in this manner;
+the same delayed scheduling mechanism of shift-click commands applies regardless
+of how <code>spath</code> is modified.
 </p>
-
-<div class="org-src-container">
-
-<pre class="src src-js" id="selection-state-set-path">  SelectionState.<span style="color: #8b1a1a;">prototype</span>.setPath = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">path</span>) {
-    <span style="color: #8b1a1a;">this</span>._spath = path;
-    <span style="color: #8b1a1a;">this</span>._cursor = activeEnd(path);
-
-    <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._queuedCommand.pending &amp;&amp;
-        <span style="color: #8b1a1a;">this</span>._queuedCommand.type === C_SET_PATH) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
-    <span style="color: #0000FF;">else</span> <span style="color: #8b1a1a;">this</span>._flush();
-
-    <span style="color: #8b1a1a;">this</span>._queuedCommand = mkDelayedCommand(<span style="color: #8b1a1a;">this</span>, C_SET_PATH); 
-    setTimeout(<span style="color: #8b1a1a;">this</span>._queuedCommand, 0);
-    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
-  }
-</pre>
-</div>
 </div>
 </div>
 
@@ -1591,7 +1563,7 @@ only element is selected.
     <span style="color: #8b1a1a;">this</span>._flush();
     <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">path</span> = [];
     <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._geometry.extendPath(path, vp) === <span style="color: #8b1a1a;">null</span>) <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">false</span>;
-    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = <span style="color: #8b1a1a;">this</span>._callSelectionDomain(path);
+    <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = <span style="color: #8b1a1a;">this</span>._geometry.selectionDomain(path);
     <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>._onSelectedIndex(J);
   };
 
@@ -1687,7 +1659,7 @@ shift-click is forced add a new empty pair of selection operations.
     }
 
     <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">redoStack is not cleared ever,</span>
-    <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">so we limit its size (to same as undo stack's)</span>
+    <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">so we limit its size (to the same as that of undo stack)</span>
     <span style="color: #0000FF;">if</span> (<span style="color: #8b1a1a;">this</span>._redoStack.length &gt; <span style="color: #8b1a1a;">this</span>._maxOps) {
       <span style="color: #8b1a1a;">this</span>._redoStack.shift();
       <span style="color: #8b1a1a;">this</span>._redoStack.shift();
@@ -1764,13 +1736,14 @@ undo stack.
 Some applications provide means to select or deselect elements based
 on properties of the elements, such as selecting all file names that
 end with &ldquo;<code>.pdf</code>&rdquo;.  The <code>filter(predicate, state)</code> method implements
-this functionality.  It relies on the <code>filter(predicate)</code> method of
-the geometry, which returns the subset of the indices that satisfy
-<code>predicate</code> as the selection domain.  If state is <code>false</code>, the effect
-is to deselect, otherwise to select.  A <code>filter</code> call following
-another <code>filter</code> call with the same <code>state</code> rewrites the topmost
-selection operation (so it behaves as shift-click in this sence); all
-other calls first add a new pair of selection operations first.
+this functionality.  It relies on the selection geometry&rsquo;s
+<code>filter(predicate)</code> method to compute the subset of the indices that
+satisfy <code>predicate</code>, to be used as the new selection domain.  If state
+is <code>false</code>, the effect is to deselect, otherwise to select.  A
+<code>filter</code> call following another <code>filter</code> call with the same <code>state</code>
+replaces the topmost selection operation (so it modifies the active
+set and behaves analogously to shift-click in this sense); all other
+calls first add a new pair of selection operations.
 </p>
 
 <div class="org-src-container">
@@ -1809,7 +1782,7 @@ other calls first add a new pair of selection operations first.
 
 <p>
 The <code>commit</code> function makes the current state not active, so that
-shift-click, set-path, and filter operations will be forced to add a new 
+a subsequent filter operation (and a shift-click operation) will be forced to add a new 
 selection operation pair.
 </p>
 
@@ -1829,31 +1802,18 @@ selection operation pair.
 <h3 id="sec-6-9"><span class="section-number-3">6.9</span> Set geometry</h3>
 <div class="outline-text-3" id="text-6-9">
 <p>
-The geometry can be changed on the fly. The path and cursor
-must then be reset and  a possible pending operation flushed.  
-Further, a commit is necessary so that if the next operation is,
-say, a shift-click, the
-previously current selection domain is not ``hi-jacked&rsquo;&rsquo;.
-</p>
-
-<div class="org-src-container">
-
-<pre class="src src-js" id="selection-state-set-geometry">  SelectionState.<span style="color: #8b1a1a;">prototype</span>.setGeometry = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">geometry</span>) {
-    <span style="color: #8b1a1a;">this</span>._flush(); 
-    <span style="color: #8b1a1a;">this</span>._spath = []; <span style="color: #8b1a1a;">this</span>._cursor = <span style="color: #8b1a1a;">undefined</span>;
-    <span style="color: #8b1a1a;">this</span>.commit();
-    <span style="color: #8b1a1a;">this</span>._geometry = geometry;
-    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
-  }
-</pre>
-</div>
-
-<p>
-Even though the selection geometry <span class="underline">object</span> does not change, the object may change
+The selection geometry object may change
 in such a way as to require resetting the selection path. For example, if the 
 positions of selectable elements change on a window, then selection space points 
-may no longer correspond to the same elements. The <code>resetPath</code> function 
-is for this purpose.
+may no longer correspond to the same elements; invoking <code>selectionDomain</code> again for
+the current selection path might produce a different result. The <code>resetPath</code> function 
+is for clearing the path in such situations.
+</p>
+
+<p>
+Prior to changing the path, the possible pending command must be flushed.
+Further, a commit is necessary so that if the next operation is
+shift-click or filter, the previous selection domain is not ``hijacked&rsquo;&rsquo;.
 </p>
 
 <div class="org-src-container">
@@ -1868,12 +1828,19 @@ is for this purpose.
 </div>
 
 <p>
-FIXME: is there a way to catch a resize event and force a flush
-before?  Otherwise it would be possible to get a resetPath
-call where flush is called and a pending shift click called when
-geometry object has already been modified.  (Very very unlikely in
-practice, but in theory possible.)
+The entire selection geometry can be changed on the fly. 
+Prior to doing this, the path must be reset.  
 </p>
+
+<div class="org-src-container">
+
+<pre class="src src-js" id="selection-state-set-geometry">  SelectionState.<span style="color: #8b1a1a;">prototype</span>.setGeometry = <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">geometry</span>) {
+    <span style="color: #8b1a1a;">this</span>.resetPath();
+    <span style="color: #8b1a1a;">this</span>._geometry = geometry;
+    <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">this</span>;
+  }
+</pre>
+</div>
 </div>
 </div>
 
@@ -2019,7 +1986,7 @@ classes can inherit.
 <span style="color: #6434A3;">DefaultGeometry</span>.<span style="color: #8b1a1a;">prototype</span> = {
   <span style="color: #006699;">m2v</span> : <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">mp</span>) { <span style="color: #0000FF;">return</span> mp; },
   <span style="color: #006699;">extendPath</span> : <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">spath</span>, <span style="color: #BA36A5;">vp</span>) { spath.push(vp); },
-  <span style="color: #006699;">step</span> : <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>, <span style="color: #BA36A5;">vp</span>) { <span style="color: #0000FF;">return</span> <span style="color: #8b1a1a;">undefined</span>; },
+  <span style="color: #006699;">step</span> : <span style="color: #0000FF;">function</span> (<span style="color: #BA36A5;">dir</span>, <span style="color: #BA36A5;">vp</span>) { <span style="color: #0000FF;">return</span> vp; },
   <span style="color: #006699;">selectionDomain</span> : <span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">spath</span>, <span style="color: #BA36A5;">J</span>) { 
     <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">m</span> = makeEmptyMap();
     <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span> of spath) m.set(i, <span style="color: #8b1a1a;">true</span>); 
@@ -2036,41 +2003,64 @@ The functions of a selection geometry are:
 </p>
 
 <ul class="org-ul">
-<li><code>m2v(mpoint)</code>
-<ul class="org-ul">
-<li>Transforms a point in the client&rsquo;s coordinate system (e.g., the
-mouse coordinate system) to a coordinate in the selection space
-(see Section 3.2.3 in the manuscript).
-In the default geometry this mapping is an identity.</li>
-</ul></li>
-
-<li><code>extendPath(spath, p)</code>
-<ul class="org-ul">
-<li>Extends the selection path with a new point (as a response to a
-shift-click). The function modifies the <code>spath</code> argument.  The
-return value <code>null</code> indicates that <code>p</code> did not affect <code>spath</code>.</li>
-</ul></li>
-</ul>
-<ul class="org-ul">
-<li><code>step(dir, vp)</code>
-<ul class="org-ul">
 <li><p>
-Given a direction <code>dir</code> and a selection space coordinate <code>vp</code>,
-computes a new selection space coordinate to be used as the new keyboard
-cursor location. The possible values of <code>dir</code> are <code>UP</code>, <code>DOWN</code>, <code>LEFT</code>, 
-and <code>RIGHT</code>, defined in and exported from the multiselect module. 
-(The <code>step</code> function is never called with <code>NO_DIRECTION</code>.)
+<code>m2v(mpoint)</code>
 </p>
 
 <p>
-The default is <code>undefined</code>, which means that no keyboard commands 
-have any effect.
+Transforms a point in the client&rsquo;s coordinate system (e.g., the
+mouse coordinate system) to a coordinate in the selection space
+(see Section 3.2.3 in the manuscript).
+In the default geometry this mapping is an identity.
 </p></li>
-</ul></li>
 
-<li><code>selectionDomain(spath, J)</code>
-<ul class="org-ul">
 <li><p>
+<code>extendPath(spath, p)</code>
+</p>
+
+<p>
+Extends the selection path with a new point (typically as a response to a
+shift-click). The function modifies the <code>spath</code> argument.  The
+return value <code>null</code> indicates that <code>p</code> did not affect <code>spath</code>.
+The function is allowed to modify <code>spath</code> in any way.
+</p>
+
+<p>
+The <code>click</code> and <code>cmdClick</code> functions call <code>extendPath</code>
+with <code>spath === []</code>. This can be used as a signal to clear any
+cache that the selection geometry might have (caches are discussed
+with <code>selectionDomain</code> function below).
+</p>
+
+<p>
+The <code>onSelected</code> function also calls <code>extendPath</code> with <code>spath === []</code>.
+</p>
+
+<p>
+The default geometry&rsquo;s implementation of <code>extendPath</code> pushes <code>p</code> to <code>spath</code>.
+</p></li>
+
+<li><p>
+<code>step(dir, vp)</code>
+</p>
+
+<p>
+Given a direction <code>dir</code> and a selection space coordinate <code>vp</code>,
+computes a new selection space coordinate to be used as the new keyboard
+cursor location. The possible values of <code>dir</code> are <code>UP</code>, <code>DOWN</code>, <code>LEFT</code>, 
+and <code>RIGHT</code>. The <code>step</code> function is never called with <code>NO_DIRECTION</code>.
+</p>
+
+<p>
+The default is to return <code>vp</code>, which means that arrow commands 
+have no effect.
+</p></li>
+
+<li><p>
+<code>selectionDomain(spath, J)</code>
+</p>
+
+<p>
 Computes the selection domain, a set of indices (represented as
 a <code>Map</code>; only the keys matter, values are insignificant), from
 the <code>spath</code> array of selection space points.  The first element
@@ -2094,36 +2084,42 @@ elements are relevant for determining the selection domain.
 </div>
 
 <p>
-The <code>J</code> argument is defined when
-<code>selectionDomain</code> is called from <code>SelectionState</code>&rsquo;s <code>shiftClick</code>
-or <code>setPath</code> methods and it is a second consecutive call
-from the same method, otherwise they are both undefined. 
-</p>
-<p>
-<code>J</code>&rsquo;s value is then the current selection domain (computed
-by the most recent preceding call to <code>selectionDomain</code>).
-The purpose of this parameter is to allow the selection domain computation
-to take advantage of the results of the previous computation and in this way
-compute a new selection domain faster.
+The <code>J</code> argument is defined when <code>selectionDomain</code> is called from
+<code>SelectionState</code>&rsquo;s <code>shiftClick</code> method.  <code>J</code>&rsquo;s value is then the
+current selection domain (computed by the most recent preceding
+call to <code>selectionDomain</code>).  The purpose of this parameter is to
+allow the selection domain computation to take advantage of the
+results of the previous computation and in this way compute a new
+selection domain faster.  The client should always define
+the <code>selectionDomain</code> function in such a way that if it is called with
+no arguments other than a selection path, it correctly computes
+the selection domain.
 </p>
 
 <p>
-Both shift-click and set-path commands schedule the operation
-to a one-element long queue, so that the selection path can be modified
-several times between two consequtive calls to <code>selectionDomain</code>. 
-</p></li>
-</ul></li>
-</ul>
+The <code>shiftClick</code> function places the call to <code>selectionDomain</code>
+into a command that it schedules to be executed later (a
+one-element-long queue is maintained for pending commands), so
+that the selection path can be modified (by calls to <code>extendPath</code>)
+several times between two consecutive calls to <code>selectionDomain</code>.
+</p>
+
 <p>
-A skeleton for how to take advantage of <code>J</code> and <code>source</code> 
-is below. Note that it is not necessary to take a copy of <code>J</code>;
-it can be modified in-place.
+A skeleton for how to take advantage of the previous selection
+domain <code>J</code> is below. If <code>J</code> is undefined, the call came from some
+other operation than <code>shiftClick</code> (or from of <code>shiftClick</code> that
+added an empty pair), and thus the cache should be cleared.  Note
+that it is not necessary to take a copy of <code>J</code>; it can be modified
+in-place. That <code>J</code> is undefined indicates a call from some other
+source than shift-click, which can be used as a signal to clear
+the cache. The <code>extendPath</code> function can also be used to clear a
+cache.
 </p>
 
 <div class="org-src-container">
 
 <pre class="src src-js" id="selection-domain-skeleton">selectionDomain = <span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">spath</span>, <span style="color: #BA36A5;">J</span>) { 
-  <span style="color: #0000FF;">if</span> (J !== <span style="color: #8b1a1a;">undefined</span>) {
+  <span style="color: #0000FF;">if</span> (J === <span style="color: #8b1a1a;">undefined</span>) {
     J = makeEmptyMap(); 
     <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">clear cache</span>
     <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">populate J from scratch, start caching</span>
@@ -2131,24 +2127,26 @@ it can be modified in-place.
     <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">modify J based on cache</span>
   }
   <span style="color: #0000FF;">return</span> J;
+}
 </pre>
 </div>
 
-
-<ul class="org-ul">
-<li>If <code>spath</code> has exactly one element, call it \(p\), the computed
-selection domain should have at most one element. In selection 
+<p>
+If <code>spath</code> has exactly one element, call it \(p\), the computed
+selection domain should have at most one element. In selection
 geometries that allow overlapping elements, one might for example
 return the singleton set consisting of the index of the topmost
 element under \(p\).  This requirement is not strict&#x2014;nothing
-breaks if it is not followed, but the selection behavior might
-be unconventional since in most applications clicks and
-command-clicks can only select one element at a time.</li>
+breaks if it is not followed, but the selection behavior might be
+unconventional since in most applications clicks and
+command-clicks can only select one element at a time.
+</p>
 
-<li>The default geometry defines <code>selectionDomain</code> to map the path elements
-to the elements of the selection domain.</li>
-</ul>
-<ul class="org-ul">
+<p>
+The default geometry defines <code>selectionDomain</code> to map the path
+elements to the elements of the selection domain.
+</p></li>
+
 <li><code>defaultCursor(dir)</code>
 <ul class="org-ul">
 <li>The <code>defaultCursor(dir)</code> function provides default values for
@@ -2183,7 +2181,7 @@ click to select and a click to start a drag can vary.
 </p>
 
 <p>
-We provide a few definitions intended to help implementing
+We provide a few definitions intended to help in implementing
 event handling.
 </p>
 </div>
@@ -2193,10 +2191,9 @@ event handling.
 <div class="outline-text-3" id="text-8-1">
 <p>
 We define a set of constants to correspond to particular choices of
-modifier keys that can be held down at the time of a mouse click or a
-an arrow or space key press. The <code>modifierKeys</code> function extracts 
-the modifier key
-information from an <i>event</i> object. Both meta and control
+modifier keys that can be held down at the time of a mouse click or 
+an arrow or space key press. The <code>modifierKeys</code> function extracts the
+modifier key information from an <i>event</i> object. Both meta and control
 keys are accepted as the command modifier.
 </p>
 
@@ -2248,7 +2245,7 @@ The public names exported from the library are as follows.
   exports.DOWN = DOWN; 
   exports.LEFT = LEFT; 
   exports.RIGHT = RIGHT;
-  <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">NO_DIRECTION is not exported</span>
+  exports.NO_DIRECTION = NO_DIRECTION;
 
   <span style="color: #8D8D84;">// </span><span style="color: #8D8D84; font-style: italic;">Helpers for defining event handlers</span>
   exports.modifierKeys = modifierKeys;

@@ -113,15 +113,15 @@ should not refer to such members.
     :END:
 
 Selection mappings and selection domains are represented using
-JavaScript's built-in ~Set~ and ~Map~ types. These are features that
-are planned for EcmaScript 6 (known as "ES6 Harmony"), and supported
-by modern browsers.  The benefit of using ~Set~ and ~Map~ over
-JavaScript's built-in property maps is that ~Set~ and ~Map~ accept any
-types as keys, whereas property maps' keys are strings.  Object
-references as keys are convenient. For example, a ~Map~ from object
-references to objects is a natural indexed family for a set of
-DOM-elements; the order of the indices is their insertion order to the
-map.
+JavaScript's built-in ~Set~ and ~Map~ types. These are features of
+ECMAScript 6 and they are already supported by modern browsers.  The benefit of
+using ~Set~ and ~Map~ over JavaScript's built-in property maps is that
+~Set~ and ~Map~ accept any types as keys, whereas property maps' keys
+are strings.  Object references as keys are convenient. For example, a
+~Map~ from object references to objects is a natural indexed family
+for a set of DOM-elements. The order of iteration of the elements
+in ~Map~ and ~Set~ is predefined to be the order in which the elements
+are inserted to the collection.
 
 We use a few helper functions to deal with sets and maps.
 
@@ -177,7 +177,7 @@ and set equality of keys between two ~Map~ objects.
   }
 #+END_SRC
 
-The ~setUnion~ takes zero or more collections as argments, 
+The ~setUnion~ takes zero or more collections as arguments, 
 and returns the union of their keys as a ~Set~:
 
 #+NAME: set-union
@@ -583,7 +583,7 @@ forth. In more details:
 #  selection status of an element.
 
 The implementation of ~func~'s function call operator takes advantage
-of the avove encodings. First, if an element ~i~ is not in the
+of the above encodings. First, if an element ~i~ is not in the
 selection domain of some selection operation, the selection
 function of that operation is never evaluated when determining the
 selection status of ~i~. Second, if an element ~i~ is in the 
@@ -850,7 +850,7 @@ keys are the indices of the changed elements, and values their current
 selection status (~true~ or ~false~).  If ~tracking~ is false,
 ~refresh~ will be called with the current selection mapping.  Tracking
 can simplify visualizing the selection, but it requires additional
-computation and memory, so it is left optional.
+computation and memory, so its use is optional.
 
 The maximum number of selection operations, ~_maxOps~, is
 twice ~maxUndo~, as each undoable operation consists of two 
@@ -873,15 +873,16 @@ to respond to the indexed family $I$ being changed).
     this._spath = [];
     this._cursor = undefined;
 
-    this._redoStack = [];
     this._current = this._ops(this._s); // current selection
-    
+
     this._opsStatus = ACTIVE_NONE;        
+
+    this._redoStack = [];
+    
     this._queuedCommand = function () {};
   };
 
-  const ACTIVE_NONE = 0, ACTIVE_FILTER = 1, ACTIVE_SHIFT_CLICK_OR_SET_PATH = 2;
-  const C_SHIFT_CLICK = 0, C_SET_PATH = 1;
+  const ACTIVE_NONE = 0, ACTIVE_FILTER = 1, ACTIVE_SHIFT_CLICK = 2;
 #+END_SRC
 
 The elements of the /selection state tuple/ described 
@@ -893,24 +894,42 @@ variables:
      is an invariant that ~_ops~ always has an even number of
      selection operations),
   3. ~_spath~ is the selection path, 
-  4. ~_cursor~ is the keyboard cursor, and
-  5. ~_opsStatus~ is an indicator of whether the topmost selection
+  4. ~_cursor~ is the keyboard cursor.
+
+Some additional state is maintained:
+
+  1. ~_opsStatus~ is an indicator of whether the topmost selection
      operation is /active/ (open for modification) and for which command. It can
-     take values ~ACTIVE_NONE~, ~ACTIVE_SHIFT_CLICK_OR_SET_PAHT~, or ~ACTIVE_FILTER~.
-     If the status is ~ACTIVE_NONE~, then both shift-click/set path and filter
+     take values ~ACTIVE_NONE~, ~ACTIVE_SHIFT_CLICK~, or ~ACTIVE_FILTER~.
+     If the status is ~ACTIVE_NONE~, then both shift-click and filter
      methods will first add a new empty pair of selection operators to
-     ~_ops~.  If it is ~ACTIVE_SHIFT_CLICK~, then shift-click or set path will not
+     ~_ops~.  If it is ~ACTIVE_SHIFT_CLICK~, then shift-click will not
      add a new pair, but filter will. The roles are reversed with
      ~ACTIVE_FILTER~.
+    
+     The ~_opsStatus~ member is not part of the selection state tuple
+     described in the formal model in the manuscript. There the same
+     effect is achieved with the selection path: an undefined path
+     (the $\bot$ value) corresponds to the ~ACTIVE_NONE~ status; a
+     path that matches $P$ corresponds to the ~ACTIVE_SHIFT_CLICK~
+     status; and a path that matches $Q$ (a predicate), corresponds to
+     the ~ACTIVE_FILTER~ status.
+     Note that a predicate is not stored at all; it need not be as every
+     call to ~filter~ defines a new predicate, not a modification to the
+     existing one. Compare this to ~shiftClick~, where each call modifies
+     the current selection path rather than replaces it.
 
+  2. ~_redoStack~ contains the redoable commands
+     (selection operations).  
 
-The ~_redoStack~ variable contains the redoable commands (selection
-operations).  The ~_current~ variable is bound to the value
-~_ops(_s)~, and it is thus the selection mapping that reflects the
-current selection status of the elements. Finally, ~_queuedCommand~ is
-a one-element command queue, which is used in combining several
-consecutive shift-click operations, or several consequtive set path
-operations, to one.
+  3. ~_current~ is bound to the value ~_ops(_s)~, and it
+     is thus the selection mapping that reflects the current selection
+     status of the elements.
+
+  4. ~_queuedCommand~ is a one-element command queue, which is
+     used in combining several consecutive shift-click operations to
+     one. This optimization reduces the number of calls made to 
+     ~selectionDomain~ during a rubber-band selection.
 
 ** Accessing the selection state of elements
 
@@ -926,7 +945,7 @@ The selection state of the element at index ~i~ is given by the
 #+END_SRC
 
 The ~_flush~ method is described with the shift-click command; its purpose is
-to complete a possibly pending selection operation stored in ~_queuedCommand~.
+to complete a possibly pending shift-click command, stored in ~_queuedCommand~.
 The flush is called at the beginning of many of the methods of ~SelectionState~.
 
 The ~selected~ function constructs a ~Set~ consisting of the currently selected
@@ -948,8 +967,8 @@ iteration order of the resulting ~Set~ offers no useful guarantees.
 
 ** Click functions
 
-The three basic selection commands are ~click(p)~, ~cmdClick(p)~, and
-~shiftClick(p)~.  They follow the specification in the manuscript,
+The three basic selection commands are ~click(vp)~, ~cmdClick(vp)~, and
+~shiftClick(vp)~.  They follow the specification in the manuscript,
 with a couple additional details. 
 
 *** Click 
@@ -971,7 +990,9 @@ undefined and the keyboard cursor remains unchanged.
     this._spath = []; 
     if (this._geometry.extendPath(this._spath, vp) !== null) this._cursor = vp;
 
-    var J1 = this._callSelectionDomain(this._spath);
+    var J1 = this._geometry.selectionDomain(this._spath);
+
+    this._opsStatus = ACTIVE_SHIFT_CLICK;
 
     if (clickIsNop.call(this, J1)) return this;
 
@@ -983,32 +1004,28 @@ undefined and the keyboard cursor remains unchanged.
     this._ops.push(makeOp(tt, J1));
     this._bake();
 
-    this._opsStatus = ACTIVE_SHIFT_CLICK_OR_SET_PATH;
-
     if (this._tracking) this._refresh(mapSymmetricDifference(J0, J1, false, true));
     else this._refresh(this._current);
     return this;
   };
 #+END_SRC
 
-A click command clears the current selection, then adds the
+The ~click~ function clears the current selection, then adds the
 elements of the selection domain to the selection.  This effect is
 achieved by pushing two selection operations: first ~ff~
 over all selected elements, then ~tt~ over the new selection domain.
 
-The ~callSelectionDomain~ method wraps a call to ~selectionMode~;
-its details are explained below.
+The ~_opsStatus~ is set to ~ACTIVE_SHIFT_CLICK~ to
+indicate that if the next operation is shift-click, it should modify the topmost
+selection operation that is pushed to ~_ops~.
 
 The helper function ~clickIsNop(J)~ detects clicks that would not have
-any effect on the selection state. Such clicks are ignored to avoid
-creating unnecessary undoable states. 
+any effect on the selection state. Such clicks do not push any new
+selection operations, so that we avoid creating unnecessary undoable
+states. The ~refresh~ function is not called either.
 
 If ~_ops~ grows too big, [[#sec-baking][~_bake~]] reduces the size of ~_ops~
 by one undoable operation (two selection operations).
-
-The ~_opsStatus~ is set to ~ACTIVE_SHIFT_CLICK_OR_SET_PATH~ to
-indicate that shift-click or set path can modify the topmost
-selection operation that is pushed to ~_ops~.
 
 Finally, the ~_refresh~ callback is invoked.  If tracking is on, its
 argument is a newly constructed ~Map~ of the changed elements.  The
@@ -1016,15 +1033,14 @@ keys of the map indicate the changed elements, and the values their
 current state (~true~ selected, ~false~ not selected).  If tracking is
 off, the argument is the current selection mapping.
 
-**** Detecting a nop
+*** Detecting a click or command-click that would have no effect
 
-Assume ~op1~ and ~op2~ are the two tompost selection operations of the ~_ops~ composition.
-
+Assume ~op1~ and ~op2~ are the two topmost selection operations of the ~_ops~ composition.
 Then, if the most recent command was
 
   - click, ~op1.f~ is ~tt~ and ~op2.f~ is ~ff~;
   - command-click, ~op1.f~ is either ~tt~ or ~ff~ and ~op2.f~ is ~id~;
-  - any other command, either the conditions of click or command-click hold.
+  - shift-click, filter, undo, or redo, either the conditions of click or command-click hold.
 
 A click is deemed a nop if the previous command was also a click, and 
 if the new selection domain is equal to the previous one:
@@ -1040,7 +1056,7 @@ if the new selection domain is equal to the previous one:
 
 A command-click operation toggles, so for it to have no effect, ~J~ must
 be empty. Though this guarantees no change to elements' selection
-status, it is not yet a suffcient condition for a nop, since the
+status, it is not yet a sufficient condition for a nop, since the
 selection mode may have to change. (This case results to indistinguishable
 undo states.)
 
@@ -1053,17 +1069,17 @@ undo states.)
   }  
 #+END_SRC
 
-The above rules can let equivalent undo states through in rare cases.
+The above rules can in rare cases let equivalent undo states through.
 It would be possible to add additional checking to the undo operation, 
 but it is perhaps not worth the complication.
 
 *** Command-click
 
-The implementation differs from ~click~ on five counts: First, the
+The implementation differs from ~click~ on several counts: first, the
 selection mode depends on whether the clicked point ~vp~ is on a
-selected element or not. Second, command-clicking does not clear the
-current selection. Third, the conditions for detecting a nop differ.
-Fourth, computing which elements were changed is different.
+selected element or not; second, command-clicking does not clear the
+current selection; third, the conditions for detecting a nop differ; and
+fourth, computing which elements were changed is different.
 The second parameter, ~selmode~, is an additional variation point that is
 not used in typical selection geometries.
 
@@ -1074,10 +1090,12 @@ not used in typical selection geometries.
     this._spath = []; 
     if (this._geometry.extendPath(this._spath, vp) !== null) this._cursor = vp;
 
-    var J = this._callSelectionDomain(this._spath);
+    var J = this._geometry.selectionDomain(this._spath);
     var mode;
     if (selmode === undefined) mode = this._onSelectedIndex(J) ? ff : tt;
     else mode = selmode ? tt : ff;
+
+    this._opsStatus = ACTIVE_SHIFT_CLICK;
 
     if (cmdClickIsNop.call(this, J, mode)) return this;
 
@@ -1091,8 +1109,6 @@ not used in typical selection geometries.
     this._ops.push(makeOp(id, makeEmptyMap()));
     this._ops.push(makeOp(mode, J));
     this._bake();
-
-    this._opsStatus = ACTIVE_SHIFT_CLICK_OR_SET_PATH;
 
     this._refresh(this._tracking ? changed : this._current);
     return this;
@@ -1132,13 +1148,12 @@ a time.
   SelectionState.prototype.shiftClick = function (vp) {
 
     if (this._geometry.extendPath(this._spath, vp) === null) return this;
-    this._cursor = this._spath[this._spath.length-1];
+    this._cursor = activeEnd(this._spath);
 
-    if (this._queuedCommand.pending && 
-        this._queuedCommand.type === C_SHIFT_CLICK) return this;
-    else this._flush();
+    if (this._queuedCommand.pending) return this;
 
-    this._queuedCommand = mkDelayedCommand(this, C_SHIFT_CLICK);
+    // pending is either false or not defined at all
+    this._queuedCommand = mkDelayedShiftClickCommand(this);
     setTimeout(this._queuedCommand, 0);
     return this;
   }
@@ -1152,24 +1167,30 @@ and some mouse locations (such as those outside the extents of any
 element) map to, say, ~null~.  In such a (likely common) setting,
 dragging the mouse past an element to a ~null~ location during a
 rubber band selection would cause the cursor location to be lost.
+Note that it is possible that ~_spath~ is empty after the ~extendPath~
+call, since ~extendPath~ can modify ~_spath~ in any way. This will
+make the cursor undefined, since ~activeEnd([])~ returns ~undefined~.
 
 If a shift-click command is currently pending, nothing more needs to
 be done. Eventually that pending command will get to execute, with the
-selection path that was just extended with ~vp~.  In the case where
-either no commands are pending or another kind of command (there is
-only one possibility: /set path/) is pending, the queue is flushed,
-and a new command is created with ~mkDelayedCommand~ and scheduled.
+selection path that was just extended with ~vp~.  In the case where no
+command is pending a new command is created with
+~mkDelayedShiftClickCommand~ and scheduled.
 
-#+NAME: mk-delayed-command
+#+NAME: mk-delayed-shift-click-command
 #+BEGIN_SRC js 
-  function mkDelayedCommand(sel, cmdType) {
+  function mkDelayedShiftClickCommand(sel) {
     var cmd = function () {
-      if (cmd.pending === false) return null;
+      if (cmd.pending === false) return null; // the command has already been run
       cmd.pending = false;
 
-      if (sel._opsStatus !== ACTIVE_SHIFT_CLICK_OR_SET_PATH) { 
-        sel._opsStatus = ACTIVE_SHIFT_CLICK_OR_SET_PATH; 
+      if (sel._opsStatus !== ACTIVE_SHIFT_CLICK) { 
+        sel._opsStatus = ACTIVE_SHIFT_CLICK; 
         sel._addEmptyPair(); 
+        
+        // call selectionGeometry once with an empty path and J undefined so
+        // that cache is cleared
+        sel._geometry.selectionDomain([]);
       }
 
       var changed = makeEmptyMap();
@@ -1178,7 +1199,7 @@ and a new command is created with ~mkDelayedCommand~ and scheduled.
 
       var oldJ = sel._tracking ? copyMap(op.domain) : op.domain;
 
-      var J = sel._callSelectionDomain(sel._spath, oldJ, cmdType);
+      var J = sel._geometry.selectionDomain(sel._spath, oldJ);
 
       if (sel._tracking) {
         mapSymmetricDifference(J, op.domain, true, false).forEach((function(value, i) {
@@ -1193,33 +1214,31 @@ and a new command is created with ~mkDelayedCommand~ and scheduled.
     };
 
     cmd.pending = true;
-    cmd.type = cmdType;
     return cmd;
   }
 #+END_SRC
 
-The parameters to ~mkDelayedcommand~ are the selection state ~sel~ and
-the a command type (~C_SHIFT_CLICK~ or ~C_SET_PATH~). 
-The function constructs a command, marks it as pending, remembers the
-method that created the command, and returns the constructed command.
+The parameter to ~mkDelayedShiftClickCommand~ is the selection state ~sel~. 
+The function constructs a command, marks it as pending, and returns it.
 
 Due to how the scheduling is arranged, a command may be executed more
 than once.  Therefore the command tests first if it is still pending
 or not, and returns immediately if it has already been executed.  When
 the command gets to be executed, it must check whether to add a new
 empty pair of selection operations. This is necessary, for example,
-after ~undo~, ~redo~, and ~reset~, but must not be done after a click,
+after ~undo~, ~redo~, ~filter~, and ~reset~, but must not be done after a click,
 command-click or another shift-click.  This mechanism is to prevent
-shift-click from overwriting a selection domain that is in an already
-"committed" state.
+shift-click from overwriting a selection domain that is already in a
+"committed" state. We make an extra call to ~selectionDomain~, so that
+there will always be a call with undefined ~J~ if an active set has
+been committed.
 
 After popping the topmost ~_ops~ element, the selection domain is
-calculated; the old selection domain is passed as a hint to the
+computed; the old selection domain is passed as a hint to the
 selection domain calculations. The ~selectionDomain~ function is
 allowed to modify the hint parameter ~oldJ~. If tracking is on, such
-modifications would cause errors, and we first thus take a copy of
-~oldJ~. The details of calling ~selectionDomain~ are in
-the ~_callSelectionDomain~ function, explained below.
+modifications would cause errors. Therefore ~oldJ~ is a copy of the
+current selection domain if tracking is on.
 
 The effect of the ~pop~ and ~push~ calls is to change the
 domain of the topmost selection operation, and thus to modify the
@@ -1236,44 +1255,13 @@ difference map of these indices, where added indices have the value
 selection function (~mode~) changes those values, and if so, set the
 corresponding index in ~changed~ to the new value.
 
-*** Call selection domain
-
-#+NAME: selection-state-call-selection-domain
-#+BEGIN_SRC js 
-  SelectionState.prototype._callSelectionDomain = function (path, J, cmdType) {
-    if (cmdType === undefined || cmdType !== this._previousCmdType) {
-      this._previousCmdType = cmdType;
-      if (path.length === 0) return makeEmptyMap();
-      return this._geometry.selectionDomain(path);
-    } else {
-      if (path.length === 0) return makeEmptyMap();
-      return this._geometry.selectionDomain(path, J);
-    }
-  }
-#+END_SRC
-
-The client should define ~selectionDomain~ function in such a way that
-if it is called with no arguments other than a selection path, it
-correctly computes the selection domain. The second argument
-enables taking advantage of the result of the previous call to
-~selectionDomain~, which is beneficial in some selection
-geometries. This possibility exists in two calling contexts, in the
-command objects created either in the ~shiftClick~ or ~setPath~
-methods. The purpose of ~_callSelectionDomain~ is to only pass the
-previous result to ~selectionDomain~ if the source
-of the call is the same as the source of the previous call.
-
-Note that ~_callSelectionDomain~ takes care of the empty path
-case, so that ~selectionDomain~ functions can assume they
-are never called with an empty path.
-
 *** Flush
 
 The ~_flush~ method is simply a call to the queued command. Flushing
 does not remove the queued command object; it may still be executed
 later by the main event loop or another call to ~_flush~. Hence, each
 command must know how to behave if executed more than once (they
-should be no-ops). Only ~shiftClick~ and ~setPath~ methods schedule
+should be no-ops after the first invocation). Only ~shiftClick~ method schedules
 commands.
 
 #+NAME: selection-state-flush
@@ -1285,34 +1273,22 @@ commands.
 
 ** Manipulating the selection path
 
-The purpose of the ~setPath~ function is to make it possible to
-implement geometry-specific means to modify the current selection path
-directly.  For example, the visualization of a lasso selection could
-make the corners of the lasso-polygon visible and draggable, so that
-the user could directly manipulate the selection path.  This would
-require modifying an aribtrary point of the selection path, not just
-adding a point at the end.
+Some selection contexts call for additional ways of manipulating the
+selection path. For example, the visualization of a lasso selection
+could make the corners of the lasso-polygon visible and draggable, so
+that the user could directly manipulate the selection path.  This
+would require modifying an arbitrary point of the selection path, not
+just adding a point at the end. Such operations can be implemented via
+shift-click.
 
-This function is very similar to shift-click, except that instead of
-extending the selection path with a new point, it replaces the entire
-path.  Calls to ~setPath~ are queued the same way as those to ~shiftClick~,
-so that consequtive calls can be combined.
-
-#+NAME: selection-state-set-path
-#+BEGIN_SRC js 
-  SelectionState.prototype.setPath = function (path) {
-    this._spath = path;
-    this._cursor = activeEnd(path);
-
-    if (this._queuedCommand.pending &&
-        this._queuedCommand.type === C_SET_PATH) return this;
-    else this._flush();
-
-    this._queuedCommand = mkDelayedCommand(this, C_SET_PATH); 
-    setTimeout(this._queuedCommand, 0);
-    return this;
-  }
-#+END_SRC
+The parameter ~vp~ in ~shiftClick(vp)~ does not have to be a selection
+space coordinate.  In particular, it can be an instruction on how the path should be
+modified (the ~vp~ object could even contain the entire new path as
+one of its fields).  The selection geometry's ~extendPath(spath, vp)~ method
+interprets the ~vp~ argument and decides how ~spath~ should be modified.  
+The client can implement arbitrary modification operations in this manner;
+the same delayed scheduling mechanism of shift-click commands applies regardless
+of how ~spath~ is modified.
 
 ** Analyzing elements under point
 
@@ -1335,7 +1311,7 @@ only element is selected.
     this._flush();
     var path = [];
     if (this._geometry.extendPath(path, vp) === null) return false;
-    var J = this._callSelectionDomain(path);
+    var J = this._geometry.selectionDomain(path);
     return this._onSelectedIndex(J);
   };
 
@@ -1416,7 +1392,7 @@ shift-click is forced add a new empty pair of selection operations.
     }
 
     // redoStack is not cleared ever,
-    // so we limit its size (to same as undo stack's)
+    // so we limit its size (to the same as that of undo stack)
     if (this._redoStack.length > this._maxOps) {
       this._redoStack.shift();
       this._redoStack.shift();
@@ -1486,13 +1462,14 @@ undo stack.
 Some applications provide means to select or deselect elements based
 on properties of the elements, such as selecting all file names that
 end with "~.pdf~".  The ~filter(predicate, state)~ method implements
-this functionality.  It relies on the ~filter(predicate)~ method of
-the geometry, which returns the subset of the indices that satisfy
-~predicate~ as the selection domain.  If state is ~false~, the effect
-is to deselect, otherwise to select.  A ~filter~ call following
-another ~filter~ call with the same ~state~ rewrites the topmost
-selection operation (so it behaves as shift-click in this sence); all
-other calls first add a new pair of selection operations first.
+this functionality.  It relies on the selection geometry's
+~filter(predicate)~ method to compute the subset of the indices that
+satisfy ~predicate~, to be used as the new selection domain.  If state
+is ~false~, the effect is to deselect, otherwise to select.  A
+~filter~ call following another ~filter~ call with the same ~state~
+replaces the topmost selection operation (so it modifies the active
+set and behaves analogously to shift-click in this sense); all other
+calls first add a new pair of selection operations.
 
 #+NAME: selection-state-filter
 #+BEGIN_SRC js
@@ -1528,7 +1505,7 @@ SelectionState.prototype.filter = function (predicate, state) {
 #+END_SRC
 
 The ~commit~ function makes the current state not active, so that
-shift-click, set-path, and filter operations will be forced to add a new 
+a subsequent filter operation (and a shift-click operation) will be forced to add a new 
 selection operation pair.
 
 #+NAME: selection-state-commit
@@ -1542,28 +1519,16 @@ SelectionState.prototype.commit = function () {
 
 ** Set geometry
 
-The geometry can be changed on the fly. The path and cursor
-must then be reset and  a possible pending operation flushed.  
-Further, a commit is necessary so that if the next operation is,
-say, a shift-click, the
-previously current selection domain is not ``hi-jacked''.
-
-#+NAME: selection-state-set-geometry
-#+BEGIN_SRC js
-  SelectionState.prototype.setGeometry = function (geometry) {
-    this._flush(); 
-    this._spath = []; this._cursor = undefined;
-    this.commit();
-    this._geometry = geometry;
-    return this;
-  }
-#+END_SRC
-
-Even though the selection geometry _object_ does not change, the object may change
+The selection geometry object may change
 in such a way as to require resetting the selection path. For example, if the 
 positions of selectable elements change on a window, then selection space points 
-may no longer correspond to the same elements. The ~resetPath~ function 
-is for this purpose.
+may no longer correspond to the same elements; invoking ~selectionDomain~ again for
+the current selection path might produce a different result. The ~resetPath~ function 
+is for clearing the path in such situations.
+
+Prior to changing the path, the possible pending command must be flushed.
+Further, a commit is necessary so that if the next operation is
+shift-click or filter, the previous selection domain is not ``hijacked''.
 
 #+NAME: selection-state-reset-path
 #+BEGIN_SRC js
@@ -1575,11 +1540,23 @@ is for this purpose.
   }
 #+END_SRC
 
-FIXME: is there a way to catch a resize event and force a flush
-before?  Otherwise it would be possible to get a resetPath
-call where flush is called and a pending shift click called when
-geometry object has already been modified.  (Very very unlikely in
-practice, but in theory possible.)
+# FIXME: is there a way to catch a resize event and force a flush
+# before?  Otherwise it would be possible to get a resetPath
+# call where flush is called and a pending shift click called when
+# geometry object has already been modified.  (Very very unlikely in
+# practice, but in theory possible.)
+
+The entire selection geometry can be changed on the fly. 
+Prior to doing this, the path must be reset.  
+
+#+NAME: selection-state-set-geometry
+#+BEGIN_SRC js
+  SelectionState.prototype.setGeometry = function (geometry) {
+    this.resetPath();
+    this._geometry = geometry;
+    return this;
+  }
+#+END_SRC
 
 
 ** Access functions
@@ -1759,7 +1736,7 @@ var DefaultGeometry = function () {};
 DefaultGeometry.prototype = {
   m2v : function (mp) { return mp; },
   extendPath : function (spath, vp) { spath.push(vp); },
-  step : function (dir, vp) { return undefined; },
+  step : function (dir, vp) { return vp; },
   selectionDomain : function(spath, J) { 
     var m = makeEmptyMap();
     for (var i of spath) m.set(i, true); 
@@ -1781,123 +1758,117 @@ The functions of a selection geometry are:
   #     ordered text have this property.
       
   - ~m2v(mpoint)~
-    - Transforms a point in the client's coordinate system (e.g., the
-      mouse coordinate system) to a coordinate in the selection space
-      (see Section 3.2.3 in the manuscript).
-      In the default geometry this mapping is an identity.
+      
+    Transforms a point in the client's coordinate system (e.g., the
+    mouse coordinate system) to a coordinate in the selection space
+    (see Section 3.2.3 in the manuscript).
+    In the default geometry this mapping is an identity.
 
   - ~extendPath(spath, p)~
-    - Extends the selection path with a new point (as a response to a
-      shift-click). The function modifies the ~spath~ argument.  The
-      return value ~null~ indicates that ~p~ did not affect ~spath~.
-#      The default geometry ignores ~null~ values and limits the path
-#      size to two---the anchor and the active end.
+
+    Extends the selection path with a new point (typically as a response to a
+    shift-click). The function modifies the ~spath~ argument.  The
+    return value ~null~ indicates that ~p~ did not affect ~spath~.
+    The function is allowed to modify ~spath~ in any way.
+    
+    The ~click~ and ~cmdClick~ functions call ~extendPath~
+    with ~spath === []~. This can be used as a signal to clear any
+    cache that the selection geometry might have (caches are discussed
+    with ~selectionDomain~ function below).
+
+    The ~onSelected~ function also calls ~extendPath~ with ~spath === []~.
+    
+    The default geometry's implementation of ~extendPath~ pushes ~p~ to ~spath~.
 
   - ~step(dir, vp)~
-    - Given a direction ~dir~ and a selection space coordinate ~vp~,
-      computes a new selection space coordinate to be used as the new keyboard
-      cursor location. The possible values of ~dir~ are ~UP~, ~DOWN~, ~LEFT~, 
-      and ~RIGHT~, defined in and exported from the multiselect module. 
-      (The ~step~ function is never called with ~NO_DIRECTION~.)
+    
+    Given a direction ~dir~ and a selection space coordinate ~vp~,
+    computes a new selection space coordinate to be used as the new keyboard
+    cursor location. The possible values of ~dir~ are ~UP~, ~DOWN~, ~LEFT~, 
+    and ~RIGHT~. The ~step~ function is never called with ~NO_DIRECTION~.
 
-      #+NAME: geometry-directions
-      #+BEGIN_SRC js :exports none
-        var UP = 1, DOWN = 2, LEFT = 3, RIGHT = 4, NO_DIRECTION = 0;
-      #+END_SRC
+    #+NAME: geometry-directions
+    #+BEGIN_SRC js :exports none
+      var UP = 1, DOWN = 2, LEFT = 3, RIGHT = 4, NO_DIRECTION = 0;
+    #+END_SRC
 
-      The default is ~undefined~, which means that no keyboard commands 
-      have any effect.
+    The default is to return ~vp~, which means that arrow commands 
+    have no effect.
 
   - ~selectionDomain(spath, J)~
-    - Computes the selection domain, a set of indices (represented as
-      a ~Map~; only the keys matter, values are insignificant), from
-      the ~spath~ array of selection space points.  The first element
-      in this array is the /anchor/, the last the /active end/.  The
-      helper functions ~anchor~ and ~activeEnd~, part of the
-      multiselect module's API, extract these values. Often only these
-      elements are relevant for determining the selection domain.
+    
+    Computes the selection domain, a set of indices (represented as
+    a ~Map~; only the keys matter, values are insignificant), from
+    the ~spath~ array of selection space points.  The first element
+    in this array is the /anchor/, the last the /active end/.  The
+    helper functions ~anchor~ and ~activeEnd~, part of the
+    multiselect module's API, extract these values. Often only these
+    elements are relevant for determining the selection domain.
 
-      #+NAME: geometry-utilities
-      #+BEGIN_SRC js
-        function anchor(path) { 
-           if (path.length === 0) return undefined; 
-           return path[0]; 
-        };
-        function activeEnd(path) { 
-           if (path.length === 0) return undefined; 
-           return path[path.length - 1]; 
-        };
-      #+END_SRC
+    #+NAME: geometry-utilities
+    #+BEGIN_SRC js
+      function anchor(path) { 
+         if (path.length === 0) return undefined; 
+         return path[0]; 
+      };
+      function activeEnd(path) { 
+         if (path.length === 0) return undefined; 
+         return path[path.length - 1]; 
+      };
+    #+END_SRC
 
-      The ~J~ argument is defined when
-      ~selectionDomain~ is called from ~SelectionState~'s ~shiftClick~
-      or ~setPath~ methods and it is a second consecutive call
-      from the same method, otherwise they are both undefined. 
-      # The
-      # ~source~ parameter is either ~C_SHIFT_CLICK~ or ~C_SET_PATH~, identifying
-      # the caller. 
-      ~J~'s value is then the current selection domain (computed
-      by the most recent preceding call to ~selectionDomain~).
-      The purpose of this parameter is to allow the selection domain computation
-      to take advantage of the results of the previous computation and in this way
-      compute a new selection domain faster.
-   
-      Both shift-click and set-path commands schedule the operation
-      to a one-element long queue, so that the selection path can be modified
-      several times between two consequtive calls to ~selectionDomain~. 
-#      The library
-#      guarantees that if ~source~ is ~C_SHIFT_CLICK~,
-#     the previous call to ~selectionDomain~ was from the ~shiftClick~ method.
-#     The analogous guarantee holds for the ~C_SET_PATH~ value and ~setPath~ method.
+    The ~J~ argument is defined when ~selectionDomain~ is called from
+    ~SelectionState~'s ~shiftClick~ method.  ~J~'s value is then the
+    current selection domain (computed by the most recent preceding
+    call to ~selectionDomain~).  The purpose of this parameter is to
+    allow the selection domain computation to take advantage of the
+    results of the previous computation and in this way compute a new
+    selection domain faster.  The client should always define
+    the ~selectionDomain~ function in such a way that if it is called with
+    no arguments other than a selection path, it correctly computes
+    the selection domain.
 
-      A skeleton for how to take advantage of ~J~ and ~source~ 
-      is below. Note that it is not necessary to take a copy of ~J~;
-      it can be modified in-place.
+    The ~shiftClick~ function places the call to ~selectionDomain~
+    into a command that it schedules to be executed later (a
+    one-element-long queue is maintained for pending commands), so
+    that the selection path can be modified (by calls to ~extendPath~)
+    several times between two consecutive calls to ~selectionDomain~.
 
-      #+NAME: selection-domain-skeleton
-      #+BEGIN_SRC js
-      selectionDomain = function(spath, J) { 
-        if (J !== undefined) {
-          J = makeEmptyMap(); 
-          // clear cache
-          // populate J from scratch, start caching
-        } else {
-          // modify J based on cache
-        }
-        return J;
-      #+END_SRC
+    A skeleton for how to take advantage of the previous selection
+    domain ~J~ is below. If ~J~ is undefined, the call came from some
+    other operation than ~shiftClick~ (or from of ~shiftClick~ that
+    added an empty pair), and thus the cache should be cleared.  Note
+    that it is not necessary to take a copy of ~J~; it can be modified
+    in-place. That ~J~ is undefined indicates a call from some other
+    source than shift-click, which can be used as a signal to clear
+    the cache. The ~extendPath~ function can also be used to clear a
+    cache.
+     
+    #+NAME: selection-domain-skeleton
+    #+BEGIN_SRC js
+    selectionDomain = function(spath, J) { 
+      if (J === undefined) {
+        J = makeEmptyMap(); 
+        // clear cache
+        // populate J from scratch, start caching
+      } else {
+        // modify J based on cache
+      }
+      return J;
+    }
+    #+END_SRC
 
+    If ~spath~ has exactly one element, call it $p$, the computed
+    selection domain should have at most one element. In selection
+    geometries that allow overlapping elements, one might for example
+    return the singleton set consisting of the index of the topmost
+    element under $p$.  This requirement is not strict---nothing
+    breaks if it is not followed, but the selection behavior might be
+    unconventional since in most applications clicks and
+    command-clicks can only select one element at a time.
 
-      # #+NAME: selection-domain-skeleton
-      # #+BEGIN_SRC js
-      # selectionDomain = function(spath, source, J) { 
-      #   shift (source) {
-      #     case C_SHIFT_CLICK:                      
-      #       // modify J based on shift click cache
-      #       break;
-      #     case C_SET_PATH:
-      #       // modify J based on set path cache
-      #       break;
-      #     default: 
-      #       J = makeEmptyMap();           
-      #       // clear cache for shift-clicks
-      #       // clear cache for set path
-      #       // populate J from scratch
-      #   }
-      #   return J;
-      # #+END_SRC
-
-   - If ~spath~ has exactly one element, call it $p$, the computed
-      selection domain should have at most one element. In selection 
-      geometries that allow overlapping elements, one might for example
-      return the singleton set consisting of the index of the topmost
-      element under $p$.  This requirement is not strict---nothing
-      breaks if it is not followed, but the selection behavior might
-      be unconventional since in most applications clicks and
-      command-clicks can only select one element at a time.
-
-   - The default geometry defines ~selectionDomain~ to map the path elements
-     to the elements of the selection domain.
+    The default geometry defines ~selectionDomain~ to map the path
+    elements to the elements of the selection domain.
 
   - ~defaultCursor(dir)~
     - The ~defaultCursor(dir)~ function provides default values for
@@ -2410,16 +2381,15 @@ are supported may vary, dragging and dropping the selected elements
 may or may not be supported and the ways to distinguish between a
 click to select and a click to start a drag can vary.
 
-We provide a few definitions intended to help implementing
+We provide a few definitions intended to help in implementing
 event handling.
 
 ** Detecting mouse/keyboard events
 
 We define a set of constants to correspond to particular choices of
-modifier keys that can be held down at the time of a mouse click or a
-an arrow or space key press. The ~modifierKeys~ function extracts 
-the modifier key
-information from an /event/ object. Both meta and control
+modifier keys that can be held down at the time of a mouse click or 
+an arrow or space key press. The ~modifierKeys~ function extracts the
+modifier key information from an /event/ object. Both meta and control
 keys are accepted as the command modifier.
 
 #+NAME: modifier-keys
@@ -2463,7 +2433,7 @@ The public names exported from the library are as follows.
   exports.DOWN = DOWN; 
   exports.LEFT = LEFT; 
   exports.RIGHT = RIGHT;
-  // NO_DIRECTION is not exported
+  exports.NO_DIRECTION = NO_DIRECTION;
 
   // Helpers for defining event handlers
   exports.modifierKeys = modifierKeys;
@@ -2576,16 +2546,16 @@ var test = QUnit.test;
   // selection state
   // -------------------------------------------------------------------
   <<selection-state>>
+  <<selection-state-reset-path>>
   <<selection-state-reset>>
   <<selection-state-is-selected>>
   <<selection-state-selected>>
-  <<selection-state-selected-map>>
   <<selection-state-click>>
   <<click-is-nop>>
   <<selection-state-cmd-click>>
   <<cmd-click-is-nop>>
   <<selection-state-shift-click>>
-  <<mk-delayed-command>>
+  <<mk-delayed-shift-click-command>>
   <<selection-state-call-selection-domain>>
   <<selection-state-set-path>>
   <<selection-state-flush>>
@@ -2698,10 +2668,17 @@ var test = QUnit.test;
 #  LocalWords:  cmdClick shiftClick ps vp pointToPath stripEmptyPair
 #  LocalWords:  cmd onSelectedIndex tmp numberOfOps vps extendPath ss
 #  LocalWords:  onSelected onElement emptyPairOnTop queuedCommand dir
-#  LocalWords:  commandQueue opertationQueue scheduleKeepLast pred
-#  LocalWords:  getters acquireCursor shiftSpace VerticalCS kbd
-#  LocalWords:  cmdSpace nop deepEqual DefaultGeometry mpoint
+#  LocalWords:  commandQueue opertationQueue scheduleKeepLast pred hs
+#  LocalWords:  getters acquireCursor shiftSpace VerticalCS kbd dg mk
+#  LocalWords:  cmdSpace nop deepEqual DefaultGeometry mpoint typeof
 #  LocalWords:  vpoint pre defaultPath subsequence activeEnd keypress
 #  LocalWords:  defaultCursor upto boundToElement resizing init undos
 #  LocalWords:  redostack setTimeout setProperty namespace padline
-#  LocalWords:  charset utf qunit QUnit reposition args stateful
+#  LocalWords:  charset utf qunit QUnit reposition args stateful oldJ
+#  LocalWords:  SETUPFILE copySet forEach copyMap leftValue opsStatus
+#  LocalWords:  mapSymmetricDifference rightValue const redoable pdf
+#  LocalWords:  selectable clickIsNop cmdClickIsNop selmode draggable
+#  LocalWords:  mkDelayedShiftClickCommand selectionGeometry resize
+#  LocalWords:  unselected resetPath valueOrDefault noCursor evt
+#  LocalWords:  modifierKeys shiftKey isCmdKey altKey metaKey ctrlKey
+#  LocalWords:  javascript

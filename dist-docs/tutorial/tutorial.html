@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>MultiselectJS Tutorial</title>
-<!-- 2015-09-08 Tue 00:19 -->
+<!-- 2015-09-22 Tue 22:24 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="Jaakko Järvi" />
@@ -288,9 +288,9 @@ object that defines the functions:
 <ul class="org-ul">
 <li><code>m2v(point)</code> that converts mouse coordinates to selection space
 coordinates;</li>
-<li><code>selectionDomain(path, cmdType, J)</code> that maps a selection <code>path</code>
-to a selection domain (the <code>cmdType</code> and <code>J</code> parameters are to
-enable optimizations, and they are explained later);</li>
+<li><code>selectionDomain(path, J)</code> that maps a selection <code>path</code>
+to a selection domain (the <code>J</code> parameter is to
+enable optimizations to be explained later);</li>
 <li><code>extendPath(path, point)</code> that defines how a new point is added to
 the selection path;</li>
 <li><code>filter(pred)</code> that computes a selection domain as the set of
@@ -427,6 +427,7 @@ selected elements.
        }
        OrderedGeometry.prototype.selectionDomain = function(path) {
          var J = multiselect.makeEmptyMap();
+         if (path.length === 0) return J;
          var a = multiselect.anchor(path);
          var b = multiselect.activeEnd(path);
          for (var i=Math.min(a, b); i<=Math.max(a, b); ++i) J.set(i, true);
@@ -732,13 +733,16 @@ inside a rectangle.
 <p>
 The <code>selectionDomain</code> function is simple&#x2014;it constructs a new <code>Map</code>
 object with <code>makeEmptyMap</code>, extracts the anchor and active end
-from the selection path, and sets all indices between them to <code>true</code>:
+from the selection path, and sets all indices between them to <code>true</code>.
+The <code>selectionDomain</code> function may be called with an empty path, 
+which is handled by checking whether <code>path.length === 0</code>.
 </p>
 
 <div class="org-src-container">
 
 <pre class="src src-js" id="ordered-geometry-selection-domain">  OrderedGeometry.<span style="color: #8b1a1a;">prototype</span>.selectionDomain = <span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">path</span>) {
     <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = multiselect.makeEmptyMap();
+    <span style="color: #0000FF;">if</span> (path.length === 0) <span style="color: #0000FF;">return</span> J;
     <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">a</span> = multiselect.anchor(path);
     <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">b</span> = multiselect.activeEnd(path);
     <span style="color: #0000FF;">for</span> (<span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">i</span>=Math.min(a, b); i&lt;=Math.max(a, b); ++i) J.set(i, <span style="color: #8b1a1a;">true</span>);
@@ -958,6 +962,8 @@ selected and <code>false</code> otherwise.
   
     RowwiseGeometry.prototype.selectionDomain = function(path) {
       var J = multiselect.makeEmptyMap();
+      if (path.length === 0) return J;
+  
       var a = multiselect.anchor(path);
       var b = multiselect.activeEnd(path);
   
@@ -1383,13 +1389,16 @@ The <code>selectionDomain</code>
 function thus first inspects the anchor&rsquo;s <code>index</code> to determine the
 kind of coordinate the anchor is, and then interprets the
 anchor and the active end either as the endpoints of a range or as the
-corners of a rectangle:
+corners of a rectangle. Again, the case that <code>path</code> is 
+empty must be handled.
 </p>
 
 <div class="org-src-container">
 
 <pre class="src src-js" id="row-wise-geometry-selection-domain">  RowwiseGeometry.<span style="color: #8b1a1a;">prototype</span>.selectionDomain = <span style="color: #0000FF;">function</span>(<span style="color: #BA36A5;">path</span>) {
     <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">J</span> = multiselect.makeEmptyMap();
+    <span style="color: #0000FF;">if</span> (path.length === 0) <span style="color: #0000FF;">return</span> J;
+
     <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">a</span> = multiselect.anchor(path);
     <span style="color: #0000FF;">var</span> <span style="color: #BA36A5;">b</span> = multiselect.activeEnd(path);
 
@@ -2169,7 +2178,7 @@ Filter: <input type="text" id="filter3"></input><button id="commit_filter3">Comm
         }
         prev = i;
       }
-      this._k = path.length - 1;
+      this._k = Math.max(0, path.length - 1);
   
       return J;
     }
@@ -2554,9 +2563,11 @@ function implements an optimization. When it is finished
 computing a selection domain, it stores the last index of the selection
 path in <code>this._k</code>. When <code>shiftClick</code> (which is called repeatedly during rubber band
 selection) makes a call to <code>selectionDomain</code>, the call includes the previously calculated
-selection domain (<code>J</code>) as the third parameter.
+selection domain (<code>J</code>) as the second parameter.
 It then suffices to iterate the line segments on the path from the index <code>k</code> 
-onward.
+onward. That <code>J</code> is <code>undefined</code> acts as a signal that 
+a new active set has been created and that any cached values 
+(here <code>_k</code>) should be reset.
 </p>
 
 <div class="org-src-container">
@@ -2571,7 +2582,7 @@ onward.
       }
       prev = i;
     }
-    <span style="color: #8b1a1a;">this</span>._k = path.length - 1;
+    <span style="color: #8b1a1a;">this</span>._k = Math.max(0, path.length - 1);
 
     <span style="color: #0000FF;">return</span> J;
   }

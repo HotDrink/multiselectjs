@@ -134,11 +134,11 @@ RowGeometry.prototype.defaultCursor = function (dir) {
 
 var SnakeGeometry = function (parent, elements) {
   HTMLElementsGeometry.call(this, parent, elements);
-  this.k = 0; // remember the previous last index based on which the previous selection
-              // domain was computed
   this.removing = false; // flag for indicating when shift-clicks are removing points
   this.prevp = undefined; // previous attempted point to extend with
   this.rcount = undefined; // refcounts of how many line segments select an index
+  this.pqueue = []; // queue of add and rem commands that extendPath generates and
+  // selectionDomain executes
 };
 SnakeGeometry.prototype = Object.create(HTMLElementsGeometry.prototype);
 
@@ -161,19 +161,13 @@ SnakeGeometry.prototype.extendPath = function(path, p) {
     // remove points that are close
     this.prevp = p;
     while (path.length >= 2 && distance(p, path[path.length-1]) < 20) {
-      this._forEachAffectedByLine(path[path.length-1], path[path.length-2], function (j) {
-        self.rcount.set(j, self.rcount.get(j) - 1);
-      });
+      this.pqueue.push({cmd: "rem", p1: path[path.length-2], p2: path[path.length-1]});
       path.pop();
     } 
   } else {
+    var prev = path.length === 0 ? p : path[path.length-1];
+    this.pqueue.push({cmd: "add", p1: prev, p2: p});
     path.push(p);
-  }
-}
-
-SnakeGeometry.prototype._forEachAffectedByPoint = function (p, f) {
-  for (var j = 0; j < this.elements.length; ++j) {
-    if (pointInRectangle(p, getOffsetRectangle(this.parent, this.elements[j]))) f(j);
   }
 }
 
@@ -184,36 +178,30 @@ SnakeGeometry.prototype._forEachAffectedByLine = function (p1, p2, f) {
 }
                                    
 // Find the elements that intersect with the snake. J may contain the previous
-// selection domain; if it does, computing from the index k onwards suffices
+// selection domain; path is not used, since we just apply commands
+// that extendPath has queued
 SnakeGeometry.prototype.selectionDomain = function(path, J) {
-  if (J === undefined || this.k === 0) {
+  if (J === undefined) {
     J = new Map();
-    this.k = 0;
     this.rcount = new Map();
   }
-  if (this.k > path.length) {
-    for (var j = 0; j < this.elements.length; ++j) {
-      if (this.rcount.has(j) && this.rcount.get(j) === 0) {
-        this.rcount.delete(j);
-        J.delete(j);
-      }
+  var self = this;
+  for (var i=0; i<this.pqueue.length; ++i) {
+    var p = this.pqueue[i];
+    if (p.cmd === "add") {
+      this._forEachAffectedByLine(p.p1, p.p2, function (j) {
+          J.set(j, true);
+          self.rcount.set(j, or_default(self.rcount.get(j), 0) + 1);
+      });
+    }
+    if (p.cmd === "rem") {
+      this._forEachAffectedByLine(p.p1, p.p2, function (j) {
+        self.rcount.set(j, self.rcount.get(j) - 1);
+        if (self.rcount.get(j) === 0) J.delete(j);
+      });
     }
   }
-  var self = this;
-  if (this.k == 0 && path.length > 0) {
-    this._forEachAffectedByPoint(path[0], function (j) {
-      J.set(j, true);
-      self.rcount.set(j, or_default(self.rcount.get(j), 0) + 1);
-    });
-    this.k++;
-  }
-  for (var i = this.k; i < path.length; ++i) {
-    this._forEachAffectedByLine(path[i], path[i-1], function (j) {
-      J.set(j, true);
-      self.rcount.set(j, or_default(self.rcount.get(j), 0) + 1);
-    });
-  }
-  this.k = path.length;
+  this.pqueue = [];
   return J;
 }
 

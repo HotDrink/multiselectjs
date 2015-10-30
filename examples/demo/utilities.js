@@ -30,6 +30,12 @@ function modifierKeys (evt) {
   function isCmdKey (evt) { return evt.metaKey || evt.ctrlKey; }
 }
 
+///////////////////////
+// general utilities //
+///////////////////////
+
+function or_default(v, def) { return v === undefined ? def : v; }
+
 ////////////////////////////////////////////////////////////
 // helper functions to deal with points, rectangles, etc. //
 ////////////////////////////////////////////////////////////

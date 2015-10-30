@@ -22,7 +22,7 @@ HTMLElementsGeometry.prototype = Object.create(multiselect.DefaultGeometry.proto
 // HTMLElementGeometry's filter function can be reused by other geometries. Iterating
 // over all elements is the same for all geometries in this application.
 HTMLElementsGeometry.prototype.filter = function(p) {   
-  var J = multiselect.makeEmptyMap();
+  var J = new Map();
   for (var i = 0; i < this.elements.length; ++i) if (p(i)) J.set(i, true);
   return J;
 }
@@ -42,7 +42,7 @@ RectangularGeometry.prototype = Object.create(HTMLElementsGeometry.prototype);
 // Selection domain is those elements that intersect with the rectangle whose
 // corners are the anchor and active end (the first and last elements of the path).
 RectangularGeometry.prototype.selectionDomain = function(path) {
-  var J = multiselect.makeEmptyMap();
+  var J = new Map();
   if (path.length === 0) return J;
   var r1 = mkRectangle(multiselect.anchor(path),
                        multiselect.activeEnd(path));
@@ -68,7 +68,7 @@ RowGeometry.prototype = Object.create(HTMLElementsGeometry.prototype);
 
 // Selection domain is the range of elements between the anchor and active end.
 RowGeometry.prototype.selectionDomain = function(path) {
-  var J = multiselect.makeEmptyMap();
+  var J = new Map();
   if (path.length === 0) return J;
   var a = multiselect.anchor(path);
   var b = multiselect.activeEnd(path);
@@ -137,7 +137,8 @@ var SnakeGeometry = function (parent, elements) {
   this.k = 0; // remember the previous last index based on which the previous selection
               // domain was computed
   this.removing = false; // flag for indicating when shift-clicks are removing points
-  this.prevp = undefined; // previous attempted point to extend with  
+  this.prevp = undefined; // previous attempted point to extend with
+  this.rcount = undefined; // refcounts of how many line segments select an index
 };
 SnakeGeometry.prototype = Object.create(HTMLElementsGeometry.prototype);
 
@@ -149,43 +150,70 @@ SnakeGeometry.prototype = Object.create(HTMLElementsGeometry.prototype);
 // via selection geometries. 
 SnakeGeometry.prototype.extendPath = function(path, p) {
 
-  var last = path.length - 1;
-  if (path.length <= 1) { this.removing = false; this.k = 0; this.prevp = p; path.push(p); return; }
-  if (this.removing) { 
-    this.k = 0; // forces selectionDomain to recalculate based on entire path
-    if (distance(p, path[last]) <= distance(this.prevp, path[last])) {
-      // new path closer to the last point than the previous p, so remain in removing mode
-      this.prevp = p;
-      while (last >= 1 && distance(p, path[last]) < 20) { path.pop(); --last; } // remove points that are close
-      this.last = path[last]; return;
-    } else {
-      this.removing = false; this.prevp = undefined; // exit removing mode
-      return;
-    }
+  var self = this;
+  if (this.removing) {
+    if (distance(p, path[path.length-1]) > distance(this.prevp, path[path.length-1])) this.removing = false;
+  } else {
+    if (path.length >= 2 && angle(path[path.length-2], path[path.length-1], p) < Math.PI/4) this.removing = true;
   }
-  while (last >= 1 && angle(path[last-1], path[last], p) < Math.PI/4) { path.pop(); --last; this.removing = true; }
-  if (this.removing) { this.prevp = p; return this.extendPath(path, p); } // entered removal mode
 
-  // normal operation
-  path.push(p);
+  if (this.removing) {
+    // remove points that are close
+    this.prevp = p;
+    while (path.length >= 2 && distance(p, path[path.length-1]) < 20) {
+      this._forEachAffectedByLine(path[path.length-1], path[path.length-2], function (j) {
+        self.rcount.set(j, self.rcount.get(j) - 1);
+      });
+      path.pop();
+    } 
+  } else {
+    path.push(p);
+  }
 }
 
+SnakeGeometry.prototype._forEachAffectedByPoint = function (p, f) {
+  for (var j = 0; j < this.elements.length; ++j) {
+    if (pointInRectangle(p, getOffsetRectangle(this.parent, this.elements[j]))) f(j);
+  }
+}
+
+SnakeGeometry.prototype._forEachAffectedByLine = function (p1, p2, f) {
+  for (var j = 0; j < this.elements.length; ++j) {
+    if (lineRectIntersect(p1, p2, getOffsetRectangle(this.parent, this.elements[j]))) f(j);
+  }
+}
+                                   
 // Find the elements that intersect with the snake. J may contain the previous
 // selection domain; if it does, computing from the index k onwards suffices
 SnakeGeometry.prototype.selectionDomain = function(path, J) {
   if (J === undefined || this.k === 0) {
-    J = multiselect.makeEmptyMap();
+    J = new Map();
     this.k = 0;
+    this.rcount = new Map();
   }
-  var prev = this.k;
-  for (var i = this.k; i < path.length; ++i) {
+  if (this.k > path.length) {
     for (var j = 0; j < this.elements.length; ++j) {
-      if (lineRectIntersect(path[i], path[prev],
-                            getOffsetRectangle(this.parent, this.elements[j]))) J.set(j, true);
+      if (this.rcount.has(j) && this.rcount.get(j) === 0) {
+        this.rcount.delete(j);
+        J.delete(j);
+      }
     }
-    prev = i;
   }
-  this.k = Math.max(0, path.length - 1);
+  var self = this;
+  if (this.k == 0 && path.length > 0) {
+    this._forEachAffectedByPoint(path[0], function (j) {
+      J.set(j, true);
+      self.rcount.set(j, or_default(self.rcount.get(j), 0) + 1);
+    });
+    this.k++;
+  }
+  for (var i = this.k; i < path.length; ++i) {
+    this._forEachAffectedByLine(path[i], path[i-1], function (j) {
+      J.set(j, true);
+      self.rcount.set(j, or_default(self.rcount.get(j), 0) + 1);
+    });
+  }
+  this.k = path.length;
   return J;
 }
 
@@ -204,7 +232,7 @@ PointGeometry.prototype.extendPath = function(path, p) { path.push(p); }
 // If J contains the previous selection domain, it suffices to compute from k onwards
 PointGeometry.prototype.selectionDomain = function(path, J) {  
   if (J === undefined) {
-    J = multiselect.makeEmptyMap();
+    J = new Map();
     this.k = 0;
   }
   for (var i = this.k; i < path.length; ++i) {
@@ -236,7 +264,7 @@ MixedGeometry.prototype = Object.create(HTMLElementsGeometry.prototype);
 // If anchor has an index field that is not undefined, row-wise selection
 // is applied, othewrise rectangular
 MixedGeometry.prototype.selectionDomain = function(path, J) {
-  var J = multiselect.makeEmptyMap();
+  var J = new Map();
   if (path.length === 0) return J;
   var a = multiselect.anchor(path);
   var b = multiselect.activeEnd(path);

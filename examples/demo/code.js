@@ -150,6 +150,7 @@ SnakeGeometry.prototype = Object.create(HTMLElementsGeometry.prototype);
 // via selection geometries. 
 SnakeGeometry.prototype.extendPath = function(path, p) {
 
+  if (path.length == 0) this.removing = false;
   var self = this;
   if (this.removing) {
     if (distance(p, path[path.length-1]) > distance(this.prevp, path[path.length-1])) this.removing = false;

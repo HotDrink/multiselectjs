@@ -1,7 +1,7 @@
 ////////////////////////////////////
 // MultiselectJS demo application //
 //                                //
-// Author: Jaakko Järvi           //
+// Author:                        //
 ////////////////////////////////////
 
 

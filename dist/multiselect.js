@@ -238,7 +238,7 @@
         // member functions of func
                 func.push = function (op) {
                   ops.push(op);
-                  ++gen
+                  ++gen;
                   op.domain.forEach(function(_, i) {
                     op.domain.set(i, domain.has(i) ? gen - domain.get(i) : ops.length);
                     domain.set(i, gen); 
